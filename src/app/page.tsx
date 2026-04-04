@@ -39,7 +39,15 @@ export default function HomePage() {
           </svg>
           Scan Your Coffee Bag
         </Link>
-        <button className="text-sm text-[#5B5F66]">or browse recipes</button>
+        <Link
+          href="/manual"
+          className="w-full flex items-center justify-center gap-2 bg-white text-[#333333] text-sm font-medium rounded-[14px] py-3.5 border border-[#E1E2E5] active:opacity-80 transition-opacity"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 3H13M3 6H10M3 9H13M3 12H8" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Enter Manually
+        </Link>
       </div>
 
       {/* Bottom nav spacer */}

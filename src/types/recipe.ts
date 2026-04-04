@@ -119,6 +119,38 @@ export const RecipeSchema = z.object({
 
 export type Recipe = z.infer<typeof RecipeSchema>
 
+// ─── Feedback & Adjustment ───────────────────────────────────────────────────
+
+export const SymptomSchema = z.enum([
+  'too_acidic',
+  'too_bitter',
+  'flat_lifeless',
+  'slow_drain',
+  'fast_drain',
+])
+
+export type Symptom = z.infer<typeof SymptomSchema>
+
+export const AdjustmentMetadataSchema = z.object({
+  round: z.number().int().min(1).max(3),
+  symptom: SymptomSchema,
+  variable_changed: z.string(),
+  previous_value: z.string(),
+  new_value: z.string(),
+  direction: z.string(),
+  note: z.string(),
+})
+
+export type AdjustmentMetadata = z.infer<typeof AdjustmentMetadataSchema>
+
+// ─── Recipe (with optional adjustment) ──────────────────────────────────────
+
+export const RecipeWithAdjustmentSchema = RecipeSchema.extend({
+  adjustment_applied: AdjustmentMetadataSchema.optional(),
+})
+
+export type RecipeWithAdjustment = z.infer<typeof RecipeWithAdjustmentSchema>
+
 // ─── Validation Result ───────────────────────────────────────────────────────
 
 export interface ValidationResult {
