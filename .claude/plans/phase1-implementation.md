@@ -11,14 +11,14 @@ Stack: **Next.js 14 App Router + TypeScript + Tailwind CSS + Anthropic SDK**. Al
 ## Checklist
 
 ### 0. Project Bootstrap
-- [ ] `npx create-next-app@latest . --typescript --tailwind --app --src-dir`
-- [ ] Install deps: `@anthropic-ai/sdk zod`
-- [ ] Create `.env.local` with `ANTHROPIC_API_KEY=`
-- [ ] Create `.env.example` documenting required vars
-- [ ] Set up `src/types/recipe.ts` — Zod schema + TypeScript types for BeanProfile, MethodRecommendation, Recipe
+- [x] `npx create-next-app@latest . --typescript --tailwind --app --src-dir`
+- [x] Install deps: `@anthropic-ai/sdk zod`
+- [x] Create `.env.local` with `ANTHROPIC_API_KEY=`
+- [x] Create `.env.example` documenting required vars
+- [x] Set up `src/types/recipe.ts` — Zod schema + TypeScript types for BeanProfile, MethodRecommendation, Recipe
 
 ### 1. Reference Documents (Knowledge Base)
-- [ ] `docs/coffee-range-system-skill.md` — Blocks 1–10 in full:
+- [x] `docs/coffee-range-system-skill.md` — Blocks 1–10 in full:
   - Block 1: Method base ranges (K-Ultra clicks + temp) for all 9 methods
   - Block 1B: Ratio ranges per method
   - Block 2: Process offsets (washed / natural / honey / anaerobic)
@@ -29,39 +29,39 @@ Stack: **Next.js 14 App Router + TypeScript + Tailwind CSS + Anthropic SDK**. Al
   - Block 6: Mandatory decision order (steps 1–9)
   - Block 8: Pour technique per method
   - Block 10: Conflict interaction rules
-- [ ] `docs/method-decision-logic.md` — Decision matrix (bean profile → top 3 methods) + scoring algorithm for all 9 methods
-- [ ] `docs/output-format.md` — Full recipe JSON schema + post-LLM validation rules (mirrors phase1 spec exactly)
-- [ ] `docs/grinder-tables/1zpresso-k-ultra-grind-table.md` — Click → micron mapping (full range)
-- [ ] `docs/grinder-tables/1zpresso-q-air-grind-table.md` — Click → micron mapping (full range)
-- [ ] `docs/grinder-tables/baratza-encore-esp-grind-table.md` — Click → micron mapping; note pour-over constraint (clicks 14–24)
+- [x] `docs/method-decision-logic.md` — Decision matrix (bean profile → top 3 methods) + scoring algorithm for all 9 methods
+- [x] `docs/output-format.md` — Full recipe JSON schema + post-LLM validation rules (mirrors phase1 spec exactly)
+- [x] `docs/grinder-tables/1zpresso-k-ultra-grind-table.md` — Click → micron mapping (full range)
+- [x] `docs/grinder-tables/1zpresso-q-air-grind-table.md` — Click → micron mapping (full range)
+- [x] `docs/grinder-tables/baratza-encore-esp-grind-table.md` — Click → micron mapping; note pour-over constraint (clicks 14–24)
 
 ### 2. Core Utilities (`src/lib/`)
-- [ ] `src/lib/method-decision-engine.ts`
+- [x] `src/lib/method-decision-engine.ts`
   - Pure function: `recommendMethods(bean: BeanProfile): MethodRecommendation[]`
   - Deterministic scoring — NO LLM call
   - Returns exactly 3 ranked methods with rationale strings
-- [ ] `src/lib/grinder-converter.ts`
+- [x] `src/lib/grinder-converter.ts`
   - `kUltraClicksToMicrons(clicks: number): number`
   - `micronsToQAir(microns: number): GrinderSetting`
   - `micronsToBaratza(microns: number): GrinderSetting`
   - Validates Baratza stays within 14–24 for pour-over methods
-- [ ] `src/lib/recipe-validator.ts`
+- [x] `src/lib/recipe-validator.ts`
   - `validateRecipe(recipe: unknown, bean: BeanProfile, method: string): ValidationResult`
   - Checks: ratio math (±5g), water sum exact match, click range, temp range, accumulation cap, Baratza zone, all 3 grinders present, all 5 quick-adjustment keys, range_logic completeness
-- [ ] `src/lib/prompt-builder.ts`
+- [x] `src/lib/prompt-builder.ts`
   - `buildExtractionPrompt(): string` — vision system prompt for bean extraction
   - `buildRecipePrompt(bean: BeanProfile, method: string): { system: string; user: string }` — assembles range system + grinder tables + output format spec
-- [ ] `src/lib/image-compressor.ts` (client-side)
+- [x] `src/lib/image-compressor.ts` (client-side)
   - `compressImage(file: File, maxSizeKb?: number): Promise<Blob>` — canvas-based compression, targets < 1 MB for API upload
 
 ### 3. API Routes (`src/app/api/`)
-- [ ] `src/app/api/extract-bean/route.ts`
+- [x] `src/app/api/extract-bean/route.ts`
   - Accepts: `multipart/form-data` with `image` field
   - Calls: Claude vision API with extraction system prompt
   - Validates: returned JSON against BeanProfile Zod schema
   - Returns: `{ bean: BeanProfile, confidence: Record<keyof BeanProfile, number> }`
   - Error: 422 on extraction failure with field-level errors
-- [ ] `src/app/api/generate-recipe/route.ts`
+- [x] `src/app/api/generate-recipe/route.ts`
   - Accepts: `{ method: string, bean: BeanProfile }`
   - Calls: Claude with full range system prompt (assembled by `prompt-builder.ts`)
   - Validates: recipe JSON via `recipe-validator.ts`
@@ -70,40 +70,49 @@ Stack: **Next.js 14 App Router + TypeScript + Tailwind CSS + Anthropic SDK**. Al
   - Error: 422 after 3 failures
 
 ### 4. Pages & Navigation (`src/app/`)
-- [ ] `src/app/page.tsx` — Upload screen (home)
-- [ ] `src/app/confirm/page.tsx` — Bean confirmation + roast date
-- [ ] `src/app/methods/page.tsx` — Method recommendation + selection
-- [ ] `src/app/recipe/page.tsx` — Recipe card display
-- [ ] State passed via `sessionStorage` (no persistence in Phase 1; avoid URL query string bloat for large objects)
+- [x] `src/app/page.tsx` — Home screen (Brygg branding, hero photo, Scan CTA, bottom nav)
+- [x] `src/app/scan/page.tsx` — Upload screen (camera/gallery picker, upload zone, loading state)
+- [x] `src/app/analysis/page.tsx` — Bean confirmation (extracted fields, editable, confidence badges, roast date)
+- [x] `src/app/methods/page.tsx` — Method recommendation + selection (3 ranked cards)
+- [x] `src/app/recipe/page.tsx` — Recipe card display
+- [x] State passed via `sessionStorage` (no persistence in Phase 1)
 
 ### 5. UI Components (`src/components/`)
-- [ ] `src/components/UploadScreen.tsx`
-  - Camera / gallery input (`accept="image/*" capture="environment"`)
-  - Client-side compression via `image-compressor.ts`
-  - Upload progress indicator
-  - Single large CTA button
-- [ ] `src/components/BeanConfirmationCard.tsx`
+- [x] `src/components/BottomNav.tsx`
+  - Floating white pill nav (`cornerRadius: 36`) with dark active tab indicator (`cornerRadius: 26`)
+  - Home / Recipes / Settings tabs
+- [x] Bean confirmation UI (inline in `/analysis` page)
   - Editable fields for all extracted bean properties
   - Per-field confidence badge (yellow warning if confidence < 0.6)
   - Roast date picker (optional; shows "Assuming optimal window" if skipped)
-  - Submit → calls `POST /api/generate-recipe` is NOT here; this just passes bean data forward
-- [ ] `src/components/MethodRecommendationCards.tsx`
+- [x] Method recommendation cards (inline in `/methods` page)
   - Renders exactly 3 method cards from `recommendMethods()` output
   - Each card: method name, rank badge, rationale text
-  - Tap to select → navigate to recipe page
-- [ ] `src/components/RecipeCard.tsx`
-  - `Parameters` section: coffee/water weights, ratio badge, temp badge, filter label, total time
-  - `Grind Settings` section: K-Ultra (primary card), Q-Air and Baratza rows
-  - `Steps` section: numbered cards with time, action, water poured, accumulated
+  - Tap to select → calls generate-recipe API → navigate to recipe page
+- [x] Recipe card (inline in `/recipe` page)
+  - `Parameters` section: 6-cell grid (water, coffee, temp, brew time, grind, ratio)
+  - `Grind Settings` section: K-Ultra primary card, Q-Air and Baratza rows
+  - `Brew Steps` section: numbered cards with time, action, water poured, accumulated
   - `Quick Adjustments` section: collapsible, 5 categories
-  - `Range Logic` section: collapsible "How was this calculated?" with full offset chain
+  - `How was this calculated?` section: collapsible full offset chain
 
 ### 6. Integration & Wiring
-- [ ] Wire upload page → extract-bean API → confirm page (with extracted data + confidence)
-- [ ] Wire confirm page → method decision engine (client-side call) → methods page
-- [ ] Wire method selection → generate-recipe API → recipe page
-- [ ] Add loading states for both API calls (skeleton UI or spinner)
-- [ ] Add error boundaries / toast for API failures
+- [x] Wire scan page → extract-bean API → analysis page (with extracted data + confidence)
+- [x] Wire analysis page → method decision engine (client-side) → methods page
+- [x] Wire method selection → generate-recipe API → recipe page
+- [x] Loading states for both API calls (spinner + message)
+- [x] Error display for API failures (inline error box)
+
+### 7. Design Token Alignment (Pencil design)
+- [x] CTA button radius: `rounded-[14px]` (extracted from Pencil: `cornerRadius: 14`)
+- [x] Button background: `#333333` (`--foreground` token)
+- [x] Background: `#F5F5F5` (`--background` token)
+- [x] Card background: `#FFFFFF` (`--card` token)
+- [x] Border: `#E1E2E5` (`--border` token)
+- [x] Muted text: `#5B5F66` (`--muted-foreground` token)
+- [x] Font: Roboto (`--font-primary` token)
+- [x] Hero image radius: `rounded-[16px]`
+- [x] Bottom nav: floating white pill with dark active indicator
 
 ### 7. Validation & Testing
 - [ ] Unit test `method-decision-engine.ts` — all 4 bean profile scenarios return correct top method
