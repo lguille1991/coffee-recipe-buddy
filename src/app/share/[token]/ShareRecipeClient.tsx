@@ -6,7 +6,7 @@ import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER
 import { useAuth } from '@/hooks/useAuth'
 
 function normalizeClickSetting(value: string): string {
-  return value.replace(/^click\s+(\d+)$/i, '$1 clicks')
+  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
 
 export default function ShareRecipeClient({ data }: { data: PublicShareResponse }) {

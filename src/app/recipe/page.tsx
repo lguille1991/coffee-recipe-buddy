@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 
 function normalizeClickSetting(value: string): string {
-  return value.replace(/^click\s+(\d+)$/i, '$1 clicks')
+  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────

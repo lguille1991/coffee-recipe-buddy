@@ -84,8 +84,8 @@ export function kUltraRangeToQAir(
   const startSetting = micronsToQAirRaw(startMicrons)
 
   return {
-    range: `${lowSetting.toFixed(1)}–${highSetting.toFixed(1)}`,
-    starting_point: startSetting.toFixed(1),
+    range: `${lowSetting.toFixed(1)}–${highSetting.toFixed(1)} rotations`,
+    starting_point: `${startSetting.toFixed(1)} rotations`,
   }
 }
 

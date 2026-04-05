@@ -1,7 +1,7 @@
 import { RecipeWithAdjustment } from '@/types/recipe'
-import { parseKUltraRange, kUltraRangeToTimemoreC2, kUltraRangeToQAir } from './grinder-converter'
+import { parseKUltraRange, kUltraRangeToTimemoreC2, kUltraRangeToQAir, kUltraRangeToBaratza } from './grinder-converter'
 
-const CURRENT_SCHEMA_VERSION = 3
+const CURRENT_SCHEMA_VERSION = 4
 
 type MigrationFn = (recipe: RecipeWithAdjustment) => RecipeWithAdjustment
 
@@ -47,6 +47,30 @@ const migrations: Record<number, MigrationFn> = {
           range: qAir.range,
           starting_point: qAir.starting_point,
         },
+      },
+    }
+  },
+
+  // v3 → v4: recalculate all derived grinders (q_air, baratza, timemore_c2) from
+  // K-Ultra using the deterministic converter tables, fixing any LLM-generated drift.
+  3: (recipe) => {
+    const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
+    if (!kuRange) return recipe
+
+    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
+    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange.mid
+
+    const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
+    const baratza = kUltraRangeToBaratza(kuRange.low, kuRange.high, startClicks, recipe.method)
+    const c2 = kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, recipe.method)
+
+    return {
+      ...recipe,
+      grind: {
+        ...recipe.grind,
+        q_air: { ...recipe.grind.q_air, ...qAir },
+        baratza_encore_esp: { ...recipe.grind.baratza_encore_esp, ...baratza },
+        timemore_c2: { ...recipe.grind.timemore_c2, ...c2 },
       },
     }
   },
