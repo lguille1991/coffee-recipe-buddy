@@ -247,3 +247,30 @@ export const UpdateProfileRequestSchema = z.object({
 })
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>
+
+// ─── Sharing ──────────────────────────────────────────────────────────────────
+
+export const ShareSnapshotSchema = z.object({
+  bean_info: BeanProfileSchema,
+  current_recipe_json: RecipeWithAdjustmentSchema,
+  image_url: z.string().nullable().optional(),
+  owner_display_name: z.string().nullable().optional(),
+})
+
+export type ShareSnapshot = z.infer<typeof ShareSnapshotSchema>
+
+export const ShareResponseSchema = z.object({
+  shareToken: z.string(),
+  url: z.string(),
+})
+
+export type ShareResponse = z.infer<typeof ShareResponseSchema>
+
+export const PublicShareResponseSchema = z.object({
+  shareToken: z.string(),
+  title: z.string().nullable().optional(),
+  createdAt: z.string(),
+  snapshot: ShareSnapshotSchema,
+})
+
+export type PublicShareResponse = z.infer<typeof PublicShareResponseSchema>

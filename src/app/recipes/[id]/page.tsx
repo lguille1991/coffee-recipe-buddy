@@ -21,6 +21,14 @@ export default function SavedRecipeDetailPage() {
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
   const { preferredGrinder } = useProfile()
 
+  // Sharing state
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string>('')
+  const [showShareSheet, setShowShareSheet] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [revoking, setRevoking] = useState(false)
+
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
       .then(async r => {
@@ -34,12 +42,21 @@ export default function SavedRecipeDetailPage() {
         const migrated = migrateRecipe(data.current_recipe_json, data.schema_version)
         const hydratedData = { ...data, current_recipe_json: migrated }
         setRecipe(hydratedData)
-        // Pre-compute freshness adjustment
         const adj = recalculateFreshness(migrated, data.bean_info.roast_date ?? undefined)
         if (adj.adjusted) setFreshnessAdj(adj)
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
+
+    // Check if this recipe already has a share link
+    fetch(`/api/recipes/${id}/share`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setShareToken(data.shareToken)
+          setShareUrl(data.url)
+        }
+      })
   }, [id, router])
 
   async function handleDelete() {
@@ -58,8 +75,40 @@ export default function SavedRecipeDetailPage() {
     sessionStorage.setItem('confirmedBean', JSON.stringify(recipe.bean_info))
     sessionStorage.setItem('feedback_round', '0')
     sessionStorage.setItem('adjustment_history', JSON.stringify(recipe.feedback_history ?? []))
-    sessionStorage.setItem('rebrew_recipe_id', id) // track which saved recipe we're re-brewing
+    sessionStorage.setItem('rebrew_recipe_id', id)
     router.push('/recipe')
+  }
+
+  async function handleShare() {
+    setSharing(true)
+    try {
+      const res = await fetch(`/api/recipes/${id}/share`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to create share link')
+      const data = await res.json()
+      setShareToken(data.shareToken)
+      setShareUrl(data.url)
+      setShowShareSheet(true)
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleRevoke() {
+    setRevoking(true)
+    try {
+      await fetch(`/api/recipes/${id}/share`, { method: 'DELETE' })
+      setShareToken(null)
+      setShareUrl('')
+      setShowShareSheet(false)
+    } finally {
+      setRevoking(false)
+    }
   }
 
   if (loading) {
@@ -99,15 +148,33 @@ export default function SavedRecipeDetailPage() {
           </button>
           <h2 className="text-lg font-semibold">Saved Recipe</h2>
         </div>
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="p-2 text-red-400"
-          aria-label="Delete recipe"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Share button */}
+          <button
+            onClick={shareToken ? () => setShowShareSheet(true) : handleShare}
+            disabled={sharing}
+            className="p-2 text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
+            aria-label="Share recipe"
+          >
+            {sharing ? (
+              <div className="w-[18px] h-[18px] border-2 border-[var(--muted-foreground)] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M13 12.5C12.4 12.5 11.87 12.74 11.47 13.12L6.62 10.3C6.67 10.1 6.7 9.9 6.7 9.68C6.7 9.46 6.67 9.26 6.62 9.06L11.42 6.27C11.83 6.68 12.39 6.94 13 6.94C14.24 6.94 15.25 5.93 15.25 4.69C15.25 3.45 14.24 2.44 13 2.44C11.76 2.44 10.75 3.45 10.75 4.69C10.75 4.91 10.78 5.11 10.83 5.31L6.03 8.1C5.62 7.69 5.06 7.44 4.45 7.44C3.21 7.44 2.2 8.45 2.2 9.69C2.2 10.93 3.21 11.94 4.45 11.94C5.06 11.94 5.62 11.68 6.03 11.27L10.88 14.1C10.83 14.29 10.8 14.49 10.8 14.69C10.8 15.9 11.79 16.88 13 16.88C14.21 16.88 15.2 15.9 15.2 14.69C15.2 13.48 14.21 12.5 13 12.5Z" fill="currentColor" />
+              </svg>
+            )}
+          </button>
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 text-red-400"
+            aria-label="Delete recipe"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
@@ -124,7 +191,20 @@ export default function SavedRecipeDetailPage() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
+            {shareToken && (
+              <button
+                onClick={() => setShowShareSheet(true)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--foreground)]/10 text-[var(--foreground)] text-[10px] font-medium active:opacity-70"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M7.2 6.9C6.87 6.9 6.59 7.03 6.37 7.24L3.68 5.72C3.7 5.61 3.71 5.49 3.71 5.37C3.71 5.25 3.7 5.13 3.68 5.02L6.34 3.52C6.56 3.74 6.86 3.87 7.2 3.87C7.91 3.87 8.48 3.3 8.48 2.59C8.48 1.88 7.91 1.31 7.2 1.31C6.49 1.31 5.92 1.88 5.92 2.59C5.92 2.71 5.93 2.83 5.95 2.94L3.29 4.44C3.07 4.22 2.77 4.09 2.43 4.09C1.72 4.09 1.15 4.66 1.15 5.37C1.15 6.08 1.72 6.65 2.43 6.65C2.77 6.65 3.07 6.52 3.29 6.3L5.98 7.82C5.96 7.93 5.95 8.05 5.95 8.17C5.95 8.86 6.51 9.42 7.2 9.42C7.89 9.42 8.45 8.86 8.45 8.17C8.45 7.48 7.89 6.9 7.2 6.9Z" fill="currentColor" />
+                </svg>
+                Shared
+              </button>
+            )}
+          </div>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {recipe.bean_info.roaster && (
             <p className="text-xs text-[#9CA3AF] mt-0.5">{recipe.bean_info.roaster}</p>
@@ -271,6 +351,45 @@ export default function SavedRecipeDetailPage() {
           Brew Again
         </button>
       </div>
+
+      {/* Share sheet */}
+      {showShareSheet && shareToken && (
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 pb-safe" onClick={() => setShowShareSheet(false)}>
+          <div className="bg-[var(--card)] rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">Share Recipe</h3>
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">Anyone with this link can view and clone your recipe.</p>
+
+            {/* URL display */}
+            <div className="flex items-center gap-2 bg-[var(--background)] rounded-xl px-3 py-2.5 mb-4">
+              <p className="flex-1 text-xs text-[var(--muted-foreground)] truncate">{shareUrl}</p>
+              <button
+                onClick={handleCopy}
+                className="text-xs font-semibold text-[var(--foreground)] shrink-0 active:opacity-60"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleCopy}
+                className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80"
+              >
+                {copied ? 'Link Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={handleRevoke}
+                disabled={revoking}
+                className="w-full py-3.5 bg-[var(--background)] text-red-500 text-sm font-medium rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+              >
+                {revoking ? (
+                  <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                ) : 'Revoke Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
