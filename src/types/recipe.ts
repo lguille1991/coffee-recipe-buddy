@@ -247,7 +247,7 @@ export const UpdateNotesRequestSchema = z.object({
 export type UpdateNotesRequest = z.infer<typeof UpdateNotesRequestSchema>
 
 export const UpdateProfileRequestSchema = z.object({
-  display_name: z.string().optional(),
+  display_name: z.string().nullable().optional(),
   default_volume_ml: z.number().int().positive().optional(),
   temp_unit: z.enum(['C', 'F']).optional(),
   preferred_grinder: GrinderIdSchema.optional(),

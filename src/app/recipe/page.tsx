@@ -185,7 +185,7 @@ export default function RecipePage() {
       const res = await fetch('/api/adjust-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_recipe: recipe, symptom: selectedSymptom, round: nextRound }),
+        body: JSON.stringify({ current_recipe: recipe, symptom: selectedSymptom, round: nextRound, preferred_grinder: preferredGrinder }),
       })
 
       if (!res.ok) {
