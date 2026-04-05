@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { BeanProfile, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
+import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_LABELS: Record<string, string> = {
   washed: 'Washed',
@@ -62,10 +63,18 @@ function EditableField({
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { profile } = useProfile()
   const [extraction, setExtraction] = useState<ExtractionResponse | null>(null)
   const [bean, setBean] = useState<BeanProfile | null>(null)
   const [roastDate, setRoastDate] = useState('')
+  const [targetVolume, setTargetVolume] = useState('')
   const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    if (profile?.default_volume_ml) {
+      setTargetVolume(String(profile.default_volume_ml))
+    }
+  }, [profile])
 
   useEffect(() => {
     const raw = sessionStorage.getItem('extractionResult')
@@ -85,6 +94,13 @@ export default function AnalysisPage() {
     if (!bean) return
     const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
     sessionStorage.setItem('confirmedBean', JSON.stringify(finalBean))
+
+    const vol = parseInt(targetVolume, 10)
+    if (vol > 0) {
+      sessionStorage.setItem('targetVolumeMl', String(vol))
+    } else {
+      sessionStorage.removeItem('targetVolumeMl')
+    }
 
     // Run deterministic method recommendation client-side
     const recs = recommendMethods(finalBean)
@@ -112,7 +128,7 @@ export default function AnalysisPage() {
         <h2 className="text-lg font-semibold">Coffee Analysis</h2>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-32">
+      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-48">
         {/* Bean identity card */}
         <div className="bg-white rounded-2xl p-4 flex items-start gap-3">
           <div className="w-14 h-14 rounded-xl bg-[#D4C9B8] flex items-center justify-center shrink-0">
@@ -195,6 +211,23 @@ export default function AnalysisPage() {
             {!roastDate && (
               <p className="text-[10px] text-[#9CA3AF] mt-1">Assuming optimal window (8–21 days)</p>
             )}
+          </div>
+        </div>
+
+        {/* Target volume */}
+        <div>
+          <h3 className="text-xs font-semibold text-[#5B5F66] uppercase tracking-wider px-1 mb-2">Target Volume</h3>
+          <div className="bg-white rounded-xl p-3 flex items-center gap-2">
+            <input
+              type="number"
+              value={targetVolume}
+              onChange={e => setTargetVolume(e.target.value)}
+              min={50}
+              max={2000}
+              className="flex-1 text-sm font-medium text-[#333333] bg-transparent outline-none"
+              placeholder="250"
+            />
+            <span className="text-sm text-[#9CA3AF]">ml</span>
           </div>
         </div>
       </div>

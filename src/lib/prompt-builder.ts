@@ -57,6 +57,7 @@ Rules:
 export function buildRecipePrompt(
   bean: BeanProfile,
   method: string,
+  targetVolumeMl?: number,
 ): { system: string; user: string } {
   const rangeSystem = readDoc('coffee-range-system-skill.md')
   const methodLogic = readDoc('method-decision-logic.md')
@@ -118,9 +119,14 @@ ${timemoreC2Table}
 7. All 5 quick_adjustments keys must be present and actionable.
 8. ratio must be within the method's Block 1B range.
 9. Output ONLY the JSON object — zero extra text before or after.
-10. compressed field in range_logic MUST be true if you applied Block 5B compression, false otherwise.`
+10. compressed field in range_logic MUST be true if you applied Block 5B compression, false otherwise.
+11. If target_volume_ml is provided in the input, scale the recipe so that water_g equals that value exactly. Adjust coffee_g to maintain the method's ratio.`
 
-  const user = JSON.stringify({ method, bean }, null, 2)
+  const payload: Record<string, unknown> = { method, bean }
+  if (targetVolumeMl && targetVolumeMl > 0) {
+    payload.target_volume_ml = targetVolumeMl
+  }
+  const user = JSON.stringify(payload, null, 2)
 
   return { system, user }
 }

@@ -14,7 +14,7 @@ const MAX_RETRIES = 2
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { method, bean } = body
+    const { method, bean, targetVolumeMl } = body
 
     if (!method || !bean) {
       return NextResponse.json({ error: 'method and bean are required' }, { status: 400 })
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { system, user } = buildRecipePrompt(beanParsed.data, method)
+    const { system, user } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: system },
