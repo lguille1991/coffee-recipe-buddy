@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
@@ -65,9 +64,9 @@ export default function HomePage() {
       {/* Header */}
       <div className="px-6 pb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#333333]">Brygg</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-[#333333]">Coffee Recipe Buddy</h1>
           <p className="text-[#5B5F66] text-sm mt-0.5">
-            {user ? `Good morning` : 'Good morning'}
+            Hey there, what coffee beans do you need a recipe for today?
           </p>
         </div>
         {!loading && !user && (
@@ -148,7 +147,6 @@ export default function HomePage() {
 
       {/* Bottom nav spacer */}
       <div className="h-24" />
-      <BottomNav />
     </div>
   )
 }

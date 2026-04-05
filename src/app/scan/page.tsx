@@ -111,7 +111,7 @@ export default function ScanPage() {
           </button>
         </div>
 
-        <p className="text-center text-xs text-[#5B5F66] pb-8">
+        <p className="text-center text-xs text-[#5B5F66] pb-24">
           We&apos;ll analyze your coffee beans and create a personalized recipe
         </p>
       </div>

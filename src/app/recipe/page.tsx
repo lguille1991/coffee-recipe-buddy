@@ -274,7 +274,7 @@ export default function RecipePage() {
         </button>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-4 pb-8 overflow-y-auto">
+      <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
         {/* Title */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#333333]">{recipe.display_name}</h1>

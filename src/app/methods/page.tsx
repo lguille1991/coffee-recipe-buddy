@@ -87,7 +87,7 @@ export default function MethodsPage() {
         Based on your bean profile, here are the best brewing methods:
       </p>
 
-      <div className="px-4 flex flex-col gap-3">
+      <div className="px-4 flex flex-col gap-3 pb-24">
         {recommendations.map((rec, i) => (
           <button
             key={rec.method}

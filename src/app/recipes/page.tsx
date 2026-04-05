@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
 
@@ -178,7 +177,6 @@ export default function RecipesPage() {
       </div>
 
       <div className="h-24" />
-      <BottomNav />
     </div>
   )
 }
