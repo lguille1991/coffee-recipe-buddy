@@ -72,7 +72,9 @@ export default function AnalysisPage() {
     if (!raw) { router.replace('/scan'); return }
     const data: ExtractionResponse = JSON.parse(raw)
     setExtraction(data)
-    setBean(data.bean)
+    const b = data.bean
+    const parts = [b.variety, b.finca, b.producer].filter(Boolean)
+    setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
   }, [router])
 
   function updateField<K extends keyof BeanProfile>(key: K, value: BeanProfile[K]) {
@@ -120,9 +122,13 @@ export default function AnalysisPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-[#333333] text-sm">
-              {bean.bean_name || 'Unknown Bean'}
-            </p>
+            <input
+              type="text"
+              value={bean.bean_name || ''}
+              onChange={e => updateField('bean_name', e.target.value || undefined)}
+              placeholder="Unknown Bean"
+              className="w-full font-semibold text-[#333333] text-sm bg-transparent outline-none placeholder:text-[#9CA3AF]"
+            />
             <p className="text-xs text-[#5B5F66] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
             <p className="text-xs text-[#9CA3AF] mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
