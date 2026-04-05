@@ -71,7 +71,7 @@ export default function MethodsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto">
+    <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       <div className="flex items-center gap-3 px-4 pb-4">

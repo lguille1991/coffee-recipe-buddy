@@ -81,7 +81,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto relative">
+    <div className="flex flex-col min-h-screen relative">
       <div className="h-12" />
 
       {/* Header */}

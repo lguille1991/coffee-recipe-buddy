@@ -87,7 +87,7 @@ function AuthForm() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto px-6">
+    <div className="flex flex-col min-h-screen px-6">
       <div className="h-16" />
 
       <div className="mb-8">

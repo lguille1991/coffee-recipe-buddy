@@ -165,7 +165,7 @@ export default function ManualPage() {
   const hasRequiredFields = process !== '' && roastLevel !== ''
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto">
+    <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       {/* Header */}
@@ -327,7 +327,7 @@ export default function ManualPage() {
       </div>
 
       {/* Submit — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24 max-w-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24">
         <button
           onClick={handleSubmit}
           className={`w-full flex items-center justify-center gap-2 text-sm font-semibold rounded-[14px] py-4 transition-colors ${

@@ -101,7 +101,7 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto">
+    <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       {/* Header */}
@@ -200,7 +200,7 @@ export default function AnalysisPage() {
       </div>
 
       {/* Generate button — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24 max-w-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24">
         <button
           onClick={handleGenerate}
           disabled={generating}
