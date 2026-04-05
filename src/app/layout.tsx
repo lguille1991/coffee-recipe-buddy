@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Roboto } from 'next/font/google'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
+import SideNav from '@/components/SideNav'
 
 const roboto = Roboto({
   variable: '--font-roboto',
@@ -22,7 +23,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${roboto.variable} h-full`}>
       <body className="min-h-full bg-[#F5F5F5] text-[#333333] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
-        {children}
+        <SideNav />
+        <div className="lg:ml-56">
+          <div className="max-w-sm mx-auto lg:max-w-md">
+            {children}
+          </div>
+        </div>
         <BottomNav />
       </body>
     </html>
