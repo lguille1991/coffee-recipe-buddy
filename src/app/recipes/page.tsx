@@ -20,9 +20,9 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="flex items-center gap-3 bg-white rounded-2xl p-3 active:opacity-80 transition-opacity"
+      className="flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3 active:opacity-80 transition-opacity"
     >
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#E1E2E5] shrink-0 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
         {recipe.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
@@ -34,9 +34,9 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#333333] truncate">{beanName}</p>
+        <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
         {roaster && <p className="text-[10px] text-[#9CA3AF] truncate">{roaster}</p>}
-        <p className="text-xs text-[#6B6B6B] mt-0.5">{displayName}</p>
+        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
       </div>
       <div className="text-right shrink-0">
         <p className="text-[10px] text-[#9CA3AF]">{date}</p>
@@ -97,7 +97,7 @@ export default function RecipesPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -108,7 +108,7 @@ export default function RecipesPage() {
 
       {/* Header */}
       <div className="px-6 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-[#333333]">My Recipes</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">My Recipes</h1>
       </div>
 
       {/* Search */}
@@ -123,7 +123,7 @@ export default function RecipesPage() {
             placeholder="Search bean, origin, roaster…"
             value={q}
             onChange={e => handleSearchChange(e.target.value)}
-            className="w-full bg-white border border-[#E1E2E5] rounded-[12px] pl-9 pr-4 py-2.5 text-sm text-[#333333] placeholder:text-[#9CA3AF] outline-none focus:border-[#333333] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] pl-9 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
       </div>
@@ -137,8 +137,8 @@ export default function RecipesPage() {
               onClick={() => setMethod(f.id)}
               className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition-colors ${
                 method === f.id
-                  ? 'bg-[#333333] text-white'
-                  : 'bg-white text-[#6B6B6B] border border-[#E1E2E5]'
+                  ? 'bg-[var(--foreground)] text-[var(--background)]'
+                  : 'bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)]'
               }`}
             >
               {f.label}
@@ -150,9 +150,9 @@ export default function RecipesPage() {
       {/* Recipe list */}
       <div className="flex-1 px-6 flex flex-col gap-2 pb-8">
         {!fetching && recipes.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center mt-4">
-            <p className="text-sm text-[#6B6B6B]">No recipes found.</p>
-            <Link href="/scan" className="text-xs text-[#333333] font-medium underline mt-2 block">
+          <div className="bg-[var(--card)] rounded-2xl p-8 text-center mt-4">
+            <p className="text-sm text-[var(--muted-foreground)]">No recipes found.</p>
+            <Link href="/scan" className="text-xs text-[var(--foreground)] font-medium underline mt-2 block">
               Scan your first bag
             </Link>
           </div>
@@ -161,13 +161,13 @@ export default function RecipesPage() {
             {recipes.map(r => <RecipeCard key={r.id} recipe={r} />)}
             {fetching && (
               <div className="flex justify-center py-6">
-                <div className="w-6 h-6 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             {!fetching && hasMore && (
               <button
                 onClick={() => fetchRecipes(page + 1, method, q, false)}
-                className="w-full py-3 text-sm text-[#6B6B6B] font-medium border border-[#E1E2E5] rounded-[14px] bg-white active:opacity-80"
+                className="w-full py-3 text-sm text-[var(--muted-foreground)] font-medium border border-[var(--border)] rounded-[14px] bg-[var(--card)] active:opacity-80"
               >
                 Load more
               </button>

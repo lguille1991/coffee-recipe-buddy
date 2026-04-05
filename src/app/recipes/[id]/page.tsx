@@ -65,7 +65,7 @@ export default function SavedRecipeDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -73,8 +73,8 @@ export default function SavedRecipeDetailPage() {
   if (error || !recipe) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center px-6 gap-4">
-        <p className="text-sm text-[#6B6B6B]">{error ?? 'Recipe not found.'}</p>
-        <button onClick={() => router.replace('/recipes')} className="text-sm text-[#333333] underline">
+        <p className="text-sm text-[var(--muted-foreground)]">{error ?? 'Recipe not found.'}</p>
+        <button onClick={() => router.replace('/recipes')} className="text-sm text-[var(--foreground)] underline">
           Back to recipes
         </button>
       </div>
@@ -94,7 +94,7 @@ export default function SavedRecipeDetailPage() {
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 -ml-2">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 15L7 10L12 5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <h2 className="text-lg font-semibold">Saved Recipe</h2>
@@ -124,8 +124,8 @@ export default function SavedRecipeDetailPage() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#333333]">{displayName}</h1>
-          <p className="text-sm text-[#6B6B6B] mt-0.5">{beanName}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {recipe.bean_info.roaster && (
             <p className="text-xs text-[#9CA3AF] mt-0.5">{recipe.bean_info.roaster}</p>
           )}
@@ -158,7 +158,7 @@ export default function SavedRecipeDetailPage() {
 
         {/* Parameters */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Parameters</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             {[
               { value: `${r.parameters.water_g}ml`, label: 'Water' },
@@ -168,8 +168,8 @@ export default function SavedRecipeDetailPage() {
               { value: r.grind[preferredGrinder].starting_point, label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
-              <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[#F5F4F2]">
-                <p className="text-sm font-semibold text-[#333333]">{p.value}</p>
+              <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
+                <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
                 <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{p.label}</p>
               </div>
             ))}
@@ -181,22 +181,22 @@ export default function SavedRecipeDetailPage() {
           const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
           const primaryData = r.grind[preferredGrinder]
           return (
-            <div className="bg-white rounded-2xl p-4">
-              <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-3">Grind Settings</h3>
+            <div className="bg-[var(--card)] rounded-2xl p-4">
+              <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">Grind Settings</h3>
 
               {/* Primary grinder */}
-              <div className="rounded-xl p-3 mb-3 bg-[#333333] text-white">
+              <div className="rounded-xl p-3 mb-3 bg-[var(--foreground)] text-[var(--background)]">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-white/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                  <span className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Primary</span>
+                  <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                 </div>
                 <p className="text-lg font-bold">{primaryData.starting_point}</p>
-                <p className="text-xs text-white/60 mt-0.5">Range: {primaryData.range}</p>
+                <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
                 {primaryData.description && (
-                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.description}</p>
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
                 )}
                 {primaryData.note && (
-                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.note}</p>
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
                 )}
               </div>
 
@@ -205,15 +205,15 @@ export default function SavedRecipeDetailPage() {
                 const data = r.grind[grinder]
                 const isLast = i === secondaryGrinders.length - 1
                 return (
-                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[#F0EDE9]'}`}>
+                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                     <div>
-                      <p className="text-xs font-medium text-[#6B6B6B]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
                       <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
                       {data.note && (
                         <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-[#333333] shrink-0">{data.starting_point}</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{data.starting_point}</p>
                   </div>
                 )
               })}
@@ -223,19 +223,19 @@ export default function SavedRecipeDetailPage() {
 
         {/* Brew steps */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Brew Steps</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
           <div className="flex flex-col gap-2">
             {r.steps.map(step => (
-              <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-white">
-                <div className="w-7 h-7 rounded-full bg-[#333333] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-[var(--card)]">
+                <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
                   {step.step}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-semibold text-[#333333]">{step.time}</p>
+                    <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
                     <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
                   </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">{step.action}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                 </div>
               </div>
             ))}
@@ -245,11 +245,11 @@ export default function SavedRecipeDetailPage() {
         {/* Feedback history */}
         {recipe.feedback_history.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Adjustment History</h3>
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Adjustment History</h3>
             <div className="flex flex-col gap-2">
               {recipe.feedback_history.map((fh, i) => (
-                <div key={i} className="bg-white rounded-xl px-4 py-2.5 text-xs text-[#6B6B6B]">
-                  <span className="font-medium text-[#333333]">Round {fh.round}</span>
+                <div key={i} className="bg-[var(--card)] rounded-xl px-4 py-2.5 text-xs text-[var(--muted-foreground)]">
+                  <span className="font-medium text-[var(--foreground)]">Round {fh.round}</span>
                   {' · '}
                   {fh.variable_changed}: {fh.previous_value} → {fh.new_value}
                 </div>
@@ -261,12 +261,12 @@ export default function SavedRecipeDetailPage() {
         {/* Actions */}
         <button
           onClick={handleBrewAgain}
-          className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2.5 8C2.5 4.96 4.96 2.5 8 2.5C10.07 2.5 11.87 3.6 12.85 5.25M13.5 8C13.5 11.04 11.04 13.5 8 13.5C5.93 13.5 4.13 12.4 3.15 10.75" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M12 3V6H15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M1 10V13H4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2.5 8C2.5 4.96 4.96 2.5 8 2.5C10.07 2.5 11.87 3.6 12.85 5.25M13.5 8C13.5 11.04 11.04 13.5 8 13.5C5.93 13.5 4.13 12.4 3.15 10.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M12 3V6H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 10V13H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Brew Again
         </button>
@@ -275,9 +275,9 @@ export default function SavedRecipeDetailPage() {
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 pb-safe">
-          <div className="bg-white rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10">
-            <h3 className="text-base font-semibold text-[#333333] mb-1">Delete this recipe?</h3>
-            <p className="text-sm text-[#6B6B6B] mb-6">This action cannot be undone.</p>
+          <div className="bg-[var(--card)] rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10">
+            <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">Delete this recipe?</h3>
+            <p className="text-sm text-[var(--muted-foreground)] mb-6">This action cannot be undone.</p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleDelete}
@@ -290,7 +290,7 @@ export default function SavedRecipeDetailPage() {
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="w-full py-3.5 bg-[#F5F4F2] text-[#333333] text-sm font-medium rounded-[14px] active:opacity-80"
+                className="w-full py-3.5 bg-[var(--background)] text-[var(--foreground)] text-sm font-medium rounded-[14px] active:opacity-80"
               >
                 Cancel
               </button>

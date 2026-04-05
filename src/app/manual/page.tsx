@@ -43,7 +43,7 @@ function PickerField<T extends string>({
 }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-[#5B5F66] uppercase tracking-wider block mb-1.5">
+      <label className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       <div className="flex flex-wrap gap-2">
@@ -54,8 +54,8 @@ function PickerField<T extends string>({
             onClick={() => onChange(opt.value)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               value === opt.value
-                ? 'bg-[#333333] text-white'
-                : 'bg-white text-[#333333] border border-[#E1E2E5]'
+                ? 'bg-[var(--foreground)] text-[var(--background)]'
+                : 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)]'
             }`}
           >
             {opt.label}
@@ -81,7 +81,7 @@ function TextField({
   type?: string
 }) {
   return (
-    <div className="bg-white rounded-xl p-3">
+    <div className="bg-[var(--card)] rounded-xl p-3">
       <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
         {label}
       </label>
@@ -90,7 +90,7 @@ function TextField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+        className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
       />
     </div>
   )
@@ -172,7 +172,7 @@ export default function ManualPage() {
       <div className="flex items-center gap-3 px-4 pb-4">
         <button onClick={() => router.back()} className="p-2 -ml-2">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 15L7 10L12 5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <div>
@@ -205,7 +205,7 @@ export default function ManualPage() {
 
         {/* Optional text fields */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-[10px] font-semibold text-[#5B5F66] uppercase tracking-wider">Bean Details (optional)</h3>
+          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Bean Details (optional)</h3>
           <TextField label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
           <TextField label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
           <TextField label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
@@ -213,7 +213,7 @@ export default function ManualPage() {
 
         {/* Variety — picker + freeform */}
         <div>
-          <h3 className="text-[10px] font-semibold text-[#5B5F66] uppercase tracking-wider mb-1.5">Variety (optional)</h3>
+          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-1.5">Variety (optional)</h3>
           <div className="flex flex-wrap gap-2 mb-2">
             {VARIETY_SUGGESTIONS.map(v => (
               <button
@@ -222,15 +222,15 @@ export default function ManualPage() {
                 onClick={() => setVariety(variety === v ? '' : v)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   variety === v
-                    ? 'bg-[#333333] text-white'
-                    : 'bg-white text-[#333333] border border-[#E1E2E5]'
+                    ? 'bg-[var(--foreground)] text-[var(--background)]'
+                    : 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)]'
                 }`}
               >
                 {v}
               </button>
             ))}
           </div>
-          <div className="bg-white rounded-xl p-3">
+          <div className="bg-[var(--card)] rounded-xl p-3">
             <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
               Or type a variety
             </label>
@@ -239,13 +239,13 @@ export default function ManualPage() {
               value={variety}
               onChange={e => setVariety(e.target.value)}
               placeholder="e.g. Castillo, Pink Bourbon..."
-              className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
             />
           </div>
         </div>
 
         {/* Altitude */}
-        <div className="bg-white rounded-xl p-3">
+        <div className="bg-[var(--card)] rounded-xl p-3">
           <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
             Altitude (masl, optional)
           </label>
@@ -254,7 +254,7 @@ export default function ManualPage() {
             value={altitude}
             onChange={e => setAltitude(e.target.value)}
             placeholder="e.g. 1800"
-            className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+            className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
           {!altitude && (
             <p className="text-[10px] text-[#9CA3AF] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
@@ -263,7 +263,7 @@ export default function ManualPage() {
 
         {/* Tasting notes */}
         <div>
-          <h3 className="text-[10px] font-semibold text-[#5B5F66] uppercase tracking-wider mb-1.5">Tasting Notes (optional)</h3>
+          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-1.5">Tasting Notes (optional)</h3>
           {tastingNotes.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
               {tastingNotes.map(note => (
@@ -271,30 +271,30 @@ export default function ManualPage() {
                   key={note}
                   type="button"
                   onClick={() => removeNote(note)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-[#333333] text-white"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--foreground)] text-[var(--background)]"
                 >
                   {note}
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M3 3L7 7M7 3L3 7" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+                    <path d="M3 3L7 7M7 3L3 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
                 </button>
               ))}
             </div>
           )}
-          <div className="bg-white rounded-xl p-3 flex items-center gap-2">
+          <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
             <input
               type="text"
               value={noteInput}
               onChange={e => setNoteInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addNote(noteInput) } }}
               placeholder="e.g. blueberry, chocolate..."
-              className="flex-1 text-sm font-medium text-[#333333] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="flex-1 text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
             />
             {noteInput.trim() && (
               <button
                 type="button"
                 onClick={() => addNote(noteInput)}
-                className="text-xs font-semibold text-[#333333] shrink-0"
+                className="text-xs font-semibold text-[var(--foreground)] shrink-0"
               >
                 Add
               </button>
@@ -303,7 +303,7 @@ export default function ManualPage() {
         </div>
 
         {/* Roast date */}
-        <div className="bg-white rounded-xl p-3">
+        <div className="bg-[var(--card)] rounded-xl p-3">
           <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
             Roast Date (optional)
           </label>
@@ -311,7 +311,7 @@ export default function ManualPage() {
             type="date"
             value={roastDate}
             onChange={e => setRoastDate(e.target.value)}
-            className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none"
+            className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
           {!roastDate && (
             <p className="text-[10px] text-[#9CA3AF] mt-1">Assuming optimal window (8–21 days)</p>
@@ -327,13 +327,13 @@ export default function ManualPage() {
       </div>
 
       {/* Submit — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--background)] px-4 pt-4 pb-24">
         <button
           onClick={handleSubmit}
           className={`w-full flex items-center justify-center gap-2 text-sm font-semibold rounded-[14px] py-4 transition-colors ${
             hasRequiredFields
-              ? 'bg-[#333333] text-white active:opacity-80'
-              : 'bg-[#E1E2E5] text-[#9CA3AF]'
+              ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
+              : 'bg-[var(--border)] text-[#9CA3AF]'
           }`}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

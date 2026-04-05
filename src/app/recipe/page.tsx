@@ -24,10 +24,10 @@ function ParamCard({
 }) {
   return (
     <div className={`rounded-xl p-3 flex flex-col items-start gap-1.5 relative ${
-      changed ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-[#F5F4F2]'
+      changed ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-[var(--background)]'
     }`}>
-      <div className="text-[#6B6B6B]">{icon}</div>
-      <p className="text-sm font-semibold text-[#333333]">{value}</p>
+      <div className="text-[var(--muted-foreground)]">{icon}</div>
+      <p className="text-sm font-semibold text-[var(--foreground)]">{value}</p>
       <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{label}</p>
       {changed && annotation && (
         <p className="text-[9px] text-amber-600 font-medium leading-tight">{annotation}</p>
@@ -39,12 +39,12 @@ function ParamCard({
 function Collapsible({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="bg-[var(--card)] rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3.5 text-left"
       >
-        <span className="text-sm font-semibold text-[#333333]">{title}</span>
+        <span className="text-sm font-semibold text-[var(--foreground)]">{title}</span>
         <svg
           width="16" height="16" viewBox="0 0 16 16" fill="none"
           className={`transition-transform ${open ? 'rotate-180' : ''}`}
@@ -213,7 +213,7 @@ export default function RecipePage() {
   if (!recipe) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -256,11 +256,11 @@ export default function RecipePage() {
         <button
           onClick={handleSave}
           disabled={saving || saved}
-          className="p-2 text-[#333333] disabled:opacity-50 relative"
+          className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
           aria-label="Save recipe"
         >
           {saving ? (
-            <div className="w-5 h-5 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
           ) : (
             <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
           )}
@@ -270,8 +270,8 @@ export default function RecipePage() {
       <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
         {/* Title */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#333333]">{recipe.display_name}</h1>
-          <p className="text-sm text-[#6B6B6B] mt-0.5">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">{recipe.display_name}</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
             {bean.bean_name || 'Your Coffee'}{bean.roast_level ? ` · ${bean.roast_level.charAt(0).toUpperCase() + bean.roast_level.slice(1)} Roast` : ''}
           </p>
           <p className="text-xs text-[#9CA3AF] mt-1.5 leading-relaxed">{recipe.objective}</p>
@@ -296,7 +296,7 @@ export default function RecipePage() {
               <p className="text-xs font-semibold text-amber-700">Adjustment {feedbackRound} of 3</p>
               <button
                 onClick={handleReset}
-                className="text-[10px] text-[#6B6B6B] underline"
+                className="text-[10px] text-[var(--muted-foreground)] underline"
               >
                 Reset to original
               </button>
@@ -314,7 +314,7 @@ export default function RecipePage() {
 
         {/* Parameters */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Parameters</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             <ParamCard
               icon={<Droplets size={16} />}
@@ -361,25 +361,25 @@ export default function RecipePage() {
           const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
           const primaryData = recipe.grind[preferredGrinder]
           return (
-            <div className={`bg-white rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
-              <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-3">Grind Settings</h3>
+            <div className={`bg-[var(--card)] rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
+              <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">Grind Settings</h3>
 
               {/* Primary grinder */}
-              <div className={`rounded-xl p-3 mb-3 text-white ${grindChanged() ? 'bg-amber-700' : 'bg-[#333333]'}`}>
+              <div className={`rounded-xl p-3 mb-3 text-[var(--background)] ${grindChanged() ? 'bg-amber-700' : 'bg-[var(--foreground)]'}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-white/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                  <span className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Primary</span>
+                  <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                 </div>
                 <p className="text-lg font-bold">{primaryData.starting_point}</p>
-                <p className="text-xs text-white/60 mt-0.5">Range: {primaryData.range}</p>
+                <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
-                  <p className="text-xs text-white/80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
+                  <p className="text-xs opacity-80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
                 )}
                 {primaryData.description && (
-                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.description}</p>
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
                 )}
                 {primaryData.note && (
-                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.note}</p>
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
                 )}
               </div>
 
@@ -388,15 +388,15 @@ export default function RecipePage() {
                 const data = recipe.grind[grinder]
                 const isLast = i === secondaryGrinders.length - 1
                 return (
-                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[#F0EDE9]'}`}>
+                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                     <div>
-                      <p className="text-xs font-medium text-[#6B6B6B]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
                       <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
                       {data.note && (
                         <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-[#333333] shrink-0">{data.starting_point}</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{data.starting_point}</p>
                   </div>
                 )
               })}
@@ -406,19 +406,19 @@ export default function RecipePage() {
 
         {/* Brew Steps */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Brew Steps</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
           <div className="flex flex-col gap-2">
             {recipe.steps.map(step => (
-              <div key={step.step} className={`rounded-2xl p-4 flex gap-3 ${ratioChanged() ? 'bg-amber-50' : 'bg-white'}`}>
-                <div className="w-7 h-7 rounded-full bg-[#333333] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <div key={step.step} className={`rounded-2xl p-4 flex gap-3 ${ratioChanged() ? 'bg-amber-50' : 'bg-[var(--card)]'}`}>
+                <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
                   {step.step}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-semibold text-[#333333]">{step.time}</p>
+                    <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
                     <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
                   </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">{step.action}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                 </div>
               </div>
             ))}
@@ -433,7 +433,7 @@ export default function RecipePage() {
                 <p className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-0.5">
                   {key.replace(/_/g, ' ')}
                 </p>
-                <p className="text-xs text-[#333333] leading-relaxed">{value}</p>
+                <p className="text-xs text-[var(--foreground)] leading-relaxed">{value}</p>
               </div>
             ))}
           </div>
@@ -453,7 +453,7 @@ export default function RecipePage() {
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3">
                 <p className="text-[10px] text-[#9CA3AF] shrink-0">{label}</p>
-                <p className="text-[10px] text-[#333333] text-right">{value}</p>
+                <p className="text-[10px] text-[var(--foreground)] text-right">{value}</p>
               </div>
             ))}
             {recipe.range_logic.compressed && (
@@ -468,10 +468,10 @@ export default function RecipePage() {
 
         {maxRoundsReached ? (
           /* Method switch nudge after 3 rounds */
-          <div className="bg-white border border-[#E1E2E5] rounded-2xl p-4 flex flex-col gap-3">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3">
             <div>
-              <p className="text-sm font-semibold text-[#333333]">This bean might work better with a different method</p>
-              <p className="text-xs text-[#6B6B6B] mt-1 leading-relaxed">
+              <p className="text-sm font-semibold text-[var(--foreground)]">This bean might work better with a different method</p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
                 You&apos;ve reached the 3-round adjustment limit. Sometimes the bean profile is better served by a different brewing approach.
               </p>
             </div>
@@ -480,16 +480,16 @@ export default function RecipePage() {
                 // Navigate back to methods with the same bean data already in sessionStorage
                 router.push('/methods')
               }}
-              className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-semibold rounded-[12px] py-3 active:opacity-80"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[12px] py-3 active:opacity-80"
             >
               Try a Different Method
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7H11M7.5 3.5L11 7L7.5 10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 7H11M7.5 3.5L11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
             <button
               onClick={handleReset}
-              className="text-xs text-[#6B6B6B] underline text-center"
+              className="text-xs text-[var(--muted-foreground)] underline text-center"
             >
               Reset recipe to original
             </button>
@@ -499,11 +499,11 @@ export default function RecipePage() {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setShowFeedback(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white border border-[#E1E2E5] text-[#333333] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="#333333" strokeWidth="1.3"/>
-                <path d="M8 5V8M8 11H8.01" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M8 5V8M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               How did it taste?
             </button>
@@ -518,9 +518,9 @@ export default function RecipePage() {
           </div>
         ) : (
           /* Symptom selector */
-          <div className="bg-white rounded-2xl p-4 flex flex-col gap-4">
+          <div className="bg-[var(--card)] rounded-2xl p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#333333]">What was off?</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">What was off?</p>
               <p className="text-[10px] text-[#9CA3AF]">
                 Round {feedbackRound + 1} of 3
               </p>
@@ -533,8 +533,8 @@ export default function RecipePage() {
                   onClick={() => setSelectedSymptom(opt.value)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                     selectedSymptom === opt.value
-                      ? 'bg-[#333333] text-white'
-                      : 'bg-[#F5F4F2] text-[#333333]'
+                      ? 'bg-[var(--foreground)] text-[var(--background)]'
+                      : 'bg-[var(--background)] text-[var(--foreground)]'
                   }`}
                 >
                   <span className="text-lg">{opt.emoji}</span>
@@ -550,17 +550,17 @@ export default function RecipePage() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowFeedback(false); setSelectedSymptom(null); setAdjustError(null) }}
-                className="flex-1 py-3 rounded-[12px] text-sm font-medium text-[#6B6B6B] bg-[#F5F4F2] active:opacity-80"
+                className="flex-1 py-3 rounded-[12px] text-sm font-medium text-[var(--muted-foreground)] bg-[var(--background)] active:opacity-80"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdjust}
                 disabled={!selectedSymptom || adjusting}
-                className="flex-1 py-3 rounded-[12px] text-sm font-semibold text-white bg-[#333333] disabled:opacity-40 active:opacity-80 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-[12px] text-sm font-semibold text-[var(--background)] bg-[var(--foreground)] disabled:opacity-40 active:opacity-80 flex items-center justify-center gap-2"
               >
                 {adjusting ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   'Adjust'
                 )}

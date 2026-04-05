@@ -65,22 +65,22 @@ The hex values in components must be replaced with CSS variable references (e.g.
 
 ### Implementation
 
-- [ ] Add `.dark { --foreground: ...; --background: ...; ... }` block to `globals.css`
-- [ ] Create `src/hooks/useTheme.ts`
+- [x] Add `.dark { --foreground: ...; --background: ...; ... }` block to `globals.css`
+- [x] Create `src/hooks/useTheme.ts`
   - Reads preference from `localStorage` (`theme: 'light' | 'dark' | 'system'`)
   - Adds/removes `dark` class on `document.documentElement`
   - Handles `prefers-color-scheme` for `system` mode
   - Exposes `theme`, `setTheme`
-- [ ] Create `src/components/ThemeProvider.tsx` — mounts in root layout, initializes theme before first paint (inline script in `<head>` to avoid flash)
-- [ ] Wire `ThemeProvider` into `src/app/layout.tsx`
-- [ ] Refactor pass — replace all hardcoded hex class values across all pages and components with `var(--*)` equivalents:
+- [x] Create `src/components/ThemeProvider.tsx` — mounts in root layout, initializes theme before first paint (inline script in `<head>` to avoid flash)
+- [x] Wire `ThemeProvider` into `src/app/layout.tsx`
+- [x] Refactor pass — replace all hardcoded hex class values across all pages and components with `var(--*)` equivalents:
   - `text-[#333333]` → `text-[var(--foreground)]`
   - `bg-[#F5F4F2]` → `bg-[var(--background)]`
   - `bg-white` → `bg-[var(--card)]`
   - `border-[#E1E2E5]` → `border-[var(--border)]`
   - `text-[#6B6B6B]`, `text-[#5B5F66]` → `text-[var(--muted-foreground)]`
-- [ ] Add **Appearance** toggle in Settings: Light / Dark / System (3-option toggle, same style as temp unit toggle)
-- [ ] Preference stored in `localStorage` only — no DB column needed (avoids round-trip; matches OS expectation)
+- [x] Add **Appearance** toggle in Settings: Light / Dark / System (3-option toggle, same style as temp unit toggle)
+- [x] Preference stored in `localStorage` only — no DB column needed (avoids round-trip; matches OS expectation)
 
 > **Scope note:** The refactor pass touches every page and component. Plan the PR accordingly — it should be one atomic change so dark mode either fully works or the PR is reverted cleanly.
 
