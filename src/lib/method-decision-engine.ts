@@ -187,7 +187,7 @@ export function recommendMethods(bean: BeanProfile): MethodRecommendation[] {
 
   scoreProcess(scores, bean.process)
   scoreRoast(scores, bean.roast_level)
-  scoreVariety(scores, bean.variety)
+  scoreVariety(scores, bean.variety ?? undefined)
   scoreFlavorNotes(scores, bean.tasting_notes)
   scoreAltitude(scores, bean.altitude_masl)
 
