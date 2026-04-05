@@ -240,7 +240,7 @@ export default function RecipePage() {
   const selectedMethod = selectedMethodRaw ? JSON.parse(selectedMethodRaw) : null
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto">
+    <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       {/* Header */}

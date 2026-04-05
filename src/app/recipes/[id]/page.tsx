@@ -83,7 +83,7 @@ export default function SavedRecipeDetailPage() {
   const r = recipe.current_recipe_json
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto">
+    <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       {/* Header */}

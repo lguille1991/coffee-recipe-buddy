@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Camera, PenLine } from 'lucide-react'
+import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
@@ -58,26 +58,16 @@ export default function HomePage() {
   }, [user])
 
   return (
-    <div className="flex flex-col min-h-screen max-w-sm mx-auto relative">
+    <div className="flex flex-col min-h-screen relative">
       {/* Status bar spacer */}
       <div className="h-12" />
 
       {/* Header */}
-      <div className="px-6 pb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#333333]">Coffee Recipe Buddy</h1>
-          <p className="text-[#5B5F66] text-sm mt-0.5">
-            Hey there, what coffee beans do you need a recipe for today?
-          </p>
-        </div>
-        {!loading && !user && (
-          <Link
-            href="/auth"
-            className="text-xs font-medium text-[#333333] border border-[#E1E2E5] rounded-[10px] px-3 py-1.5"
-          >
-            Sign in
-          </Link>
-        )}
+      <div className="px-6 pb-4">
+        <h1 className="text-3xl font-bold tracking-tight text-[#333333]">Coffee Recipe Buddy</h1>
+        <p className="text-[#5B5F66] text-sm mt-0.5">
+          Hey there, what coffee beans do you need a recipe for today?
+        </p>
       </div>
 
       {/* Hero image */}
@@ -109,6 +99,15 @@ export default function HomePage() {
           <PenLine size={16} />
           Enter Manually
         </Link>
+        {!loading && !user && (
+          <Link
+            href="/auth"
+            className="w-full flex items-center justify-center gap-2 bg-white text-[#333333] text-sm font-medium rounded-[14px] py-3.5 border border-[#E1E2E5] active:opacity-80 transition-opacity"
+          >
+            <LogIn size={16} />
+            Sign In
+          </Link>
+        )}
       </div>
 
       {/* My Recipes section */}
