@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 
 interface Profile {
@@ -181,7 +180,6 @@ export default function SettingsPage() {
       </form>
 
       <div className="h-24" />
-      <BottomNav />
     </div>
   )
 }

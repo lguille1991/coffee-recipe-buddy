@@ -6,6 +6,8 @@ export const BeanProfileSchema = z.object({
   bean_name: z.string().nullable().optional(),
   roaster: z.string().nullable().optional(),
   variety: z.string().nullable().optional(),
+  finca: z.string().nullable().optional(),
+  producer: z.string().nullable().optional(),
   process: z.enum(['washed', 'natural', 'honey', 'anaerobic', 'unknown']),
   origin: z.string().nullable().optional(),
   altitude_masl: z.number().nullable().optional(),

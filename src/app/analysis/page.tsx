@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft, Sparkles } from 'lucide-react'
 import { BeanProfile, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 
@@ -71,7 +72,9 @@ export default function AnalysisPage() {
     if (!raw) { router.replace('/scan'); return }
     const data: ExtractionResponse = JSON.parse(raw)
     setExtraction(data)
-    setBean(data.bean)
+    const b = data.bean
+    const parts = [b.variety, b.finca, b.producer].filter(Boolean)
+    setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
   }, [router])
 
   function updateField<K extends keyof BeanProfile>(key: K, value: BeanProfile[K]) {
@@ -104,9 +107,7 @@ export default function AnalysisPage() {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
         <button onClick={() => router.back()} className="p-2 -ml-2">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 15L7 10L12 5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ArrowLeft size={20} />
         </button>
         <h2 className="text-lg font-semibold">Coffee Analysis</h2>
       </div>
@@ -121,9 +122,13 @@ export default function AnalysisPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-[#333333] text-sm">
-              {bean.bean_name || 'Unknown Bean'}
-            </p>
+            <input
+              type="text"
+              value={bean.bean_name || ''}
+              onChange={e => updateField('bean_name', e.target.value || undefined)}
+              placeholder="Unknown Bean"
+              className="w-full font-semibold text-[#333333] text-sm bg-transparent outline-none placeholder:text-[#9CA3AF]"
+            />
             <p className="text-xs text-[#5B5F66] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
             <p className="text-xs text-[#9CA3AF] mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
@@ -195,7 +200,7 @@ export default function AnalysisPage() {
       </div>
 
       {/* Generate button — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-8 max-w-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24 max-w-sm mx-auto">
         <button
           onClick={handleGenerate}
           disabled={generating}
@@ -204,9 +209,7 @@ export default function AnalysisPage() {
           {generating ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1L10 6H15L11 9.5L12.5 15L8 12L3.5 15L5 9.5L1 6H6L8 1Z" fill="white" />
-            </svg>
+            <Sparkles size={20} />
           )}
           Generate Recipe
         </button>

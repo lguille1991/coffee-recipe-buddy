@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft, Bookmark, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio } from 'lucide-react'
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -246,9 +247,7 @@ export default function RecipePage() {
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 -ml-2">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 15L7 10L12 5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ArrowLeft size={20} />
           </button>
           <h2 className="text-lg font-semibold">Your Recipe</h2>
         </div>
@@ -261,20 +260,12 @@ export default function RecipePage() {
           {saving ? (
             <div className="w-5 h-5 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
           ) : (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M5 2H15C15.55 2 16 2.45 16 3V18L10 15L4 18V3C4 2.45 4.45 2 5 2Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-                fill={saved ? 'currentColor' : 'none'}
-              />
-            </svg>
+            <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
           )}
         </button>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-4 pb-8 overflow-y-auto">
+      <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
         {/* Title */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#333333]">{recipe.display_name}</h1>
@@ -324,38 +315,38 @@ export default function RecipePage() {
           <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C5.79 2 4 3.79 4 6C4 8.21 5.79 10 8 10H12V14H4V12H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<Droplets size={16} />}
               value={`${recipe.parameters.water_g}ml`}
               label="Water"
               changed={ratioChanged()}
               annotation={annotation('ratio')}
             />
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="11" r="3" stroke="currentColor" strokeWidth="1.2"/><path d="M8 2V5M6 8H4M12 8H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<Scale size={16} />}
               value={`${recipe.parameters.coffee_g}g`}
               label="Coffee"
             />
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2V6M8 6C6.34 6 5 7.34 5 9C5 10.66 6.34 12 8 12C9.66 12 11 10.66 11 9C11 7.34 9.66 6 8 6Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<Thermometer size={16} />}
               value={`${recipe.parameters.temperature_c}°C`}
               label="Temp"
               changed={tempChanged()}
               annotation={annotation('temp')}
             />
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.2"/><path d="M8 5V8L10 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<Timer size={16} />}
               value={recipe.parameters.total_time}
               label="Brew Time"
             />
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 12L8 4L12 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M5.5 9H10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<CircleDot size={16} />}
               value={recipe.grind.k_ultra.starting_point}
               label="Grind"
               changed={grindChanged()}
               annotation={annotation('grind')}
             />
             <ParamCard
-              icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M8 3V13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
+              icon={<Ratio size={16} />}
               value={recipe.parameters.ratio}
               label="Ratio"
               changed={ratioChanged()}

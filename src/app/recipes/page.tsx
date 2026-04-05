@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
 
@@ -130,7 +129,7 @@ export default function RecipesPage() {
       </div>
 
       {/* Method chips */}
-      <div className="px-6 mb-4 overflow-x-auto">
+      <div className="px-6 mb-4 overflow-x-auto pb-2">
         <div className="flex gap-2 w-max">
           {METHOD_FILTERS.map(f => (
             <button
@@ -178,7 +177,6 @@ export default function RecipesPage() {
       </div>
 
       <div className="h-24" />
-      <BottomNav />
     </div>
   )
 }

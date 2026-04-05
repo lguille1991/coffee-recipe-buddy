@@ -20,8 +20,10 @@ Return ONLY a valid JSON object with this exact structure:
 {
   "bean": {
     "bean_name": "string or null",
-    "roaster": "string or null",
+    "roaster": "string or null (the coffee brand or roastery — look for logos, brand stamps, company names printed on the bag; NOT the farm or producer)",
     "variety": "string or null (e.g. Gesha, Bourbon, Typica, Caturra, Pacamara)",
+    "finca": "string or null (farm/estate name, e.g. Finca La Palma)",
+    "producer": "string or null (producer or farmer name)",
     "process": "washed" | "natural" | "honey" | "anaerobic" | "unknown",
     "origin": "string or null (country or region)",
     "altitude_masl": number or null,
@@ -32,6 +34,8 @@ Return ONLY a valid JSON object with this exact structure:
     "bean_name": 0.0–1.0,
     "roaster": 0.0–1.0,
     "variety": 0.0–1.0,
+    "finca": 0.0–1.0,
+    "producer": 0.0–1.0,
     "process": 0.0–1.0,
     "origin": 0.0–1.0,
     "altitude_masl": 0.0–1.0,
