@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata } from '@/types/recipe'
+import { useAuth } from '@/hooks/useAuth'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -66,11 +67,17 @@ const SYMPTOM_OPTIONS: { value: Symptom; emoji: string; label: string }[] = [
 
 export default function RecipePage() {
   const router = useRouter()
+  const { user } = useAuth()
 
   const [recipe, setRecipe] = useState<RecipeWithAdjustment | null>(null)
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null)
   const [feedbackRound, setFeedbackRound] = useState(0)
   const [adjustmentHistory, setAdjustmentHistory] = useState<AdjustmentMetadata[]>([])
+
+  // Save state
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Feedback UI state
   const [showFeedback, setShowFeedback] = useState(false)
@@ -100,6 +107,53 @@ export default function RecipePage() {
     const historyRaw = sessionStorage.getItem('adjustment_history')
     if (historyRaw) setAdjustmentHistory(JSON.parse(historyRaw))
   }, [router])
+
+  async function handleSave() {
+    if (!recipe || !originalRecipe || saving || saved) return
+
+    const beanRawInner = typeof window !== 'undefined' ? sessionStorage.getItem('confirmedBean') : null
+    const beanInner = beanRawInner ? JSON.parse(beanRawInner) : {}
+
+    const payload = {
+      bean_info: beanInner,
+      method: recipe.method,
+      original_recipe_json: originalRecipe,
+      current_recipe_json: recipe,
+      feedback_history: adjustmentHistory.map((a, i) => ({
+        round: i + 1,
+        symptom: a.symptom,
+        variable_changed: a.variable_changed,
+        previous_value: a.previous_value,
+        new_value: a.new_value,
+      })),
+    }
+
+    if (!user) {
+      // Guest: hold payload and redirect to auth
+      sessionStorage.setItem('pending_save_recipe', JSON.stringify(payload))
+      router.push(`/auth?returnTo=/recipe&pendingRecipe=true`)
+      return
+    }
+
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const res = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Save failed')
+      }
+      setSaved(true)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function handleReset() {
     if (!originalRecipe) return
@@ -198,10 +252,25 @@ export default function RecipePage() {
           </button>
           <h2 className="text-lg font-semibold">Your Recipe</h2>
         </div>
-        <button className="p-2 text-[#333333]">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M5 2H15C15.55 2 16 2.45 16 3V18L10 15L4 18V3C4 2.45 4.45 2 5 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          </svg>
+        <button
+          onClick={handleSave}
+          disabled={saving || saved}
+          className="p-2 text-[#333333] disabled:opacity-50 relative"
+          aria-label="Save recipe"
+        >
+          {saving ? (
+            <div className="w-5 h-5 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M5 2H15C15.55 2 16 2.45 16 3V18L10 15L4 18V3C4 2.45 4.45 2 5 2Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+                fill={saved ? 'currentColor' : 'none'}
+              />
+            </svg>
+          )}
         </button>
       </div>
 
@@ -214,6 +283,18 @@ export default function RecipePage() {
           </p>
           <p className="text-xs text-[#9CA3AF] mt-1.5 leading-relaxed">{recipe.objective}</p>
         </div>
+
+        {/* Save feedback */}
+        {saved && (
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
+            Recipe saved to your library.
+          </div>
+        )}
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-xs text-red-700">
+            {saveError}
+          </div>
+        )}
 
         {/* Adjustment banner */}
         {adj && (

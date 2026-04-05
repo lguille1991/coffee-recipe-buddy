@@ -157,3 +157,78 @@ export interface ValidationResult {
   valid: boolean
   errors: string[]
 }
+
+// ─── Phase 3: Persistence types ──────────────────────────────────────────────
+
+export const FeedbackRoundSchema = z.object({
+  round: z.number().int().min(1).max(3),
+  symptom: SymptomSchema,
+  variable_changed: z.string(),
+  previous_value: z.string(),
+  new_value: z.string(),
+})
+
+export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
+
+export const UserProfileSchema = z.object({
+  display_name: z.string().nullable().optional(),
+  default_volume_ml: z.number().int().positive().default(250),
+  temp_unit: z.enum(['C', 'F']).default('C'),
+})
+
+export type UserProfile = z.infer<typeof UserProfileSchema>
+
+export const SavedRecipeSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  schema_version: z.number().int().default(1),
+  bean_info: BeanProfileSchema,
+  method: z.string(),
+  original_recipe_json: RecipeSchema,
+  current_recipe_json: RecipeWithAdjustmentSchema,
+  feedback_history: z.array(FeedbackRoundSchema).default([]),
+  image_url: z.string().nullable().optional(),
+  created_at: z.string(),
+  archived: z.boolean().default(false),
+})
+
+export type SavedRecipe = z.infer<typeof SavedRecipeSchema>
+
+// ─── API request/response schemas ────────────────────────────────────────────
+
+export const SaveRecipeRequestSchema = z.object({
+  bean_info: BeanProfileSchema,
+  method: z.string().min(1),
+  original_recipe_json: RecipeSchema,
+  current_recipe_json: RecipeWithAdjustmentSchema,
+  feedback_history: z.array(FeedbackRoundSchema).default([]),
+  image_data_url: z.string().optional(), // base64 data URL — uploaded server-side
+})
+
+export type SaveRecipeRequest = z.infer<typeof SaveRecipeRequestSchema>
+
+export const RecipeListItemSchema = z.object({
+  id: z.string().uuid(),
+  method: z.string(),
+  bean_info: BeanProfileSchema,
+  image_url: z.string().nullable().optional(),
+  created_at: z.string(),
+  schema_version: z.number().int(),
+})
+
+export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
+
+export const UpdateRecipeRequestSchema = z.object({
+  current_recipe_json: RecipeWithAdjustmentSchema,
+  feedback_round: FeedbackRoundSchema,
+})
+
+export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
+
+export const UpdateProfileRequestSchema = z.object({
+  display_name: z.string().optional(),
+  default_volume_ml: z.number().int().positive().optional(),
+  temp_unit: z.enum(['C', 'F']).optional(),
+})
+
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>
