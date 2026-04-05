@@ -48,7 +48,7 @@ export async function GET(request: Request, { params }: Params) {
     author_id: c.author_id,
     body: c.body,
     created_at: c.created_at,
-    author_display_name: (c.author as { display_name: string | null } | null)?.display_name ?? null,
+    author_display_name: (c.author as unknown as { display_name: string | null } | null)?.display_name ?? null,
   }))
 
   return NextResponse.json({ comments, total: count ?? 0, page, pageSize: PAGE_SIZE })
@@ -105,6 +105,6 @@ export async function POST(request: Request, { params }: Params) {
     author_id: inserted.author_id,
     body: inserted.body,
     created_at: inserted.created_at,
-    author_display_name: (inserted.author as { display_name: string | null } | null)?.display_name ?? null,
+    author_display_name: (inserted.author as unknown as { display_name: string | null } | null)?.display_name ?? null,
   }, { status: 201 })
 }
