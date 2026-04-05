@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 const NAV_ITEMS = [
   {
     href: '/',
-    label: 'HOME',
+    label: 'Home',
     icon: (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <path d="M3 8.5L10 2L17 8.5V17H13V12H7V17H3V8.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   },
   {
     href: '/recipes',
-    label: 'RECIPES',
+    label: 'Recipes',
     icon: (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <rect x="4" y="3" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   },
   {
     href: '/settings',
-    label: 'SETTINGS',
+    label: 'Settings',
     icon: (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
@@ -35,31 +35,37 @@ const NAV_ITEMS = [
   },
 ]
 
-export default function BottomNav() {
+export default function SideNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 flex justify-center pb-2 pt-2 pointer-events-none">
-      {/* White floating pill */}
-      <div className="pointer-events-auto bg-white rounded-[36px] flex items-center px-3 py-2 gap-1 shadow-sm">
+    <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-56 bg-white border-r border-[#E1E2E5] z-40">
+      {/* Brand */}
+      <div className="px-6 py-8 border-b border-[#E1E2E5]">
+        <span className="text-xl font-bold tracking-tight text-[#333333]">QAfe</span>
+        <p className="text-xs text-[#9CA3AF] mt-0.5">Coffee Recipe Buddy</p>
+      </div>
+
+      {/* Nav items */}
+      <nav className="flex flex-col gap-1 px-3 py-4">
         {NAV_ITEMS.map(item => {
           const active = pathname === item.href
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-[26px] transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-sm font-medium transition-colors ${
                 active
                   ? 'bg-[#333333] text-white'
-                  : 'text-[#333333] opacity-50'
+                  : 'text-[#333333] hover:bg-[#F5F4F2]'
               }`}
             >
               {item.icon}
-              <span className="text-[9px] font-semibold tracking-widest">{item.label}</span>
+              {item.label}
             </Link>
           )
         })}
-      </div>
-    </nav>
+      </nav>
+    </aside>
   )
 }

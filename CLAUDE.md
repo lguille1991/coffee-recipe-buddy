@@ -16,7 +16,7 @@ Requires `ANTHROPIC_API_KEY` in `.env.local` (see `.env.example`).
 
 ## Architecture
 
-**Brygg** is a mobile-first Next.js 16 (App Router) coffee recipe app. The user flow is linear and session-scoped:
+**QAfe** is a mobile-first Next.js 16 (App Router) coffee recipe app. The user flow is linear and session-scoped:
 
 ```
 / (home) → /scan → /analysis → /methods → /recipe
