@@ -15,8 +15,23 @@ export async function GET() {
     .eq('id', user.id)
     .single()
 
-  if (error || !data) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (error?.code === 'PGRST116' || !data) {
+    // Row doesn't exist yet — create it with defaults
+    const { data: created, error: insertError } = await supabase
+      .from('profiles')
+      .insert({ id: user.id })
+      .select()
+      .single()
+
+    if (insertError || !created) {
+      return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+    }
+
+    return NextResponse.json(created)
+  }
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json(data)
