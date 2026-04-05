@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { BeanProfile, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
+import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_LABELS: Record<string, string> = {
   washed: 'Washed',
@@ -45,7 +46,7 @@ function EditableField({
   type?: string
 }) {
   return (
-    <div className="bg-white rounded-xl p-3">
+    <div className="bg-[var(--card)] rounded-xl p-3">
       <div className="flex items-center justify-between mb-1">
         <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider">{label}</label>
         <ConfidenceBadge score={confidence} />
@@ -54,7 +55,7 @@ function EditableField({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none"
+        className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
       />
     </div>
   )
@@ -62,10 +63,18 @@ function EditableField({
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { profile } = useProfile()
   const [extraction, setExtraction] = useState<ExtractionResponse | null>(null)
   const [bean, setBean] = useState<BeanProfile | null>(null)
   const [roastDate, setRoastDate] = useState('')
+  const [targetVolume, setTargetVolume] = useState('')
   const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    if (profile?.default_volume_ml) {
+      setTargetVolume(String(profile.default_volume_ml))
+    }
+  }, [profile])
 
   useEffect(() => {
     const raw = sessionStorage.getItem('extractionResult')
@@ -86,6 +95,13 @@ export default function AnalysisPage() {
     const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
     sessionStorage.setItem('confirmedBean', JSON.stringify(finalBean))
 
+    const vol = parseInt(targetVolume, 10)
+    if (vol > 0) {
+      sessionStorage.setItem('targetVolumeMl', String(vol))
+    } else {
+      sessionStorage.removeItem('targetVolumeMl')
+    }
+
     // Run deterministic method recommendation client-side
     const recs = recommendMethods(finalBean)
     sessionStorage.setItem('methodRecommendations', JSON.stringify(recs))
@@ -95,7 +111,7 @@ export default function AnalysisPage() {
   if (!bean || !extraction) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -112,9 +128,9 @@ export default function AnalysisPage() {
         <h2 className="text-lg font-semibold">Coffee Analysis</h2>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-32">
+      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-48">
         {/* Bean identity card */}
-        <div className="bg-white rounded-2xl p-4 flex items-start gap-3">
+        <div className="bg-[var(--card)] rounded-2xl p-4 flex items-start gap-3">
           <div className="w-14 h-14 rounded-xl bg-[#D4C9B8] flex items-center justify-center shrink-0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <ellipse cx="12" cy="12" rx="8" ry="5" stroke="#6B5B45" strokeWidth="1.5" />
@@ -127,9 +143,9 @@ export default function AnalysisPage() {
               value={bean.bean_name || ''}
               onChange={e => updateField('bean_name', e.target.value || undefined)}
               placeholder="Unknown Bean"
-              className="w-full font-semibold text-[#333333] text-sm bg-transparent outline-none placeholder:text-[#9CA3AF]"
+              className="w-full font-semibold text-[var(--foreground)] text-sm bg-transparent outline-none placeholder:text-[#9CA3AF]"
             />
-            <p className="text-xs text-[#5B5F66] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
             <p className="text-xs text-[#9CA3AF] mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
             </p>
@@ -138,7 +154,7 @@ export default function AnalysisPage() {
 
         {/* Bean profile grid */}
         <div>
-          <h3 className="text-xs font-semibold text-[#5B5F66] uppercase tracking-wider px-1 mb-2">Bean Profile</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Bean Profile</h3>
           <div className="grid grid-cols-2 gap-2">
             <EditableField
               label="Origin"
@@ -170,10 +186,10 @@ export default function AnalysisPage() {
         {/* Flavor notes */}
         {(bean.tasting_notes?.length ?? 0) > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-[#5B5F66] uppercase tracking-wider px-1 mb-2">Flavor Notes</h3>
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Flavor Notes</h3>
             <div className="flex flex-wrap gap-2">
               {bean.tasting_notes!.map(note => (
-                <span key={note} className="px-3 py-1.5 bg-white rounded-full text-xs font-medium text-[#333333] capitalize">
+                <span key={note} className="px-3 py-1.5 bg-[var(--card)] rounded-full text-xs font-medium text-[var(--foreground)] capitalize">
                   {note}
                 </span>
               ))}
@@ -183,13 +199,13 @@ export default function AnalysisPage() {
 
         {/* Roast date */}
         <div>
-          <h3 className="text-xs font-semibold text-[#5B5F66] uppercase tracking-wider px-1 mb-2">Roast Date</h3>
-          <div className="bg-white rounded-xl p-3">
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Roast Date</h3>
+          <div className="bg-[var(--card)] rounded-xl p-3">
             <input
               type="date"
               value={roastDate}
               onChange={e => setRoastDate(e.target.value)}
-              className="w-full text-sm font-medium text-[#333333] bg-transparent outline-none"
+              className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="Optional — leave blank for optimal window"
             />
             {!roastDate && (
@@ -197,17 +213,34 @@ export default function AnalysisPage() {
             )}
           </div>
         </div>
+
+        {/* Target volume */}
+        <div>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Target Volume</h3>
+          <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
+            <input
+              type="number"
+              value={targetVolume}
+              onChange={e => setTargetVolume(e.target.value)}
+              min={50}
+              max={2000}
+              className="flex-1 text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
+              placeholder="250"
+            />
+            <span className="text-sm text-[#9CA3AF]">ml</span>
+          </div>
+        </div>
       </div>
 
       {/* Generate button — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F5F4F2] px-4 pt-4 pb-24">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--background)] px-4 pt-4 pb-24">
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-semibold rounded-[14px] py-4 disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 disabled:opacity-50"
         >
           {generating ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
           ) : (
             <Sparkles size={20} />
           )}

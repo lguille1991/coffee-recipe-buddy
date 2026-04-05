@@ -3,6 +3,7 @@ import { Roboto } from 'next/font/google'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import SideNav from '@/components/SideNav'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const roboto = Roboto({
   variable: '--font-roboto',
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
   description: 'Scan your coffee bag and get a personalized brew recipe',
 }
 
+const themeScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})()`
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,14 +25,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${roboto.variable} h-full`}>
-      <body className="min-h-full bg-[#F5F5F5] text-[#333333] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
-        <SideNav />
-        <div className="lg:ml-56">
-          <div className="max-w-sm mx-auto lg:max-w-md">
-            {children}
+      <head>
+        {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
+        <ThemeProvider>
+          <SideNav />
+          <div className="lg:ml-56">
+            <div className="max-w-sm mx-auto lg:max-w-md">
+              {children}
+            </div>
           </div>
-        </div>
-        <BottomNav />
+          <BottomNav />
+        </ThemeProvider>
       </body>
     </html>
   )

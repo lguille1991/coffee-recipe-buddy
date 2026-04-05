@@ -3,21 +3,26 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { useTheme, Theme } from '@/hooks/useTheme'
 
 interface Profile {
   display_name: string | null
   default_volume_ml: number
   temp_unit: 'C' | 'F'
+  preferred_grinder: GrinderId
 }
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
+  const { theme, setTheme } = useTheme()
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [volumeMl, setVolumeMl] = useState('250')
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C')
+  const [preferredGrinder, setPreferredGrinder] = useState<GrinderId>('k_ultra')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +41,7 @@ export default function SettingsPage() {
         setDisplayName(data.display_name ?? '')
         setVolumeMl(String(data.default_volume_ml))
         setTempUnit(data.temp_unit)
+        setPreferredGrinder(data.preferred_grinder ?? 'k_ultra')
       })
       .catch(() => {})
   }, [user])
@@ -53,6 +59,7 @@ export default function SettingsPage() {
           display_name: displayName || null,
           default_volume_ml: parseInt(volumeMl, 10),
           temp_unit: tempUnit,
+          preferred_grinder: preferredGrinder,
         }),
       })
       if (!res.ok) {
@@ -75,7 +82,7 @@ export default function SettingsPage() {
   if (loading || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -86,7 +93,7 @@ export default function SettingsPage() {
 
       {/* Header */}
       <div className="px-6 pb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-[#333333]">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
         {user?.email && (
           <p className="text-xs text-[#9CA3AF] mt-0.5">{user.email}</p>
         )}
@@ -95,7 +102,7 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="flex-1 px-6 flex flex-col gap-5 pb-8">
         {/* Display name */}
         <div>
-          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
             Display Name
           </label>
           <input
@@ -103,13 +110,13 @@ export default function SettingsPage() {
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
             placeholder="Optional"
-            className="w-full bg-white border border-[#E1E2E5] rounded-[12px] px-4 py-3 text-sm text-[#333333] placeholder:text-[#9CA3AF] outline-none focus:border-[#333333] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
         {/* Temperature unit */}
         <div>
-          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
             Temperature Unit
           </label>
           <div className="flex gap-2">
@@ -120,8 +127,8 @@ export default function SettingsPage() {
                 onClick={() => setTempUnit(unit)}
                 className={`flex-1 py-3 rounded-[12px] text-sm font-medium transition-colors ${
                   tempUnit === unit
-                    ? 'bg-[#333333] text-white'
-                    : 'bg-white border border-[#E1E2E5] text-[#6B6B6B]'
+                    ? 'bg-[var(--foreground)] text-[var(--background)]'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
                 }`}
               >
                 °{unit}
@@ -130,9 +137,55 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Preferred grinder */}
+        <div>
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+            Preferred Grinder
+          </label>
+          <div className="flex flex-col gap-2">
+            {(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as const).map(grinder => (
+              <button
+                key={grinder}
+                type="button"
+                onClick={() => setPreferredGrinder(grinder)}
+                className={`w-full py-3 rounded-[12px] text-sm font-medium transition-colors text-left px-4 ${
+                  preferredGrinder === grinder
+                    ? 'bg-[var(--foreground)] text-[var(--background)]'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
+                }`}
+              >
+                {GRINDER_DISPLAY_NAMES[grinder]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Appearance */}
+        <div>
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+            Appearance
+          </label>
+          <div className="flex gap-2">
+            {(['light', 'system', 'dark'] as Theme[]).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTheme(t)}
+                className={`flex-1 py-3 rounded-[12px] text-sm font-medium transition-colors ${
+                  theme === t
+                    ? 'bg-[var(--foreground)] text-[var(--background)]'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
+                }`}
+              >
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Default volume */}
         <div>
-          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
             Default Volume (ml)
           </label>
           <input
@@ -142,7 +195,7 @@ export default function SettingsPage() {
             min={100}
             max={1000}
             step={10}
-            className="w-full bg-white border border-[#E1E2E5] rounded-[12px] px-4 py-3 text-sm text-[#333333] outline-none focus:border-[#333333] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -162,10 +215,10 @@ export default function SettingsPage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-[#333333] text-white text-sm font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {saving ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
           ) : 'Save'}
         </button>
 
@@ -173,7 +226,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full py-3.5 text-sm font-medium text-red-500 border border-red-200 rounded-[14px] bg-white active:opacity-80"
+          className="w-full py-3.5 text-sm font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
         >
           Sign Out
         </button>

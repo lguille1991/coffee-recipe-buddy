@@ -98,6 +98,7 @@ export const RecipeSchema = z.object({
     k_ultra: GrinderSettingSchema,
     q_air: GrinderSettingSchema,
     baratza_encore_esp: GrinderSettingSchema,
+    timemore_c2: GrinderSettingSchema,
   }),
   range_logic: z.object({
     base_range: z.string(),
@@ -172,10 +173,21 @@ export const FeedbackRoundSchema = z.object({
 
 export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
 
+export const GrinderIdSchema = z.enum(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
+export type GrinderId = z.infer<typeof GrinderIdSchema>
+
+export const GRINDER_DISPLAY_NAMES: Record<GrinderId, string> = {
+  k_ultra: '1Zpresso K-Ultra',
+  q_air: '1Zpresso Q-Air',
+  baratza_encore_esp: 'Baratza Encore ESP',
+  timemore_c2: 'Timemore C2',
+}
+
 export const UserProfileSchema = z.object({
   display_name: z.string().nullable().optional(),
   default_volume_ml: z.number().int().positive().default(250),
   temp_unit: z.enum(['C', 'F']).default('C'),
+  preferred_grinder: GrinderIdSchema.default('k_ultra'),
 })
 
 export type UserProfile = z.infer<typeof UserProfileSchema>
@@ -190,6 +202,7 @@ export const SavedRecipeSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
   feedback_history: z.array(FeedbackRoundSchema).default([]),
   image_url: z.string().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
   created_at: z.string(),
   archived: z.boolean().default(false),
 })
@@ -227,10 +240,64 @@ export const UpdateRecipeRequestSchema = z.object({
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
 
+export const UpdateNotesRequestSchema = z.object({
+  notes: z.string().max(1000).nullable(),
+})
+
+export type UpdateNotesRequest = z.infer<typeof UpdateNotesRequestSchema>
+
 export const UpdateProfileRequestSchema = z.object({
   display_name: z.string().optional(),
   default_volume_ml: z.number().int().positive().optional(),
   temp_unit: z.enum(['C', 'F']).optional(),
+  preferred_grinder: GrinderIdSchema.optional(),
 })
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+export const RecipeCommentSchema = z.object({
+  id: z.string().uuid(),
+  share_token: z.string(),
+  author_id: z.string().uuid(),
+  body: z.string().max(500),
+  created_at: z.string(),
+  author_display_name: z.string().nullable().optional(),
+})
+
+export type RecipeComment = z.infer<typeof RecipeCommentSchema>
+
+export const CreateCommentRequestSchema = z.object({
+  body: z.string().min(1).max(500),
+})
+
+export type CreateCommentRequest = z.infer<typeof CreateCommentRequestSchema>
+
+// ─── Sharing ──────────────────────────────────────────────────────────────────
+
+export const ShareSnapshotSchema = z.object({
+  bean_info: BeanProfileSchema,
+  current_recipe_json: RecipeWithAdjustmentSchema,
+  image_url: z.string().nullable().optional(),
+  owner_display_name: z.string().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+})
+
+export type ShareSnapshot = z.infer<typeof ShareSnapshotSchema>
+
+export const ShareResponseSchema = z.object({
+  shareToken: z.string(),
+  url: z.string(),
+})
+
+export type ShareResponse = z.infer<typeof ShareResponseSchema>
+
+export const PublicShareResponseSchema = z.object({
+  shareToken: z.string(),
+  title: z.string().nullable().optional(),
+  createdAt: z.string(),
+  snapshot: ShareSnapshotSchema,
+})
+
+export type PublicShareResponse = z.infer<typeof PublicShareResponseSchema>

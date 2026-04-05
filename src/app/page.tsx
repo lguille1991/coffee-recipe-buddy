@@ -6,6 +6,7 @@ import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import MethodIcon from '@/components/MethodIcon'
 
 function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
@@ -15,25 +16,22 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="flex items-center gap-3 bg-white rounded-2xl p-3 active:opacity-80 transition-opacity"
+      className="flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3 active:opacity-80 transition-opacity"
     >
       {/* Thumbnail */}
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#E1E2E5] shrink-0 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
         {recipe.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
         ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4 4h12v12H4z" stroke="#9CA3AF" strokeWidth="1.2" strokeLinejoin="round" />
-            <path d="M7 8h6M7 11h4" stroke="#9CA3AF" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
+          <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#333333] truncate">{beanName}</p>
-        <p className="text-xs text-[#6B6B6B] mt-0.5">{displayName}</p>
+        <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
+        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
       </div>
 
       {/* Date */}
@@ -64,8 +62,8 @@ export default function HomePage() {
 
       {/* Header */}
       <div className="px-6 pb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-[#333333]">Coffee Recipe Buddy</h1>
-        <p className="text-[#5B5F66] text-sm mt-0.5">
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">Coffee Recipe Buddy</h1>
+        <p className="text-[var(--muted-foreground)] text-sm mt-0.5">
           Hey there, what coffee beans do you need a recipe for today?
         </p>
       </div>
@@ -87,14 +85,14 @@ export default function HomePage() {
       <div className="px-6 mt-6 flex flex-col items-center gap-3">
         <Link
           href="/scan"
-          className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
           <Camera size={20} />
           Scan Your Coffee Bag
         </Link>
         <Link
           href="/manual"
-          className="w-full flex items-center justify-center gap-2 bg-white text-[#333333] text-sm font-medium rounded-[14px] py-3.5 border border-[#E1E2E5] active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
         >
           <PenLine size={16} />
           Enter Manually
@@ -102,7 +100,7 @@ export default function HomePage() {
         {!loading && !user && (
           <Link
             href="/auth"
-            className="w-full flex items-center justify-center gap-2 bg-white text-[#333333] text-sm font-medium rounded-[14px] py-3.5 border border-[#E1E2E5] active:opacity-80 transition-opacity"
+            className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
           >
             <LogIn size={16} />
             Sign In
@@ -114,17 +112,17 @@ export default function HomePage() {
       {!loading && user && (
         <div className="px-6 mt-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[#333333]">My Recipes</h2>
-            <Link href="/recipes" className="text-xs text-[#6B6B6B] underline">See all</Link>
+            <h2 className="text-sm font-semibold text-[var(--foreground)]">My Recipes</h2>
+            <Link href="/recipes" className="text-xs text-[var(--muted-foreground)] underline">See all</Link>
           </div>
 
           {recipesLoading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : recipes.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center">
-              <p className="text-sm text-[#6B6B6B] leading-relaxed">
+            <div className="bg-[var(--card)] rounded-2xl p-6 text-center">
+              <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
                 No saved recipes yet.
               </p>
               <p className="text-xs text-[#9CA3AF] mt-1">Scan your first bag to get started!</p>

@@ -91,10 +91,10 @@ function AuthForm() {
       <div className="h-16" />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-[#333333]">
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">
           {mode === 'signin' ? 'Welcome back' : 'Create account'}
         </h1>
-        <p className="text-[#5B5F66] text-sm mt-1">
+        <p className="text-[var(--muted-foreground)] text-sm mt-1">
           {mode === 'signin' ? 'Sign in to access your saved recipes.' : 'Save and revisit your brew recipes.'}
         </p>
       </div>
@@ -113,7 +113,7 @@ function AuthForm() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
-          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
             Email
           </label>
           <input
@@ -123,12 +123,12 @@ function AuthForm() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full bg-white border border-[#E1E2E5] rounded-[12px] px-4 py-3 text-sm text-[#333333] placeholder:text-[#9CA3AF] outline-none focus:border-[#333333] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
             Password
           </label>
           <input
@@ -138,31 +138,31 @@ function AuthForm() {
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="••••••••"
-            className="w-full bg-white border border-[#E1E2E5] rounded-[12px] px-4 py-3 text-sm text-[#333333] placeholder:text-[#9CA3AF] outline-none focus:border-[#333333] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#333333] text-white text-sm font-semibold rounded-[14px] py-4 mt-1 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+          className="w-full bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 mt-1 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
         >
           {loading ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
           ) : mode === 'signin' ? 'Sign In' : 'Create Account'}
         </button>
       </form>
 
       <div className="flex items-center gap-3 my-5">
-        <div className="flex-1 h-px bg-[#E1E2E5]" />
+        <div className="flex-1 h-px bg-[var(--border)]" />
         <span className="text-xs text-[#9CA3AF]">or</span>
-        <div className="flex-1 h-px bg-[#E1E2E5]" />
+        <div className="flex-1 h-px bg-[var(--border)]" />
       </div>
 
       <button
         onClick={handleGoogleOAuth}
         disabled={loading}
-        className="w-full bg-white border border-[#E1E2E5] text-[#333333] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2.5"
+        className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2.5"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -175,10 +175,10 @@ function AuthForm() {
 
       <button
         onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError(null) }}
-        className="mt-6 text-sm text-[#6B6B6B] text-center"
+        className="mt-6 text-sm text-[var(--muted-foreground)] text-center"
       >
         {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-        <span className="text-[#333333] font-medium underline">
+        <span className="text-[var(--foreground)] font-medium underline">
           {mode === 'signin' ? 'Sign up' : 'Sign in'}
         </span>
       </button>

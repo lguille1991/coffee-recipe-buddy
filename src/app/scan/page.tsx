@@ -47,27 +47,27 @@ export default function ScanPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-6">
-        <button onClick={() => router.back()} className="p-2 -ml-2 text-[#333333]">
+        <button onClick={() => router.back()} className="p-2 -ml-2 text-[var(--foreground)]">
           <ArrowLeft size={20} />
         </button>
-        <h2 className="text-lg font-semibold text-[#333333]">Scan Coffee</h2>
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Scan Coffee</h2>
       </div>
 
       {/* Upload zone */}
       <div className="flex-1 px-6 flex flex-col gap-6">
         <div
-          className="flex-1 min-h-[280px] border-2 border-dashed border-[#E1E2E5] rounded-[16px] flex flex-col items-center justify-center gap-3 bg-white cursor-pointer"
+          className="flex-1 min-h-[280px] border-2 border-dashed border-[var(--border)] rounded-[16px] flex flex-col items-center justify-center gap-3 bg-[var(--card)] cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
         >
           {loading ? (
             <>
-              <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#5B5F66]">Analyzing your coffee bag…</p>
+              <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-[var(--muted-foreground)]">Analyzing your coffee bag…</p>
             </>
           ) : (
             <>
               <Camera size={48} color="#9DA4B3" strokeWidth={1.5} />
-              <p className="text-sm text-[#5B5F66]">Take a photo of your coffee bag</p>
+              <p className="text-sm text-[var(--muted-foreground)]">Take a photo of your coffee bag</p>
             </>
           )}
         </div>
@@ -83,7 +83,7 @@ export default function ScanPage() {
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
           >
             <Camera size={18} />
             Take Photo
@@ -91,14 +91,14 @@ export default function ScanPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 border border-[#333333] text-[#333333] text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 border border-[var(--foreground)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
           >
             <Upload size={18} />
             Upload
           </button>
         </div>
 
-        <p className="text-center text-xs text-[#5B5F66] pb-24">
+        <p className="text-center text-xs text-[var(--muted-foreground)] pb-24">
           We&apos;ll analyze your coffee beans and create a personalized recipe
         </p>
       </div>

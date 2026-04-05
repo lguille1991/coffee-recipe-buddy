@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { UpdateRecipeRequestSchema } from '@/types/recipe'
+import { UpdateRecipeRequestSchema, UpdateNotesRequestSchema } from '@/types/recipe'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -35,6 +35,24 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
+
+  // Notes-only update (no feedback_round in body)
+  if ('notes' in body && !('feedback_round' in body)) {
+    const parsed = UpdateNotesRequestSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { data, error } = await supabase
+      .from('recipes')
+      .update({ notes: parsed.data.notes })
+      .eq('id', id)
+      .select('id, notes')
+      .single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
+  // Recipe update (feedback-driven)
   const parsed = UpdateRecipeRequestSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })

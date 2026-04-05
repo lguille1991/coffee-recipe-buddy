@@ -1,10 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { SavedRecipe, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { SavedRecipe, RecipeWithAdjustment, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recalculator'
 import { migrateRecipe } from '@/lib/recipe-migrations'
+import { useProfile } from '@/hooks/useProfile'
+
+function normalizeClickSetting(value: string): string {
+  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
+}
 
 export default function SavedRecipeDetailPage() {
   const router = useRouter()
@@ -18,6 +23,21 @@ export default function SavedRecipeDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [freshnessAdj, setFreshnessAdj] = useState<FreshnessAdjustment | null>(null)
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
+  const { preferredGrinder } = useProfile()
+
+  // Notes state
+  const [notes, setNotes] = useState('')
+  const [notesSaving, setNotesSaving] = useState(false)
+  const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sharing state
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string>('')
+  const [showShareSheet, setShowShareSheet] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [revoking, setRevoking] = useState(false)
+  const [commentCount, setCommentCount] = useState<number | null>(null)
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -29,14 +49,29 @@ export default function SavedRecipeDetailPage() {
         return r.json()
       })
       .then((data: SavedRecipe) => {
-        setRecipe(data)
-        // Pre-compute freshness adjustment
         const migrated = migrateRecipe(data.current_recipe_json, data.schema_version)
+        const hydratedData = { ...data, current_recipe_json: migrated }
+        setRecipe(hydratedData)
+        setNotes(data.notes ?? '')
         const adj = recalculateFreshness(migrated, data.bean_info.roast_date ?? undefined)
         if (adj.adjusted) setFreshnessAdj(adj)
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
+
+    // Check if this recipe already has a share link
+    fetch(`/api/recipes/${id}/share`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setShareToken(data.shareToken)
+          setShareUrl(data.url)
+          // Fetch comment count for the share badge
+          fetch(`/api/share/${data.shareToken}/comments?page=1`)
+            .then(r => r.ok ? r.json() : null)
+            .then(res => { if (res) setCommentCount(res.total) })
+        }
+      })
   }, [id, router])
 
   async function handleDelete() {
@@ -51,18 +86,65 @@ export default function SavedRecipeDetailPage() {
     const finalRecipe = freshnessAdj && !freshnessIgnored ? freshnessAdj.adjustedRecipe : migrated
 
     sessionStorage.setItem('recipe', JSON.stringify(finalRecipe))
-    sessionStorage.setItem('recipe_original', JSON.stringify(recipe.original_recipe_json))
+    const migratedOriginal = migrateRecipe(recipe.original_recipe_json as RecipeWithAdjustment, recipe.schema_version)
+    sessionStorage.setItem('recipe_original', JSON.stringify(migratedOriginal))
     sessionStorage.setItem('confirmedBean', JSON.stringify(recipe.bean_info))
     sessionStorage.setItem('feedback_round', '0')
     sessionStorage.setItem('adjustment_history', JSON.stringify(recipe.feedback_history ?? []))
-    sessionStorage.setItem('rebrew_recipe_id', id) // track which saved recipe we're re-brewing
+    sessionStorage.setItem('rebrew_recipe_id', id)
     router.push('/recipe')
+  }
+
+  async function handleShare() {
+    setSharing(true)
+    try {
+      const res = await fetch(`/api/recipes/${id}/share`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to create share link')
+      const data = await res.json()
+      setShareToken(data.shareToken)
+      setShareUrl(data.url)
+      setShowShareSheet(true)
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleNotesChange(value: string) {
+    setNotes(value)
+    if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
+    notesDebounceRef.current = setTimeout(async () => {
+      setNotesSaving(true)
+      await fetch(`/api/recipes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: value || null }),
+      })
+      setNotesSaving(false)
+    }, 500)
+  }
+
+  async function handleRevoke() {
+    setRevoking(true)
+    try {
+      await fetch(`/api/recipes/${id}/share`, { method: 'DELETE' })
+      setShareToken(null)
+      setShareUrl('')
+      setShowShareSheet(false)
+    } finally {
+      setRevoking(false)
+    }
   }
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#333333] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -70,8 +152,8 @@ export default function SavedRecipeDetailPage() {
   if (error || !recipe) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center px-6 gap-4">
-        <p className="text-sm text-[#6B6B6B]">{error ?? 'Recipe not found.'}</p>
-        <button onClick={() => router.replace('/recipes')} className="text-sm text-[#333333] underline">
+        <p className="text-sm text-[var(--muted-foreground)]">{error ?? 'Recipe not found.'}</p>
+        <button onClick={() => router.replace('/recipes')} className="text-sm text-[var(--foreground)] underline">
           Back to recipes
         </button>
       </div>
@@ -91,20 +173,38 @@ export default function SavedRecipeDetailPage() {
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 -ml-2">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12 15L7 10L12 5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <h2 className="text-lg font-semibold">Saved Recipe</h2>
         </div>
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="p-2 text-red-400"
-          aria-label="Delete recipe"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Share button */}
+          <button
+            onClick={shareToken ? () => setShowShareSheet(true) : handleShare}
+            disabled={sharing}
+            className="p-2 text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
+            aria-label="Share recipe"
+          >
+            {sharing ? (
+              <div className="w-[18px] h-[18px] border-2 border-[var(--muted-foreground)] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M13 12.5C12.4 12.5 11.87 12.74 11.47 13.12L6.62 10.3C6.67 10.1 6.7 9.9 6.7 9.68C6.7 9.46 6.67 9.26 6.62 9.06L11.42 6.27C11.83 6.68 12.39 6.94 13 6.94C14.24 6.94 15.25 5.93 15.25 4.69C15.25 3.45 14.24 2.44 13 2.44C11.76 2.44 10.75 3.45 10.75 4.69C10.75 4.91 10.78 5.11 10.83 5.31L6.03 8.1C5.62 7.69 5.06 7.44 4.45 7.44C3.21 7.44 2.2 8.45 2.2 9.69C2.2 10.93 3.21 11.94 4.45 11.94C5.06 11.94 5.62 11.68 6.03 11.27L10.88 14.1C10.83 14.29 10.8 14.49 10.8 14.69C10.8 15.9 11.79 16.88 13 16.88C14.21 16.88 15.2 15.9 15.2 14.69C15.2 13.48 14.21 12.5 13 12.5Z" fill="currentColor" />
+              </svg>
+            )}
+          </button>
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 text-red-400"
+            aria-label="Delete recipe"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
@@ -121,8 +221,21 @@ export default function SavedRecipeDetailPage() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#333333]">{displayName}</h1>
-          <p className="text-sm text-[#6B6B6B] mt-0.5">{beanName}</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
+            {shareToken && (
+              <button
+                onClick={() => setShowShareSheet(true)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--foreground)]/10 text-[var(--foreground)] text-[10px] font-medium active:opacity-70"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M7.2 6.9C6.87 6.9 6.59 7.03 6.37 7.24L3.68 5.72C3.7 5.61 3.71 5.49 3.71 5.37C3.71 5.25 3.7 5.13 3.68 5.02L6.34 3.52C6.56 3.74 6.86 3.87 7.2 3.87C7.91 3.87 8.48 3.3 8.48 2.59C8.48 1.88 7.91 1.31 7.2 1.31C6.49 1.31 5.92 1.88 5.92 2.59C5.92 2.71 5.93 2.83 5.95 2.94L3.29 4.44C3.07 4.22 2.77 4.09 2.43 4.09C1.72 4.09 1.15 4.66 1.15 5.37C1.15 6.08 1.72 6.65 2.43 6.65C2.77 6.65 3.07 6.52 3.29 6.3L5.98 7.82C5.96 7.93 5.95 8.05 5.95 8.17C5.95 8.86 6.51 9.42 7.2 9.42C7.89 9.42 8.45 8.86 8.45 8.17C8.45 7.48 7.89 6.9 7.2 6.9Z" fill="currentColor" />
+                </svg>
+                Shared{commentCount !== null && commentCount > 0 ? ` · ${commentCount}` : ''}
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {recipe.bean_info.roaster && (
             <p className="text-xs text-[#9CA3AF] mt-0.5">{recipe.bean_info.roaster}</p>
           )}
@@ -155,39 +268,84 @@ export default function SavedRecipeDetailPage() {
 
         {/* Parameters */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Parameters</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             {[
               { value: `${r.parameters.water_g}ml`, label: 'Water' },
               { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
               { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
               { value: r.parameters.total_time, label: 'Time' },
-              { value: r.grind.k_ultra.starting_point, label: 'Grind' },
+              { value: normalizeClickSetting(r.grind[preferredGrinder].starting_point), label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
-              <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[#F5F4F2]">
-                <p className="text-sm font-semibold text-[#333333]">{p.value}</p>
+              <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
+                <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
                 <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{p.label}</p>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Grinder Settings */}
+        {(() => {
+          const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
+          const primaryData = r.grind[preferredGrinder]
+          return (
+            <div className="bg-[var(--card)] rounded-2xl p-4">
+              <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">Grind Settings</h3>
+
+              {/* Primary grinder */}
+              <div className="rounded-xl p-3 mb-3 bg-[var(--foreground)] text-[var(--background)]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
+                </div>
+                <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
+                <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
+                {primaryData.description && (
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
+                )}
+                {primaryData.note && (
+                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
+                )}
+              </div>
+
+              {/* Secondary grinders */}
+              {secondaryGrinders.map((grinder, i) => {
+                const data = r.grind[grinder]
+                const isLast = i === secondaryGrinders.length - 1
+                return (
+                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
+                    <div>
+                      <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
+                      {data.note && (
+                        <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
+
         {/* Brew steps */}
         <div>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Brew Steps</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
           <div className="flex flex-col gap-2">
             {r.steps.map(step => (
-              <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-white">
-                <div className="w-7 h-7 rounded-full bg-[#333333] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-[var(--card)]">
+                <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
                   {step.step}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-semibold text-[#333333]">{step.time}</p>
+                    <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
                     <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
                   </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">{step.action}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                 </div>
               </div>
             ))}
@@ -197,11 +355,11 @@ export default function SavedRecipeDetailPage() {
         {/* Feedback history */}
         {recipe.feedback_history.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-2">Adjustment History</h3>
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Adjustment History</h3>
             <div className="flex flex-col gap-2">
               {recipe.feedback_history.map((fh, i) => (
-                <div key={i} className="bg-white rounded-xl px-4 py-2.5 text-xs text-[#6B6B6B]">
-                  <span className="font-medium text-[#333333]">Round {fh.round}</span>
+                <div key={i} className="bg-[var(--card)] rounded-xl px-4 py-2.5 text-xs text-[var(--muted-foreground)]">
+                  <span className="font-medium text-[var(--foreground)]">Round {fh.round}</span>
                   {' · '}
                   {fh.variable_changed}: {fh.previous_value} → {fh.new_value}
                 </div>
@@ -210,26 +368,84 @@ export default function SavedRecipeDetailPage() {
           </div>
         )}
 
+        {/* Notes */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Notes</h3>
+            {notesSaving && (
+              <span className="text-[10px] text-[#9CA3AF]">Saving…</span>
+            )}
+          </div>
+          <textarea
+            value={notes}
+            onChange={e => handleNotesChange(e.target.value)}
+            maxLength={1000}
+            placeholder="Add notes about this brew…"
+            rows={3}
+            className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+          />
+          <p className="text-[10px] text-[#9CA3AF] text-right mt-1">{notes.length}/1000</p>
+        </div>
+
         {/* Actions */}
         <button
           onClick={handleBrewAgain}
-          className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2.5 8C2.5 4.96 4.96 2.5 8 2.5C10.07 2.5 11.87 3.6 12.85 5.25M13.5 8C13.5 11.04 11.04 13.5 8 13.5C5.93 13.5 4.13 12.4 3.15 10.75" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M12 3V6H15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M1 10V13H4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2.5 8C2.5 4.96 4.96 2.5 8 2.5C10.07 2.5 11.87 3.6 12.85 5.25M13.5 8C13.5 11.04 11.04 13.5 8 13.5C5.93 13.5 4.13 12.4 3.15 10.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M12 3V6H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 10V13H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Brew Again
         </button>
       </div>
 
+      {/* Share sheet */}
+      {showShareSheet && shareToken && (
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 pb-safe" onClick={() => setShowShareSheet(false)}>
+          <div className="bg-[var(--card)] rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">Share Recipe</h3>
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">Anyone with this link can view and clone your recipe.</p>
+
+            {/* URL display */}
+            <div className="flex items-center gap-2 bg-[var(--background)] rounded-xl px-3 py-2.5 mb-4">
+              <p className="flex-1 text-xs text-[var(--muted-foreground)] truncate">{shareUrl}</p>
+              <button
+                onClick={handleCopy}
+                className="text-xs font-semibold text-[var(--foreground)] shrink-0 active:opacity-60"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleCopy}
+                className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80"
+              >
+                {copied ? 'Link Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={handleRevoke}
+                disabled={revoking}
+                className="w-full py-3.5 bg-[var(--background)] text-red-500 text-sm font-medium rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+              >
+                {revoking ? (
+                  <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                ) : 'Revoke Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 pb-safe">
-          <div className="bg-white rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10">
-            <h3 className="text-base font-semibold text-[#333333] mb-1">Delete this recipe?</h3>
-            <p className="text-sm text-[#6B6B6B] mb-6">This action cannot be undone.</p>
+          <div className="bg-[var(--card)] rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10">
+            <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">Delete this recipe?</h3>
+            <p className="text-sm text-[var(--muted-foreground)] mb-6">This action cannot be undone.</p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleDelete}
@@ -242,7 +458,7 @@ export default function SavedRecipeDetailPage() {
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="w-full py-3.5 bg-[#F5F4F2] text-[#333333] text-sm font-medium rounded-[14px] active:opacity-80"
+                className="w-full py-3.5 bg-[var(--background)] text-[var(--foreground)] text-sm font-medium rounded-[14px] active:opacity-80"
               >
                 Cancel
               </button>

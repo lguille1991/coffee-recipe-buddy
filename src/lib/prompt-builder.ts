@@ -57,6 +57,7 @@ Rules:
 export function buildRecipePrompt(
   bean: BeanProfile,
   method: string,
+  targetVolumeMl?: number,
 ): { system: string; user: string } {
   const rangeSystem = readDoc('coffee-range-system-skill.md')
   const methodLogic = readDoc('method-decision-logic.md')
@@ -64,6 +65,7 @@ export function buildRecipePrompt(
   const kUltraTable = readDoc('grinder-tables/1zpresso-k-ultra-grind-table.md')
   const qAirTable = readDoc('grinder-tables/1zpresso-q-air-grind-table.md')
   const baratzaTable = readDoc('grinder-tables/baratza-encore-esp-grind-table.md')
+  const timemoreC2Table = readDoc('grinder-tables/timemore-c2-grind-table.md')
 
   const system = `You are an expert specialty coffee barista and recipe developer. Your task is to generate a precise, structured pour-over recipe following the Coffee Range System.
 
@@ -99,22 +101,32 @@ ${qAirTable}
 
 ${baratzaTable}
 
+### Timemore C2
+
+${timemoreC2Table}
+
 ---
 
 ## HARD CONSTRAINTS (MUST follow every one)
 
 1. Follow Block 6 mandatory decision order exactly — record every step in range_logic.
 2. Final operating range MUST be ≤ 10 K-Ultra clicks wide (Block 5B accumulation cap).
-3. Include grind settings for ALL 3 grinders (k_ultra, q_air, baratza_encore_esp).
+3. Include grind settings for ALL 4 grinders (k_ultra, q_air, baratza_encore_esp, timemore_c2).
 4. Baratza starting_point MUST be within clicks 14–24 for any pour-over method.
+4b. Timemore C2 starting_point MUST be within clicks 14–22 for any pour-over method.
 5. steps[].water_poured_g must sum to exactly water_g.
 6. water_accumulated_g in last step must equal water_g.
 7. All 5 quick_adjustments keys must be present and actionable.
 8. ratio must be within the method's Block 1B range.
 9. Output ONLY the JSON object — zero extra text before or after.
-10. compressed field in range_logic MUST be true if you applied Block 5B compression, false otherwise.`
+10. compressed field in range_logic MUST be true if you applied Block 5B compression, false otherwise.
+11. If target_volume_ml is provided in the input, scale the recipe so that water_g equals that value exactly. Adjust coffee_g to maintain the method's ratio.`
 
-  const user = JSON.stringify({ method, bean }, null, 2)
+  const payload: Record<string, unknown> = { method, bean }
+  if (targetVolumeMl && targetVolumeMl > 0) {
+    payload.target_volume_ml = targetVolumeMl
+  }
+  const user = JSON.stringify(payload, null, 2)
 
   return { system, user }
 }

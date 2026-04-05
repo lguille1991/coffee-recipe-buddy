@@ -10,7 +10,7 @@ The Baratza Encore ESP is an entry-level electric grinder with 40 click settings
 
 ## Click → Approximate Micron Mapping
 
-| Baratza Click | Approx. Microns | Grind Zone |
+| Baratza Clicks | Approx. Microns | Grind Zone |
 |---|---|---|
 | 1 | 200 | Finest espresso |
 | 5 | 300 | Espresso |
@@ -36,24 +36,6 @@ The Baratza Encore ESP is an entry-level electric grinder with 40 click settings
 
 ---
 
-## Conversion from K-Ultra Microns to Baratza
-
-| K-Ultra Clicks | Microns | Baratza Click | Notes |
-|---|---|---|---|
-| 70 | 770 | 17 | Fine pour-over |
-| 72 | 792 | 17–18 | AeroPress fine |
-| 74 | 814 | 18 | |
-| 76 | 836 | 18–19 | Orea fine |
-| 78 | 858 | 19 | V60 lower |
-| 80 | 880 | 19–20 | V60 mid / Switch lower |
-| 82 | 902 | 20 | |
-| 84 | 924 | 21 | V60 upper |
-| 86 | 946 | 21–22 | Switch / Kalita |
-| 88 | 968 | 22–23 | Chemex lower |
-| 90 | 990 | 23 | Chemex mid |
-
----
-
 ## Pour-Over Zone Constraint
 
 **For ALL pour-over methods, Baratza starting_point MUST be within clicks 14–24.**
@@ -65,7 +47,4 @@ AeroPress may go below 14 (fine filter range is acceptable).
 
 ## Precision Note
 
-The Baratza Encore ESP has wider step intervals than hand grinders. This means:
-- 1 Baratza click ≈ 3–5 K-Ultra clicks in coarseness change.
-- Dial adjustments are less granular — compensate with other variables (water temp, pour speed).
-- Always note this reduced precision in `baratza_encore_esp.note`.
+The Baratza Encore ESP has wider step intervals than hand grinders. Dial adjustments are less granular — compensate with other variables (water temp, pour speed). Always note this reduced precision in `baratza_encore_esp.note`.

@@ -40,8 +40,8 @@ export default function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 flex justify-center pb-2 pt-2 pointer-events-none">
-      {/* White floating pill */}
-      <div className="pointer-events-auto bg-white rounded-[36px] flex items-center px-3 py-2 gap-1 shadow-sm">
+      {/* Floating pill */}
+      <div className="pointer-events-auto bg-[var(--card)] rounded-[36px] flex items-center px-3 py-2 gap-1 shadow-sm">
         {NAV_ITEMS.map(item => {
           const active = pathname === item.href
           return (
@@ -50,8 +50,8 @@ export default function BottomNav() {
               href={item.href}
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-[26px] transition-colors ${
                 active
-                  ? 'bg-[#333333] text-white'
-                  : 'text-[#333333] opacity-50'
+                  ? 'bg-[var(--foreground)] text-[var(--background)]'
+                  : 'text-[var(--foreground)] opacity-50'
               }`}
             >
               {item.icon}

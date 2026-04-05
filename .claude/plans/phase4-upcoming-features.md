@@ -6,35 +6,37 @@ This plan covers five features that extend the Phase 3 foundation. They are grou
 
 ## 1. Grinder Preference
 
-**Goal:** User picks their preferred grinder in Settings. The recipe's Grind Settings section shows that grinder as the primary card; the other two appear as secondary rows.
+**Goal:** User picks their preferred grinder in Settings. The recipe's Grind Settings section shows that grinder as the primary card; the others appear as secondary rows.
 
-**Current state:** K-Ultra is always the primary display. Three grinders are supported: K-Ultra (primary reference), Q-Air, Baratza Encore ESP. All conversion logic lives in `src/lib/grinder-converter.ts`.
+**Current state:** ✅ Complete. Four grinders supported: K-Ultra, Q-Air, Baratza Encore ESP, Timemore C2. Conversion logic in `src/lib/grinder-converter.ts`. Q-Air corrected to rotation-based scale. Schema migrations v2 (Timemore C2) and v3 (Q-Air fix) applied to existing saved recipes via `src/lib/recipe-migrations.ts`.
 
 ### Database
 
-- [ ] Add `preferred_grinder` column to `profiles`: `text NOT NULL DEFAULT 'k_ultra'` — values: `k_ultra | q_air | baratza_encore_esp`
-- [ ] Add migration to `docs/migration_002_grinder_preference.sql`
+- [x] Add `preferred_grinder` column to `profiles`: `text NOT NULL DEFAULT 'k_ultra'` — values: `k_ultra | q_air | baratza_encore_esp | timemore_c2`
+- [x] Add migration to `docs/migration_002_grinder_preference.sql`
+- [x] Add Timemore C2 to CHECK constraint — `docs/migration_003_add_timemore_c2.sql`
 
 ### API
 
-- [ ] Update `UserProfile` type in `src/types/recipe.ts` to include `preferred_grinder`
-- [ ] Update `GET /api/profile` response to include `preferred_grinder`
-- [ ] Update `PATCH /api/profile` to accept and validate `preferred_grinder`
+- [x] Update `UserProfile` type in `src/types/recipe.ts` to include `preferred_grinder`
+- [x] Update `GET /api/profile` response to include `preferred_grinder`
+- [x] Update `PATCH /api/profile` to accept and validate `preferred_grinder`
 
 ### Settings UI (`src/app/settings/page.tsx`)
 
-- [ ] Add **Preferred Grinder** section below Temperature Unit
-- [ ] Three-option toggle: "1Zpresso K-Ultra" / "1Zpresso Q-Air" / "Baratza Encore ESP"
-- [ ] Persist as part of the existing Save action (no separate save needed)
+- [x] Add **Preferred Grinder** section below Temperature Unit
+- [x] Four-option toggle: "1Zpresso K-Ultra" / "1Zpresso Q-Air" / "Baratza Encore ESP" / "Timemore C2"
+- [x] Persist as part of the existing Save action (no separate save needed)
 
 ### Recipe Card Grind Section
 
-- [ ] Create `src/hooks/useProfile.ts` (or extend `useAuth`) to expose `preferred_grinder` client-side
-- [ ] Update the Grind Settings section in the recipe card component to accept a `primaryGrinder` prop
-- [ ] When `primaryGrinder` is `q_air`: show Q-Air as the large primary card, K-Ultra and Baratza as secondary rows
-- [ ] When `primaryGrinder` is `baratza_encore_esp`: show Baratza as primary, K-Ultra and Q-Air as secondary rows
-- [ ] Default (guests + `k_ultra`): existing layout unchanged
-- [ ] Apply to both the live `/recipe` page and the saved `/recipes/:id` detail page
+- [x] Create `src/hooks/useProfile.ts` to expose `preferred_grinder` client-side
+- [x] Update the Grind Settings section in the recipe card component to use `preferredGrinder`
+- [x] When `primaryGrinder` is `q_air`: show Q-Air as the large primary card, others as secondary rows
+- [x] When `primaryGrinder` is `baratza_encore_esp`: show Baratza as primary, others as secondary rows
+- [x] When `primaryGrinder` is `timemore_c2`: show Timemore C2 as primary, others as secondary rows
+- [x] Default (guests + `k_ultra`): existing layout unchanged
+- [x] Apply to both the live `/recipe` page and the saved `/recipes/:id` detail page
 
 ---
 
@@ -63,22 +65,22 @@ The hex values in components must be replaced with CSS variable references (e.g.
 
 ### Implementation
 
-- [ ] Add `.dark { --foreground: ...; --background: ...; ... }` block to `globals.css`
-- [ ] Create `src/hooks/useTheme.ts`
+- [x] Add `.dark { --foreground: ...; --background: ...; ... }` block to `globals.css`
+- [x] Create `src/hooks/useTheme.ts`
   - Reads preference from `localStorage` (`theme: 'light' | 'dark' | 'system'`)
   - Adds/removes `dark` class on `document.documentElement`
   - Handles `prefers-color-scheme` for `system` mode
   - Exposes `theme`, `setTheme`
-- [ ] Create `src/components/ThemeProvider.tsx` — mounts in root layout, initializes theme before first paint (inline script in `<head>` to avoid flash)
-- [ ] Wire `ThemeProvider` into `src/app/layout.tsx`
-- [ ] Refactor pass — replace all hardcoded hex class values across all pages and components with `var(--*)` equivalents:
+- [x] Create `src/components/ThemeProvider.tsx` — mounts in root layout, initializes theme before first paint (inline script in `<head>` to avoid flash)
+- [x] Wire `ThemeProvider` into `src/app/layout.tsx`
+- [x] Refactor pass — replace all hardcoded hex class values across all pages and components with `var(--*)` equivalents:
   - `text-[#333333]` → `text-[var(--foreground)]`
   - `bg-[#F5F4F2]` → `bg-[var(--background)]`
   - `bg-white` → `bg-[var(--card)]`
   - `border-[#E1E2E5]` → `border-[var(--border)]`
   - `text-[#6B6B6B]`, `text-[#5B5F66]` → `text-[var(--muted-foreground)]`
-- [ ] Add **Appearance** toggle in Settings: Light / Dark / System (3-option toggle, same style as temp unit toggle)
-- [ ] Preference stored in `localStorage` only — no DB column needed (avoids round-trip; matches OS expectation)
+- [x] Add **Appearance** toggle in Settings: Light / Dark / System (3-option toggle, same style as temp unit toggle)
+- [x] Preference stored in `localStorage` only — no DB column needed (avoids round-trip; matches OS expectation)
 
 > **Scope note:** The refactor pass touches every page and component. Plan the PR accordingly — it should be one atomic change so dark mode either fully works or the PR is reverted cleanly.
 
@@ -96,7 +98,7 @@ The sharing model is: **share a read-only snapshot → recipient views it → re
 
 ### Database
 
-- [ ] Add `shared_recipes` table to `docs/migration_003_sharing.sql`:
+- [ ] Add `shared_recipes` table to `docs/migration_004_sharing.sql`:
   ```sql
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
   owner_id     uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
@@ -176,22 +178,22 @@ Pour step volumes are **not** directly editable — they follow from dose/ratio 
 
 Every saved recipe can have a freeform text note for personal context ("great with oat milk", "beans were 18 days old", "ground 2 extra clicks coarser").
 
-- [ ] Add `notes text` (nullable) column to `recipes` table → `docs/migration_004_notes.sql`
-- [ ] Update `SavedRecipe` type and API:
-  - `GET /api/recipes/:id` — include `notes` in response
-  - `PATCH /api/recipes/:id` — accept `notes` field
-- [ ] Notes textarea in saved recipe detail (`/recipes/:id`):
+- [x] Add `notes text` (nullable) column to `recipes` table → `docs/migration_005_notes.sql`
+- [x] Update `SavedRecipe` type and API:
+  - `GET /api/recipes/:id` — include `notes` in response (via `select('*')`)
+  - `PATCH /api/recipes/:id` — accept `notes` field (notes-only branch added)
+- [x] Notes textarea in saved recipe detail (`/recipes/:id`):
   - Appears below the recipe card, above action buttons
   - Placeholder: "Add notes about this brew…"
-  - Auto-saves on blur (debounced `PATCH` call, no explicit save button)
-  - Character limit: 1000
-- [ ] Notes field included in the share snapshot (read-only in `/share/:token` view as "Sharer's notes")
+  - Auto-saves on change (debounced 500ms `PATCH` call, no explicit save button)
+  - Character limit: 1000 with live counter
+- [x] Notes field included in the share snapshot (read-only in `/share/:token` view as "Sharer's notes")
 
 ### Comments on shared recipes (Phase B — plan now, implement after Phase A)
 
 Enables conversation about a shared recipe — useful when a friend shares a recipe and you want to ask about the dose or a specific adjustment.
 
-- [ ] Add `recipe_comments` table → `docs/migration_005_comments.sql`:
+- [x] Add `recipe_comments` table → `docs/migration_006_comments.sql`:
   ```sql
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid()
   share_token   text NOT NULL REFERENCES shared_recipes(share_token) ON DELETE CASCADE
@@ -199,12 +201,12 @@ Enables conversation about a shared recipe — useful when a friend shares a rec
   body          text NOT NULL CHECK (length(body) <= 500)
   created_at    timestamptz DEFAULT now()
   ```
-- [ ] RLS: anyone can read comments for a given `share_token`; only the `author_id` can delete their own
-- [ ] `GET /api/share/:token/comments` — public; paginated, ordered by `created_at ASC`
-- [ ] `POST /api/share/:token/comments` — auth'd; validates body length; inserts comment
-- [ ] `DELETE /api/share/:token/comments/:id` — auth'd; only own comments
-- [ ] Comments section in `/share/[token]` view — below recipe card; shows comment list + input (auth required to post, prompt to sign in otherwise)
-- [ ] Comment count shown in share badge on recipe detail
+- [x] RLS: anyone can read comments for a given `share_token`; only the `author_id` can delete their own
+- [x] `GET /api/share/:token/comments` — public; paginated, ordered by `created_at ASC`
+- [x] `POST /api/share/:token/comments` — auth'd; validates body length; inserts comment
+- [x] `DELETE /api/share/:token/comments/:id` — auth'd; only own comments
+- [x] Comments section in `/share/[token]` view — below recipe card; shows comment list + input (auth required to post, prompt to sign in otherwise)
+- [x] Comment count shown in share badge on recipe detail
 - [ ] **No notifications in this scope** — polling or static load only; real-time (Supabase Realtime) is a future enhancement
 
 ---

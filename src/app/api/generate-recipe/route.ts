@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
-import { BeanProfileSchema } from '@/types/recipe'
+import { BeanProfileSchema, Recipe } from '@/types/recipe'
+import { parseKUltraRange, kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2 } from '@/lib/grinder-converter'
 
 const client = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -14,7 +15,7 @@ const MAX_RETRIES = 2
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { method, bean } = body
+    const { method, bean, targetVolumeMl } = body
 
     if (!method || !bean) {
       return NextResponse.json({ error: 'method and bean are required' }, { status: 400 })
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { system, user } = buildRecipePrompt(beanParsed.data, method)
+    const { system, user } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: system },
@@ -66,7 +67,19 @@ export async function POST(req: NextRequest) {
       const validation = validateRecipe(parsed, beanParsed.data, method)
 
       if (validation.valid) {
-        return NextResponse.json(parsed)
+        const recipe = parsed as Recipe
+        const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
+        const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
+        const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange?.mid
+        if (kuRange && startClicks !== undefined) {
+          const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
+          const baratza = kUltraRangeToBaratza(kuRange.low, kuRange.high, startClicks, method)
+          const c2 = kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, method)
+          recipe.grind.q_air = { ...recipe.grind.q_air, ...qAir }
+          recipe.grind.baratza_encore_esp = { ...recipe.grind.baratza_encore_esp, ...baratza }
+          recipe.grind.timemore_c2 = { ...recipe.grind.timemore_c2, ...c2 }
+        }
+        return NextResponse.json(recipe)
       }
 
       lastErrors = validation.errors

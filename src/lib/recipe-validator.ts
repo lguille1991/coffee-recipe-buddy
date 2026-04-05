@@ -75,9 +75,9 @@ export function validateRecipe(
     )
   }
 
-  // 5. All 3 grinders present (schema already enforces, but double-check non-empty)
-  if (!recipe.grind.k_ultra.range || !recipe.grind.q_air.range || !recipe.grind.baratza_encore_esp.range) {
-    errors.push('All 3 grinder ranges must be present and non-empty.')
+  // 5. All 4 grinders present (schema already enforces, but double-check non-empty)
+  if (!recipe.grind.k_ultra.range || !recipe.grind.q_air.range || !recipe.grind.baratza_encore_esp.range || !recipe.grind.timemore_c2.range) {
+    errors.push('All 4 grinder ranges must be present and non-empty.')
   }
 
   // 6. All 5 quick adjustment keys present (schema enforces, but check non-empty)
@@ -98,7 +98,7 @@ export function validateRecipe(
     }
   })
 
-  // 8. Baratza Encore ESP in 14–24 zone for pour-over
+  // 8. Grinder zone constraints for pour-over
   if (POUR_OVER_METHODS.has(recipe.method)) {
     const baratzaStartMatch = recipe.grind.baratza_encore_esp.starting_point.match(/(\d+)/)
     if (baratzaStartMatch) {
@@ -106,6 +106,16 @@ export function validateRecipe(
       if (baratzaClick < 14 || baratzaClick > 24) {
         errors.push(
           `Baratza Encore ESP starting_point (click ${baratzaClick}) outside pour-over zone 14–24.`
+        )
+      }
+    }
+
+    const c2StartMatch = recipe.grind.timemore_c2.starting_point.match(/(\d+)/)
+    if (c2StartMatch) {
+      const c2Click = parseInt(c2StartMatch[1], 10)
+      if (c2Click < 14 || c2Click > 22) {
+        errors.push(
+          `Timemore C2 starting_point (click ${c2Click}) outside pour-over zone 14–22.`
         )
       }
     }

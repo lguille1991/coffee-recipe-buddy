@@ -6,6 +6,7 @@ import {
   parseKUltraRange,
   kUltraRangeToQAir,
   kUltraRangeToBaratza,
+  kUltraRangeToTimemoreC2,
 } from './grinder-converter'
 
 // ─── Method ratio bounds (Block 1B) ──────────────────────────────────────────
@@ -51,6 +52,7 @@ function recalculateGrinders(
 ) {
   const qAir = kUltraRangeToQAir(lowClicks, highClicks, startingClicks)
   const baratza = kUltraRangeToBaratza(lowClicks, highClicks, startingClicks, method)
+  const c2 = kUltraRangeToTimemoreC2(lowClicks, highClicks, startingClicks, method)
 
   return {
     k_ultra: {
@@ -68,6 +70,12 @@ function recalculateGrinders(
       range: baratza.range,
       starting_point: baratza.starting_point,
       note: baratza.note,
+    },
+    timemore_c2: {
+      ...recipe.grind.timemore_c2,
+      range: c2.range,
+      starting_point: c2.starting_point,
+      note: c2.note,
     },
   }
 }

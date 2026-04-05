@@ -39,10 +39,10 @@ export default function SideNav() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-56 bg-white border-r border-[#E1E2E5] z-40">
+    <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-56 bg-[var(--card)] border-r border-[var(--border)] z-40">
       {/* Brand */}
-      <div className="px-6 py-8 border-b border-[#E1E2E5]">
-        <span className="text-xl font-bold tracking-tight text-[#333333]">QAfe</span>
+      <div className="px-6 py-8 border-b border-[var(--border)]">
+        <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">QAfe</span>
         <p className="text-xs text-[#9CA3AF] mt-0.5">Coffee Recipe Buddy</p>
       </div>
 
@@ -56,8 +56,8 @@ export default function SideNav() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-[#333333] text-white'
-                  : 'text-[#333333] hover:bg-[#F5F4F2]'
+                  ? 'bg-[var(--foreground)] text-[var(--background)]'
+                  : 'text-[var(--foreground)] hover:bg-[var(--background)]'
               }`}
             >
               {item.icon}
