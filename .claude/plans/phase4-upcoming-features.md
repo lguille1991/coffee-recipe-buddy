@@ -6,35 +6,37 @@ This plan covers five features that extend the Phase 3 foundation. They are grou
 
 ## 1. Grinder Preference
 
-**Goal:** User picks their preferred grinder in Settings. The recipe's Grind Settings section shows that grinder as the primary card; the other two appear as secondary rows.
+**Goal:** User picks their preferred grinder in Settings. The recipe's Grind Settings section shows that grinder as the primary card; the others appear as secondary rows.
 
-**Current state:** K-Ultra is always the primary display. Three grinders are supported: K-Ultra (primary reference), Q-Air, Baratza Encore ESP. All conversion logic lives in `src/lib/grinder-converter.ts`.
+**Current state:** ✅ Complete. Four grinders supported: K-Ultra, Q-Air, Baratza Encore ESP, Timemore C2. Conversion logic in `src/lib/grinder-converter.ts`. Q-Air corrected to rotation-based scale. Schema migrations v2 (Timemore C2) and v3 (Q-Air fix) applied to existing saved recipes via `src/lib/recipe-migrations.ts`.
 
 ### Database
 
-- [ ] Add `preferred_grinder` column to `profiles`: `text NOT NULL DEFAULT 'k_ultra'` — values: `k_ultra | q_air | baratza_encore_esp`
-- [ ] Add migration to `docs/migration_002_grinder_preference.sql`
+- [x] Add `preferred_grinder` column to `profiles`: `text NOT NULL DEFAULT 'k_ultra'` — values: `k_ultra | q_air | baratza_encore_esp | timemore_c2`
+- [x] Add migration to `docs/migration_002_grinder_preference.sql`
+- [x] Add Timemore C2 to CHECK constraint — `docs/migration_003_add_timemore_c2.sql`
 
 ### API
 
-- [ ] Update `UserProfile` type in `src/types/recipe.ts` to include `preferred_grinder`
-- [ ] Update `GET /api/profile` response to include `preferred_grinder`
-- [ ] Update `PATCH /api/profile` to accept and validate `preferred_grinder`
+- [x] Update `UserProfile` type in `src/types/recipe.ts` to include `preferred_grinder`
+- [x] Update `GET /api/profile` response to include `preferred_grinder`
+- [x] Update `PATCH /api/profile` to accept and validate `preferred_grinder`
 
 ### Settings UI (`src/app/settings/page.tsx`)
 
-- [ ] Add **Preferred Grinder** section below Temperature Unit
-- [ ] Three-option toggle: "1Zpresso K-Ultra" / "1Zpresso Q-Air" / "Baratza Encore ESP"
-- [ ] Persist as part of the existing Save action (no separate save needed)
+- [x] Add **Preferred Grinder** section below Temperature Unit
+- [x] Four-option toggle: "1Zpresso K-Ultra" / "1Zpresso Q-Air" / "Baratza Encore ESP" / "Timemore C2"
+- [x] Persist as part of the existing Save action (no separate save needed)
 
 ### Recipe Card Grind Section
 
-- [ ] Create `src/hooks/useProfile.ts` (or extend `useAuth`) to expose `preferred_grinder` client-side
-- [ ] Update the Grind Settings section in the recipe card component to accept a `primaryGrinder` prop
-- [ ] When `primaryGrinder` is `q_air`: show Q-Air as the large primary card, K-Ultra and Baratza as secondary rows
-- [ ] When `primaryGrinder` is `baratza_encore_esp`: show Baratza as primary, K-Ultra and Q-Air as secondary rows
-- [ ] Default (guests + `k_ultra`): existing layout unchanged
-- [ ] Apply to both the live `/recipe` page and the saved `/recipes/:id` detail page
+- [x] Create `src/hooks/useProfile.ts` to expose `preferred_grinder` client-side
+- [x] Update the Grind Settings section in the recipe card component to use `preferredGrinder`
+- [x] When `primaryGrinder` is `q_air`: show Q-Air as the large primary card, others as secondary rows
+- [x] When `primaryGrinder` is `baratza_encore_esp`: show Baratza as primary, others as secondary rows
+- [x] When `primaryGrinder` is `timemore_c2`: show Timemore C2 as primary, others as secondary rows
+- [x] Default (guests + `k_ultra`): existing layout unchanged
+- [x] Apply to both the live `/recipe` page and the saved `/recipes/:id` detail page
 
 ---
 
@@ -96,7 +98,7 @@ The sharing model is: **share a read-only snapshot → recipient views it → re
 
 ### Database
 
-- [ ] Add `shared_recipes` table to `docs/migration_003_sharing.sql`:
+- [ ] Add `shared_recipes` table to `docs/migration_004_sharing.sql`:
   ```sql
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
   owner_id     uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE

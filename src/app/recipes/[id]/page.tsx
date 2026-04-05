@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { SavedRecipe, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { SavedRecipe, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recalculator'
 import { migrateRecipe } from '@/lib/recipe-migrations'
+import { useProfile } from '@/hooks/useProfile'
 
 export default function SavedRecipeDetailPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function SavedRecipeDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [freshnessAdj, setFreshnessAdj] = useState<FreshnessAdjustment | null>(null)
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
+  const { preferredGrinder } = useProfile()
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -29,9 +31,10 @@ export default function SavedRecipeDetailPage() {
         return r.json()
       })
       .then((data: SavedRecipe) => {
-        setRecipe(data)
-        // Pre-compute freshness adjustment
         const migrated = migrateRecipe(data.current_recipe_json, data.schema_version)
+        const hydratedData = { ...data, current_recipe_json: migrated }
+        setRecipe(hydratedData)
+        // Pre-compute freshness adjustment
         const adj = recalculateFreshness(migrated, data.bean_info.roast_date ?? undefined)
         if (adj.adjusted) setFreshnessAdj(adj)
       })
@@ -162,7 +165,7 @@ export default function SavedRecipeDetailPage() {
               { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
               { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
               { value: r.parameters.total_time, label: 'Time' },
-              { value: r.grind.k_ultra.starting_point, label: 'Grind' },
+              { value: r.grind[preferredGrinder].starting_point, label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[#F5F4F2]">
@@ -172,6 +175,51 @@ export default function SavedRecipeDetailPage() {
             ))}
           </div>
         </div>
+
+        {/* Grinder Settings */}
+        {(() => {
+          const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
+          const primaryData = r.grind[preferredGrinder]
+          return (
+            <div className="bg-white rounded-2xl p-4">
+              <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-3">Grind Settings</h3>
+
+              {/* Primary grinder */}
+              <div className="rounded-xl p-3 mb-3 bg-[#333333] text-white">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-white/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Primary</span>
+                </div>
+                <p className="text-lg font-bold">{primaryData.starting_point}</p>
+                <p className="text-xs text-white/60 mt-0.5">Range: {primaryData.range}</p>
+                {primaryData.description && (
+                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.description}</p>
+                )}
+                {primaryData.note && (
+                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.note}</p>
+                )}
+              </div>
+
+              {/* Secondary grinders */}
+              {secondaryGrinders.map((grinder, i) => {
+                const data = r.grind[grinder]
+                const isLast = i === secondaryGrinders.length - 1
+                return (
+                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[#F0EDE9]'}`}>
+                    <div>
+                      <p className="text-xs font-medium text-[#6B6B6B]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
+                      {data.note && (
+                        <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-[#333333] shrink-0">{data.starting_point}</p>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {/* Brew steps */}
         <div>

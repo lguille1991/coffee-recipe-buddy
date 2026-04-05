@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Bookmark, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio } from 'lucide-react'
-import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata } from '@/types/recipe'
+import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ const SYMPTOM_OPTIONS: { value: Symptom; emoji: string; label: string }[] = [
 export default function RecipePage() {
   const router = useRouter()
   const { user } = useAuth()
+  const { preferredGrinder } = useProfile()
 
   const [recipe, setRecipe] = useState<RecipeWithAdjustment | null>(null)
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null)
@@ -340,7 +342,7 @@ export default function RecipePage() {
             />
             <ParamCard
               icon={<CircleDot size={16} />}
-              value={recipe.grind.k_ultra.starting_point}
+              value={recipe.grind[preferredGrinder].starting_point}
               label="Grind"
               changed={grindChanged()}
               annotation={annotation('grind')}
@@ -355,46 +357,52 @@ export default function RecipePage() {
         </div>
 
         {/* Grinder Settings */}
-        <div className={`bg-white rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
-          <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-3">Grind Settings</h3>
+        {(() => {
+          const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
+          const primaryData = recipe.grind[preferredGrinder]
+          return (
+            <div className={`bg-white rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
+              <h3 className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider mb-3">Grind Settings</h3>
 
-          {/* K-Ultra primary */}
-          <div className={`rounded-xl p-3 mb-3 text-white ${grindChanged() ? 'bg-amber-700' : 'bg-[#333333]'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-white/70">1Zpresso K-Ultra</span>
-              <span className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Primary</span>
-            </div>
-            <p className="text-lg font-bold">{recipe.grind.k_ultra.starting_point}</p>
-            <p className="text-xs text-white/60 mt-0.5">Range: {recipe.grind.k_ultra.range}</p>
-            {grindChanged() && adj && (
-              <p className="text-xs text-white/80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
-            )}
-            {recipe.grind.k_ultra.description && (
-              <p className="text-xs text-white/50 mt-1 italic">{recipe.grind.k_ultra.description}</p>
-            )}
-          </div>
+              {/* Primary grinder */}
+              <div className={`rounded-xl p-3 mb-3 text-white ${grindChanged() ? 'bg-amber-700' : 'bg-[#333333]'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-white/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full">Primary</span>
+                </div>
+                <p className="text-lg font-bold">{primaryData.starting_point}</p>
+                <p className="text-xs text-white/60 mt-0.5">Range: {primaryData.range}</p>
+                {grindChanged() && adj && (
+                  <p className="text-xs text-white/80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
+                )}
+                {primaryData.description && (
+                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.description}</p>
+                )}
+                {primaryData.note && (
+                  <p className="text-xs text-white/50 mt-1 italic">{primaryData.note}</p>
+                )}
+              </div>
 
-          {/* Q-Air */}
-          <div className="flex items-center justify-between py-2.5 border-b border-[#F0EDE9]">
-            <div>
-              <p className="text-xs font-medium text-[#6B6B6B]">1Zpresso Q-Air</p>
-              <p className="text-xs text-[#9CA3AF]">Range: {recipe.grind.q_air.range}</p>
+              {/* Secondary grinders */}
+              {secondaryGrinders.map((grinder, i) => {
+                const data = recipe.grind[grinder]
+                const isLast = i === secondaryGrinders.length - 1
+                return (
+                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[#F0EDE9]'}`}>
+                    <div>
+                      <p className="text-xs font-medium text-[#6B6B6B]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
+                      {data.note && (
+                        <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-[#333333] shrink-0">{data.starting_point}</p>
+                  </div>
+                )
+              })}
             </div>
-            <p className="text-sm font-semibold text-[#333333]">{recipe.grind.q_air.starting_point}</p>
-          </div>
-
-          {/* Baratza */}
-          <div className="flex items-start justify-between py-2.5 gap-3">
-            <div>
-              <p className="text-xs font-medium text-[#6B6B6B]">Baratza Encore ESP</p>
-              <p className="text-xs text-[#9CA3AF]">Range: {recipe.grind.baratza_encore_esp.range}</p>
-              {recipe.grind.baratza_encore_esp.note && (
-                <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{recipe.grind.baratza_encore_esp.note}</p>
-              )}
-            </div>
-            <p className="text-sm font-semibold text-[#333333] shrink-0">{recipe.grind.baratza_encore_esp.starting_point}</p>
-          </div>
-        </div>
+          )
+        })()}
 
         {/* Brew Steps */}
         <div>

@@ -35,14 +35,19 @@ export function kUltraClicksToMicrons(clicks: number): number {
   return clicks * 11 // fallback linear
 }
 
-// ─── Q-Air: microns → setting ────────────────────────────────────────────────
+// ─── Q-Air: microns → rotations ──────────────────────────────────────────────
+// Anchor points derived from the tested rotation-based grind table (0.0–4.0 rotations).
 
 const Q_AIR_TABLE: Array<[number, number]> = [
-  [300, 1.0], [350, 1.5], [400, 2.0], [450, 2.5], [500, 3.0],
-  [560, 3.5], [620, 4.0], [680, 4.5], [740, 5.0], [800, 5.5],
-  [840, 5.8], [870, 6.0], [900, 6.2], [930, 6.5], [960, 6.8],
-  [990, 7.0], [1010, 7.2], [1050, 7.5], [1100, 8.0], [1150, 8.5],
-  [1200, 9.0], [1300, 10.0],
+  [0,    0.0],
+  [200,  0.6],
+  [400,  1.2],
+  [550,  1.6],
+  [700,  2.2],
+  [850,  2.6],
+  [900,  2.8],
+  [1200, 3.6],
+  [1400, 4.0],
 ]
 
 function micronsToQAirRaw(microns: number): number {
@@ -147,6 +152,73 @@ export function kUltraRangeToBaratza(
       note = 'At boundary of pour-over zone (14–24). Step ±1 click based on drain speed.'
     } else {
       note = 'Within pour-over zone (14–24). Adjust ±1 click based on drain speed.'
+    }
+  }
+
+  return {
+    range: `clicks ${lowClick}–${highClick}`,
+    starting_point: `click ${startClick}`,
+    note,
+  }
+}
+
+// ─── Timemore C2: microns → click ────────────────────────────────────────────
+
+const TIMEMORE_C2_TABLE: Array<[number, number]> = [
+  [100, 2], [200, 4], [230, 6], [300, 8], [350, 10],
+  [400, 12], [450, 14], [550, 16], [650, 18], [750, 20],
+  [870, 22], [950, 24], [1050, 26], [1200, 28], [1400, 30],
+]
+
+function micronsToTimemoreC2Raw(microns: number): number {
+  const table = TIMEMORE_C2_TABLE
+  if (microns <= table[0][0]) return table[0][1]
+  if (microns >= table[table.length - 1][0]) return table[table.length - 1][1]
+
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (microns >= x0 && microns <= x1) {
+      const t = (microns - x0) / (x1 - x0)
+      return Math.round(y0 + t * (y1 - y0))
+    }
+  }
+  return 20
+}
+
+export function kUltraRangeToTimemoreC2(
+  lowClicks: number,
+  highClicks: number,
+  startingClicks: number,
+  method: string,
+): GrinderSetting {
+  const isPourOver = POUR_OVER_METHODS.has(method)
+
+  const lowMicrons = kUltraClicksToMicrons(lowClicks)
+  const highMicrons = kUltraClicksToMicrons(highClicks)
+  const startMicrons = kUltraClicksToMicrons(startingClicks)
+
+  let lowClick = micronsToTimemoreC2Raw(lowMicrons)
+  let highClick = micronsToTimemoreC2Raw(highMicrons)
+  let startClick = micronsToTimemoreC2Raw(startMicrons)
+
+  let note = 'Adjust ±1 click based on drain speed.'
+
+  if (isPourOver) {
+    let clamped = false
+
+    if (lowClick < 14) { lowClick = 14; clamped = true }
+    if (highClick < 14) { highClick = 14; clamped = true }
+    if (startClick < 14) { startClick = 14; clamped = true }
+
+    if (lowClick > 22) { lowClick = 22; clamped = true }
+    if (highClick > 22) { highClick = 22; clamped = true }
+    if (startClick > 22) { startClick = 22; clamped = true }
+
+    if (clamped) {
+      note = 'At boundary of pour-over zone (14–22). Step ±1 click based on drain speed.'
+    } else {
+      note = 'Within pour-over zone (14–22). Adjust ±1 click based on drain speed.'
     }
   }
 

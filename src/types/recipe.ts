@@ -98,6 +98,7 @@ export const RecipeSchema = z.object({
     k_ultra: GrinderSettingSchema,
     q_air: GrinderSettingSchema,
     baratza_encore_esp: GrinderSettingSchema,
+    timemore_c2: GrinderSettingSchema,
   }),
   range_logic: z.object({
     base_range: z.string(),
@@ -172,10 +173,21 @@ export const FeedbackRoundSchema = z.object({
 
 export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
 
+export const GrinderIdSchema = z.enum(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
+export type GrinderId = z.infer<typeof GrinderIdSchema>
+
+export const GRINDER_DISPLAY_NAMES: Record<GrinderId, string> = {
+  k_ultra: '1Zpresso K-Ultra',
+  q_air: '1Zpresso Q-Air',
+  baratza_encore_esp: 'Baratza Encore ESP',
+  timemore_c2: 'Timemore C2',
+}
+
 export const UserProfileSchema = z.object({
   display_name: z.string().nullable().optional(),
   default_volume_ml: z.number().int().positive().default(250),
   temp_unit: z.enum(['C', 'F']).default('C'),
+  preferred_grinder: GrinderIdSchema.default('k_ultra'),
 })
 
 export type UserProfile = z.infer<typeof UserProfileSchema>
@@ -231,6 +243,7 @@ export const UpdateProfileRequestSchema = z.object({
   display_name: z.string().optional(),
   default_volume_ml: z.number().int().positive().optional(),
   temp_unit: z.enum(['C', 'F']).optional(),
+  preferred_grinder: GrinderIdSchema.optional(),
 })
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>

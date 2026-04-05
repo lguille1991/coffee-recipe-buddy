@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 
 interface Profile {
   display_name: string | null
   default_volume_ml: number
   temp_unit: 'C' | 'F'
+  preferred_grinder: GrinderId
 }
 
 export default function SettingsPage() {
@@ -18,6 +20,7 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [volumeMl, setVolumeMl] = useState('250')
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C')
+  const [preferredGrinder, setPreferredGrinder] = useState<GrinderId>('k_ultra')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +39,7 @@ export default function SettingsPage() {
         setDisplayName(data.display_name ?? '')
         setVolumeMl(String(data.default_volume_ml))
         setTempUnit(data.temp_unit)
+        setPreferredGrinder(data.preferred_grinder ?? 'k_ultra')
       })
       .catch(() => {})
   }, [user])
@@ -53,6 +57,7 @@ export default function SettingsPage() {
           display_name: displayName || null,
           default_volume_ml: parseInt(volumeMl, 10),
           temp_unit: tempUnit,
+          preferred_grinder: preferredGrinder,
         }),
       })
       if (!res.ok) {
@@ -125,6 +130,29 @@ export default function SettingsPage() {
                 }`}
               >
                 °{unit}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preferred grinder */}
+        <div>
+          <label className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wider block mb-1.5">
+            Preferred Grinder
+          </label>
+          <div className="flex flex-col gap-2">
+            {(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as const).map(grinder => (
+              <button
+                key={grinder}
+                type="button"
+                onClick={() => setPreferredGrinder(grinder)}
+                className={`w-full py-3 rounded-[12px] text-sm font-medium transition-colors text-left px-4 ${
+                  preferredGrinder === grinder
+                    ? 'bg-[#333333] text-white'
+                    : 'bg-white border border-[#E1E2E5] text-[#6B6B6B]'
+                }`}
+              >
+                {GRINDER_DISPLAY_NAMES[grinder]}
               </button>
             ))}
           </div>
