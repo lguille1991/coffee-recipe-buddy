@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Camera, PenLine } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
@@ -98,20 +99,14 @@ export default function HomePage() {
           href="/scan"
           className="w-full flex items-center justify-center gap-2 bg-[#333333] text-white text-sm font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="5.25" stroke="white" strokeWidth="1.5" />
-            <circle cx="8" cy="8" r="2" fill="white" />
-            <path d="M1 8H2.5M13.5 8H15M8 1V2.5M8 13.5V15" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Camera size={20} />
           Scan Your Coffee Bag
         </Link>
         <Link
           href="/manual"
           className="w-full flex items-center justify-center gap-2 bg-white text-[#333333] text-sm font-medium rounded-[14px] py-3.5 border border-[#E1E2E5] active:opacity-80 transition-opacity"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 3H13M3 6H10M3 9H13M3 12H8" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <PenLine size={16} />
           Enter Manually
         </Link>
       </div>
