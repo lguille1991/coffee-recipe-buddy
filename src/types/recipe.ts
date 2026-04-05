@@ -3,15 +3,15 @@ import { z } from 'zod'
 // ─── Bean Profile ────────────────────────────────────────────────────────────
 
 export const BeanProfileSchema = z.object({
-  bean_name: z.string().optional(),
-  roaster: z.string().optional(),
-  variety: z.string().optional(),
+  bean_name: z.string().nullable().optional(),
+  roaster: z.string().nullable().optional(),
+  variety: z.string().nullable().optional(),
   process: z.enum(['washed', 'natural', 'honey', 'anaerobic', 'unknown']),
-  origin: z.string().optional(),
-  altitude_masl: z.number().optional(),
+  origin: z.string().nullable().optional(),
+  altitude_masl: z.number().nullable().optional(),
   roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark']),
-  tasting_notes: z.array(z.string()).optional(),
-  roast_date: z.string().optional(), // ISO date string YYYY-MM-DD
+  tasting_notes: z.array(z.string()).nullable().optional(),
+  roast_date: z.string().nullable().optional(), // ISO date string YYYY-MM-DD
 })
 
 export type BeanProfile = z.infer<typeof BeanProfileSchema>

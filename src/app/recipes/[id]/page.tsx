@@ -32,7 +32,7 @@ export default function SavedRecipeDetailPage() {
         setRecipe(data)
         // Pre-compute freshness adjustment
         const migrated = migrateRecipe(data.current_recipe_json, data.schema_version)
-        const adj = recalculateFreshness(migrated, data.bean_info.roast_date)
+        const adj = recalculateFreshness(migrated, data.bean_info.roast_date ?? undefined)
         if (adj.adjusted) setFreshnessAdj(adj)
       })
       .catch(err => setError(err.message))

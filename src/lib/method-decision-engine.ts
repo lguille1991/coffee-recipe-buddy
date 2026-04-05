@@ -185,11 +185,11 @@ function buildRationale(
 export function recommendMethods(bean: BeanProfile): MethodRecommendation[] {
   const scores = initScores()
 
-  scoreProcess(scores, bean.process)
-  scoreRoast(scores, bean.roast_level)
-  scoreVariety(scores, bean.variety)
-  scoreFlavorNotes(scores, bean.tasting_notes)
-  scoreAltitude(scores, bean.altitude_masl)
+  scoreProcess(scores, bean.process ?? undefined)
+  scoreRoast(scores, bean.roast_level ?? undefined)
+  scoreVariety(scores, bean.variety ?? undefined)
+  scoreFlavorNotes(scores, bean.tasting_notes ?? undefined)
+  scoreAltitude(scores, bean.altitude_masl ?? undefined)
 
   const sorted = ALL_METHODS
     .map(m => ({ method: m, score: scores[m] }))
