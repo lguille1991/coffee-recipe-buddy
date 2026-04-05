@@ -33,6 +33,7 @@ export default function SavedRecipeDetailPage() {
   const [sharing, setSharing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [revoking, setRevoking] = useState(false)
+  const [commentCount, setCommentCount] = useState<number | null>(null)
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -61,6 +62,10 @@ export default function SavedRecipeDetailPage() {
         if (data) {
           setShareToken(data.shareToken)
           setShareUrl(data.url)
+          // Fetch comment count for the share badge
+          fetch(`/api/share/${data.shareToken}/comments?page=1`)
+            .then(r => r.ok ? r.json() : null)
+            .then(res => { if (res) setCommentCount(res.total) })
         }
       })
   }, [id, router])
@@ -222,7 +227,7 @@ export default function SavedRecipeDetailPage() {
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path d="M7.2 6.9C6.87 6.9 6.59 7.03 6.37 7.24L3.68 5.72C3.7 5.61 3.71 5.49 3.71 5.37C3.71 5.25 3.7 5.13 3.68 5.02L6.34 3.52C6.56 3.74 6.86 3.87 7.2 3.87C7.91 3.87 8.48 3.3 8.48 2.59C8.48 1.88 7.91 1.31 7.2 1.31C6.49 1.31 5.92 1.88 5.92 2.59C5.92 2.71 5.93 2.83 5.95 2.94L3.29 4.44C3.07 4.22 2.77 4.09 2.43 4.09C1.72 4.09 1.15 4.66 1.15 5.37C1.15 6.08 1.72 6.65 2.43 6.65C2.77 6.65 3.07 6.52 3.29 6.3L5.98 7.82C5.96 7.93 5.95 8.05 5.95 8.17C5.95 8.86 6.51 9.42 7.2 9.42C7.89 9.42 8.45 8.86 8.45 8.17C8.45 7.48 7.89 6.9 7.2 6.9Z" fill="currentColor" />
                 </svg>
-                Shared
+                Shared{commentCount !== null && commentCount > 0 ? ` · ${commentCount}` : ''}
               </button>
             )}
           </div>

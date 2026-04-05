@@ -193,7 +193,7 @@ Every saved recipe can have a freeform text note for personal context ("great wi
 
 Enables conversation about a shared recipe — useful when a friend shares a recipe and you want to ask about the dose or a specific adjustment.
 
-- [ ] Add `recipe_comments` table → `docs/migration_005_comments.sql`:
+- [x] Add `recipe_comments` table → `docs/migration_006_comments.sql`:
   ```sql
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid()
   share_token   text NOT NULL REFERENCES shared_recipes(share_token) ON DELETE CASCADE
@@ -201,12 +201,12 @@ Enables conversation about a shared recipe — useful when a friend shares a rec
   body          text NOT NULL CHECK (length(body) <= 500)
   created_at    timestamptz DEFAULT now()
   ```
-- [ ] RLS: anyone can read comments for a given `share_token`; only the `author_id` can delete their own
-- [ ] `GET /api/share/:token/comments` — public; paginated, ordered by `created_at ASC`
-- [ ] `POST /api/share/:token/comments` — auth'd; validates body length; inserts comment
-- [ ] `DELETE /api/share/:token/comments/:id` — auth'd; only own comments
-- [ ] Comments section in `/share/[token]` view — below recipe card; shows comment list + input (auth required to post, prompt to sign in otherwise)
-- [ ] Comment count shown in share badge on recipe detail
+- [x] RLS: anyone can read comments for a given `share_token`; only the `author_id` can delete their own
+- [x] `GET /api/share/:token/comments` — public; paginated, ordered by `created_at ASC`
+- [x] `POST /api/share/:token/comments` — auth'd; validates body length; inserts comment
+- [x] `DELETE /api/share/:token/comments/:id` — auth'd; only own comments
+- [x] Comments section in `/share/[token]` view — below recipe card; shows comment list + input (auth required to post, prompt to sign in otherwise)
+- [x] Comment count shown in share badge on recipe detail
 - [ ] **No notifications in this scope** — polling or static load only; real-time (Supabase Realtime) is a future enhancement
 
 ---

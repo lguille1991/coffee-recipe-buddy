@@ -255,6 +255,25 @@ export const UpdateProfileRequestSchema = z.object({
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>
 
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+export const RecipeCommentSchema = z.object({
+  id: z.string().uuid(),
+  share_token: z.string(),
+  author_id: z.string().uuid(),
+  body: z.string().max(500),
+  created_at: z.string(),
+  author_display_name: z.string().nullable().optional(),
+})
+
+export type RecipeComment = z.infer<typeof RecipeCommentSchema>
+
+export const CreateCommentRequestSchema = z.object({
+  body: z.string().min(1).max(500),
+})
+
+export type CreateCommentRequest = z.infer<typeof CreateCommentRequestSchema>
+
 // ─── Sharing ──────────────────────────────────────────────────────────────────
 
 export const ShareSnapshotSchema = z.object({

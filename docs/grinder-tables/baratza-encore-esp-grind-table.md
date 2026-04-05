@@ -10,7 +10,7 @@ The Baratza Encore ESP is an entry-level electric grinder with 40 click settings
 
 ## Click → Approximate Micron Mapping
 
-| Baratza Click | Approx. Microns | Grind Zone |
+| Baratza Clicks | Approx. Microns | Grind Zone |
 |---|---|---|
 | 1 | 200 | Finest espresso |
 | 5 | 300 | Espresso |

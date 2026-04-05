@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function ShareRecipeClient({ data }: { data: PublicShareResponse }) {
@@ -11,6 +11,15 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
   const [cloning, setCloning] = useState(false)
   const [cloned, setCloned] = useState(false)
   const [cloneError, setCloneError] = useState<string | null>(null)
+
+  // Comments state
+  const [comments, setComments] = useState<RecipeComment[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(true)
+  const [commentBody, setCommentBody] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [postError, setPostError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { snapshot } = data
   const r = snapshot.current_recipe_json
@@ -22,9 +31,15 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
   const secondaryGrinders = (['q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[])
   const primaryData = r.grind[primaryGrinder]
 
+  useEffect(() => {
+    fetch(`/api/share/${data.shareToken}/comments`)
+      .then(r => r.ok ? r.json() : null)
+      .then(res => { if (res) setComments(res.comments) })
+      .finally(() => setCommentsLoading(false))
+  }, [data.shareToken])
+
   async function handleClone() {
     if (!user) {
-      // Redirect to auth, then come back to clone
       router.push(`/auth?returnTo=/share/${data.shareToken}&action=clone`)
       return
     }
@@ -41,6 +56,42 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
       setCloneError('Something went wrong. Please try again.')
     } finally {
       setCloning(false)
+    }
+  }
+
+  async function handlePostComment() {
+    if (!user) {
+      router.push(`/auth?returnTo=/share/${data.shareToken}`)
+      return
+    }
+    if (!commentBody.trim()) return
+
+    setPosting(true)
+    setPostError(null)
+    try {
+      const res = await fetch(`/api/share/${data.shareToken}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: commentBody.trim() }),
+      })
+      if (!res.ok) throw new Error('Failed to post comment')
+      const newComment: RecipeComment = await res.json()
+      setComments(prev => [...prev, newComment])
+      setCommentBody('')
+    } catch {
+      setPostError('Failed to post. Please try again.')
+    } finally {
+      setPosting(false)
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    setDeletingId(commentId)
+    try {
+      await fetch(`/api/share/${data.shareToken}/comments/${commentId}`, { method: 'DELETE' })
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -174,6 +225,93 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
             <p className="text-xs text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
           </div>
         )}
+
+        {/* Comments */}
+        <div>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">
+            Comments {!commentsLoading && comments.length > 0 && `· ${comments.length}`}
+          </h3>
+
+          {/* Comment list */}
+          {commentsLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-[#9CA3AF] py-2">No comments yet. Be the first!</p>
+          ) : (
+            <div className="flex flex-col gap-3 mb-4">
+              {comments.map(comment => (
+                <div key={comment.id} className="bg-[var(--card)] rounded-xl px-4 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                          {comment.author_display_name ?? 'Brygg user'}
+                        </span>
+                        <span className="text-[10px] text-[#9CA3AF] shrink-0">
+                          {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--muted-foreground)] leading-relaxed whitespace-pre-wrap">{comment.body}</p>
+                    </div>
+                    {user && comment.author_id === user.id && (
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        disabled={deletingId === comment.id}
+                        className="shrink-0 p-1 text-[#9CA3AF] active:opacity-60 disabled:opacity-40"
+                        aria-label="Delete comment"
+                      >
+                        {deletingId === comment.id ? (
+                          <div className="w-3.5 h-3.5 border border-[#9CA3AF] border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 3.5H12M4.5 3.5V2.5C4.5 2.22 4.72 2 5 2H9C9.28 2 9.5 2.22 9.5 2.5V3.5M5.5 6.5V10.5M8.5 6.5V10.5M3.5 3.5L4 11.5H10L10.5 3.5H3.5Z" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Comment input */}
+          {user ? (
+            <div className="flex flex-col gap-2">
+              <textarea
+                ref={commentInputRef}
+                value={commentBody}
+                onChange={e => setCommentBody(e.target.value)}
+                maxLength={500}
+                placeholder="Add a comment…"
+                rows={2}
+                className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-[#9CA3AF]">{commentBody.length}/500</p>
+                <button
+                  onClick={handlePostComment}
+                  disabled={posting || !commentBody.trim()}
+                  className="px-4 py-1.5 bg-[var(--foreground)] text-[var(--background)] text-xs font-semibold rounded-[10px] active:opacity-80 disabled:opacity-40 flex items-center gap-1.5"
+                >
+                  {posting ? (
+                    <div className="w-3 h-3 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+                  ) : 'Post'}
+                </button>
+              </div>
+              {postError && <p className="text-xs text-red-500">{postError}</p>}
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push(`/auth?returnTo=/share/${data.shareToken}`)}
+              className="w-full py-3 rounded-xl border border-[var(--border)] text-xs text-[var(--muted-foreground)] active:opacity-60"
+            >
+              Sign in to comment
+            </button>
+          )}
+        </div>
 
       </div>
 
