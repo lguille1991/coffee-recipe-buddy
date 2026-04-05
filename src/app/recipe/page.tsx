@@ -7,6 +7,10 @@ import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, G
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 
+function normalizeClickSetting(value: string): string {
+  return value.replace(/^click\s+(\d+)$/i, '$1 clicks')
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ParamCard({
@@ -342,7 +346,7 @@ export default function RecipePage() {
             />
             <ParamCard
               icon={<CircleDot size={16} />}
-              value={recipe.grind[preferredGrinder].starting_point}
+              value={normalizeClickSetting(recipe.grind[preferredGrinder].starting_point)}
               label="Grind"
               changed={grindChanged()}
               annotation={annotation('grind')}
@@ -370,7 +374,7 @@ export default function RecipePage() {
                   <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
                   <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                 </div>
-                <p className="text-lg font-bold">{primaryData.starting_point}</p>
+                <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
                 <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
                   <p className="text-xs opacity-80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
@@ -396,7 +400,7 @@ export default function RecipePage() {
                         <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{data.starting_point}</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
                   </div>
                 )
               })}

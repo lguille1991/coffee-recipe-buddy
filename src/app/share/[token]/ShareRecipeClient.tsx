@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 
+function normalizeClickSetting(value: string): string {
+  return value.replace(/^click\s+(\d+)$/i, '$1 clicks')
+}
+
 export default function ShareRecipeClient({ data }: { data: PublicShareResponse }) {
   const router = useRouter()
   const { user } = useAuth()
@@ -147,7 +151,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
               { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
               { value: r.parameters.total_time, label: 'Time' },
-              { value: r.grind[primaryGrinder].starting_point, label: 'Grind' },
+              { value: normalizeClickSetting(r.grind[primaryGrinder].starting_point), label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
@@ -168,7 +172,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
               <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
             </div>
-            <p className="text-lg font-bold">{primaryData.starting_point}</p>
+            <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
             <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
             {primaryData.description && (
               <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
@@ -191,7 +195,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                     <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{gdata.note}</p>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{gdata.starting_point}</p>
+                <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
               </div>
             )
           })}

@@ -31,8 +31,13 @@ The LLM must output **only valid JSON** matching this schema. Zero extra text ou
     },
     "baratza_encore_esp": {
       "range": "string — e.g. 'clicks 18–21'",
-      "starting_point": "string — e.g. 'click 20'",
+      "starting_point": "string — e.g. '20 clicks'",
       "note": "string — precision note, e.g. 'Upper range of pour-over zone; step down one click if drain is very slow'"
+    },
+    "timemore_c2": {
+      "range": "string — e.g. 'clicks 17–20'",
+      "starting_point": "string — e.g. '18 clicks'",
+      "note": "string — precision note, e.g. 'Adjust ±1 click based on drain speed.'"
     }
   },
   "range_logic": {
@@ -112,8 +117,13 @@ The LLM must output **only valid JSON** matching this schema. Zero extra text ou
     },
     "baratza_encore_esp": {
       "range": "clicks 17–20",
-      "starting_point": "click 18",
+      "starting_point": "18 clicks",
       "note": "Mid pour-over zone; adjust by ±1 click based on drain speed"
+    },
+    "timemore_c2": {
+      "range": "clicks 17–20",
+      "starting_point": "18 clicks",
+      "note": "Adjust ±1 click based on drain speed."
     }
   },
   "range_logic": {

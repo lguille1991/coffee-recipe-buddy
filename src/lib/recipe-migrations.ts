@@ -21,7 +21,7 @@ const migrations: Record<number, MigrationFn> = {
 
     const c2 = kuRange
       ? kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, recipe.method)
-      : { range: 'clicks 18–22', starting_point: 'click 20', note: 'Regenerate recipe for precise C2 settings.' }
+      : { range: 'clicks 18–22', starting_point: '20 clicks', note: 'Regenerate recipe for precise C2 settings.' }
 
     return {
       ...recipe,

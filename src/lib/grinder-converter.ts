@@ -157,7 +157,7 @@ export function kUltraRangeToBaratza(
 
   return {
     range: `clicks ${lowClick}–${highClick}`,
-    starting_point: `click ${startClick}`,
+    starting_point: `${startClick} clicks`,
     note,
   }
 }
@@ -224,7 +224,7 @@ export function kUltraRangeToTimemoreC2(
 
   return {
     range: `clicks ${lowClick}–${highClick}`,
-    starting_point: `click ${startClick}`,
+    starting_point: `${startClick} clicks`,
     note,
   }
 }

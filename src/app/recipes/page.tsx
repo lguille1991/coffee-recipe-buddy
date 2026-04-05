@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import MethodIcon from '@/components/MethodIcon'
 
 const METHOD_FILTERS: { id: string; label: string }[] = [
   { id: '', label: 'All' },
@@ -27,10 +28,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
         ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4 4h12v12H4z" stroke="#9CA3AF" strokeWidth="1.2" strokeLinejoin="round" />
-            <path d="M7 8h6M7 11h4" stroke="#9CA3AF" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
+          <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
         )}
       </div>
       <div className="flex-1 min-w-0">

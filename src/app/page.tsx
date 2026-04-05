@@ -6,6 +6,7 @@ import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import MethodIcon from '@/components/MethodIcon'
 
 function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
@@ -23,10 +24,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
         ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4 4h12v12H4z" stroke="#9CA3AF" strokeWidth="1.2" strokeLinejoin="round" />
-            <path d="M7 8h6M7 11h4" stroke="#9CA3AF" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
+          <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
         )}
       </div>
 

@@ -7,6 +7,10 @@ import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recal
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
 
+function normalizeClickSetting(value: string): string {
+  return value.replace(/^click\s+(\d+)$/i, '$1 clicks')
+}
+
 export default function SavedRecipeDetailPage() {
   const router = useRouter()
   const params = useParams()
@@ -271,7 +275,7 @@ export default function SavedRecipeDetailPage() {
               { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
               { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
               { value: r.parameters.total_time, label: 'Time' },
-              { value: r.grind[preferredGrinder].starting_point, label: 'Grind' },
+              { value: normalizeClickSetting(r.grind[preferredGrinder].starting_point), label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
@@ -296,7 +300,7 @@ export default function SavedRecipeDetailPage() {
                   <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
                   <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                 </div>
-                <p className="text-lg font-bold">{primaryData.starting_point}</p>
+                <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
                 <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
                 {primaryData.description && (
                   <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
@@ -319,7 +323,7 @@ export default function SavedRecipeDetailPage() {
                         <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{data.starting_point}</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
                   </div>
                 )
               })}
