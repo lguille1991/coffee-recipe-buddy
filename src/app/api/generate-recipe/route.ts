@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema } from '@/types/recipe'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+})
 
 const MAX_RETRIES = 2
 
@@ -27,7 +30,8 @@ export async function POST(req: NextRequest) {
 
     const { system, user } = buildRecipePrompt(beanParsed.data, method)
 
-    const messages: Anthropic.MessageParam[] = [
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'system', content: system },
       { role: 'user', content: user },
     ]
 
@@ -35,14 +39,13 @@ export async function POST(req: NextRequest) {
     let attempt = 0
 
     while (attempt <= MAX_RETRIES) {
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+      const response = await client.chat.completions.create({
+        model: 'google/gemini-2.0-flash-001',
         max_tokens: 4096,
-        system,
         messages,
       })
 
-      const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
+      const rawText = response.choices[0].message.content ?? ''
       const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
 
       let parsed: unknown

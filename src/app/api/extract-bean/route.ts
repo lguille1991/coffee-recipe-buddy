@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { buildExtractionPrompt } from '@/lib/prompt-builder'
 import { ExtractionResponseSchema } from '@/types/recipe'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+})
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,29 +20,21 @@ export async function POST(req: NextRequest) {
     // Convert File to base64
     const bytes = await imageFile.arrayBuffer()
     const base64 = Buffer.from(bytes).toString('base64')
-    const mediaType = (imageFile.type || 'image/jpeg') as
-      | 'image/jpeg'
-      | 'image/png'
-      | 'image/gif'
-      | 'image/webp'
+    const mediaType = imageFile.type || 'image/jpeg'
 
     const systemPrompt = buildExtractionPrompt()
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const response = await client.chat.completions.create({
+      model: 'google/gemini-2.0-flash-001',
       max_tokens: 1024,
-      system: systemPrompt,
       messages: [
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
           content: [
             {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64,
-              },
+              type: 'image_url',
+              image_url: { url: `data:${mediaType};base64,${base64}` },
             },
             {
               type: 'text',
@@ -50,7 +45,7 @@ export async function POST(req: NextRequest) {
       ],
     })
 
-    const rawText = message.content[0].type === 'text' ? message.content[0].text : ''
+    const rawText = response.choices[0].message.content ?? ''
 
     // Parse JSON from response (strip markdown code fences if present)
     const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
