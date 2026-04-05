@@ -178,16 +178,16 @@ Pour step volumes are **not** directly editable — they follow from dose/ratio 
 
 Every saved recipe can have a freeform text note for personal context ("great with oat milk", "beans were 18 days old", "ground 2 extra clicks coarser").
 
-- [ ] Add `notes text` (nullable) column to `recipes` table → `docs/migration_004_notes.sql`
-- [ ] Update `SavedRecipe` type and API:
-  - `GET /api/recipes/:id` — include `notes` in response
-  - `PATCH /api/recipes/:id` — accept `notes` field
-- [ ] Notes textarea in saved recipe detail (`/recipes/:id`):
+- [x] Add `notes text` (nullable) column to `recipes` table → `docs/migration_005_notes.sql`
+- [x] Update `SavedRecipe` type and API:
+  - `GET /api/recipes/:id` — include `notes` in response (via `select('*')`)
+  - `PATCH /api/recipes/:id` — accept `notes` field (notes-only branch added)
+- [x] Notes textarea in saved recipe detail (`/recipes/:id`):
   - Appears below the recipe card, above action buttons
   - Placeholder: "Add notes about this brew…"
-  - Auto-saves on blur (debounced `PATCH` call, no explicit save button)
-  - Character limit: 1000
-- [ ] Notes field included in the share snapshot (read-only in `/share/:token` view as "Sharer's notes")
+  - Auto-saves on change (debounced 500ms `PATCH` call, no explicit save button)
+  - Character limit: 1000 with live counter
+- [x] Notes field included in the share snapshot (read-only in `/share/:token` view as "Sharer's notes")
 
 ### Comments on shared recipes (Phase B — plan now, implement after Phase A)
 

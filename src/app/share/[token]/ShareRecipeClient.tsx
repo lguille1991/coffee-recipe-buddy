@@ -167,6 +167,14 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           </div>
         </div>
 
+        {/* Sharer's notes */}
+        {snapshot.notes && (
+          <div className="bg-[var(--card)] rounded-2xl px-4 py-3">
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Sharer&apos;s Notes</h3>
+            <p className="text-xs text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
+          </div>
+        )}
+
       </div>
 
       {/* Sticky Clone CTA */}

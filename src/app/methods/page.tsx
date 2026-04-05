@@ -66,6 +66,10 @@ export default function MethodsPage() {
 
       const recipe = await res.json()
       sessionStorage.setItem('recipe', JSON.stringify(recipe))
+      sessionStorage.removeItem('recipe_original')   // ensure fresh original is set on recipe page
+      sessionStorage.removeItem('feedback_round')    // clear stale feedback state
+      sessionStorage.removeItem('adjustment_history') // clear stale adjustment history
+      sessionStorage.removeItem('rebrew_recipe_id')  // not a rebrew
       sessionStorage.setItem('selectedMethod', JSON.stringify(storedRec))
       router.push('/recipe')
     } catch (err) {

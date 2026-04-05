@@ -202,6 +202,7 @@ export const SavedRecipeSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
   feedback_history: z.array(FeedbackRoundSchema).default([]),
   image_url: z.string().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
   created_at: z.string(),
   archived: z.boolean().default(false),
 })
@@ -239,6 +240,12 @@ export const UpdateRecipeRequestSchema = z.object({
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
 
+export const UpdateNotesRequestSchema = z.object({
+  notes: z.string().max(1000).nullable(),
+})
+
+export type UpdateNotesRequest = z.infer<typeof UpdateNotesRequestSchema>
+
 export const UpdateProfileRequestSchema = z.object({
   display_name: z.string().optional(),
   default_volume_ml: z.number().int().positive().optional(),
@@ -255,6 +262,7 @@ export const ShareSnapshotSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
   image_url: z.string().nullable().optional(),
   owner_display_name: z.string().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
 })
 
 export type ShareSnapshot = z.infer<typeof ShareSnapshotSchema>

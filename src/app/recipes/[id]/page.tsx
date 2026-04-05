@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { SavedRecipe, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { SavedRecipe, RecipeWithAdjustment, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recalculator'
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
@@ -20,6 +20,11 @@ export default function SavedRecipeDetailPage() {
   const [freshnessAdj, setFreshnessAdj] = useState<FreshnessAdjustment | null>(null)
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
   const { preferredGrinder } = useProfile()
+
+  // Notes state
+  const [notes, setNotes] = useState('')
+  const [notesSaving, setNotesSaving] = useState(false)
+  const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sharing state
   const [shareToken, setShareToken] = useState<string | null>(null)
@@ -42,6 +47,7 @@ export default function SavedRecipeDetailPage() {
         const migrated = migrateRecipe(data.current_recipe_json, data.schema_version)
         const hydratedData = { ...data, current_recipe_json: migrated }
         setRecipe(hydratedData)
+        setNotes(data.notes ?? '')
         const adj = recalculateFreshness(migrated, data.bean_info.roast_date ?? undefined)
         if (adj.adjusted) setFreshnessAdj(adj)
       })
@@ -71,7 +77,8 @@ export default function SavedRecipeDetailPage() {
     const finalRecipe = freshnessAdj && !freshnessIgnored ? freshnessAdj.adjustedRecipe : migrated
 
     sessionStorage.setItem('recipe', JSON.stringify(finalRecipe))
-    sessionStorage.setItem('recipe_original', JSON.stringify(recipe.original_recipe_json))
+    const migratedOriginal = migrateRecipe(recipe.original_recipe_json as RecipeWithAdjustment, recipe.schema_version)
+    sessionStorage.setItem('recipe_original', JSON.stringify(migratedOriginal))
     sessionStorage.setItem('confirmedBean', JSON.stringify(recipe.bean_info))
     sessionStorage.setItem('feedback_round', '0')
     sessionStorage.setItem('adjustment_history', JSON.stringify(recipe.feedback_history ?? []))
@@ -97,6 +104,20 @@ export default function SavedRecipeDetailPage() {
     await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleNotesChange(value: string) {
+    setNotes(value)
+    if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
+    notesDebounceRef.current = setTimeout(async () => {
+      setNotesSaving(true)
+      await fetch(`/api/recipes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: value || null }),
+      })
+      setNotesSaving(false)
+    }, 500)
   }
 
   async function handleRevoke() {
@@ -337,6 +358,25 @@ export default function SavedRecipeDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Notes */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Notes</h3>
+            {notesSaving && (
+              <span className="text-[10px] text-[#9CA3AF]">Saving…</span>
+            )}
+          </div>
+          <textarea
+            value={notes}
+            onChange={e => handleNotesChange(e.target.value)}
+            maxLength={1000}
+            placeholder="Add notes about this brew…"
+            rows={3}
+            className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+          />
+          <p className="text-[10px] text-[#9CA3AF] text-right mt-1">{notes.length}/1000</p>
+        </div>
 
         {/* Actions */}
         <button

@@ -84,6 +84,7 @@ export async function POST(request: Request, { params }: Params) {
     current_recipe_json: recipe.current_recipe_json,
     image_url: recipe.image_url ?? null,
     owner_display_name: profile?.display_name ?? null,
+    notes: recipe.notes ?? null,
   }
 
   const { data: shared, error: insertError } = await supabase
