@@ -109,7 +109,7 @@ export default function MethodsPage() {
             key={rec.method}
             onClick={() => selectMethod(rec.method, rec.displayName, rec)}
             disabled={selecting !== null}
-            className="w-full bg-white rounded-2xl p-4 text-left flex items-start gap-4 active:scale-[0.98] transition-transform disabled:opacity-60 relative overflow-hidden"
+            className="w-full bg-white rounded-2xl p-4 text-left flex active:scale-[0.98] transition-transform disabled:opacity-60 relative overflow-hidden"
           >
             {selecting === rec.method && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
@@ -117,21 +117,23 @@ export default function MethodsPage() {
               </div>
             )}
 
-            <span className={`shrink-0 mt-0.5 px-2.5 py-1 rounded-full text-xs font-semibold ${RANK_COLORS[i]}`}>
-              {RANK_LABELS[i]}
-            </span>
+            <div className="flex-1 flex flex-col gap-2">
+              <span className={`self-start px-2.5 py-1 rounded-full text-xs font-semibold ${RANK_COLORS[i]}`}>
+                {RANK_LABELS[i]}
+              </span>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{METHOD_ICONS[rec.method] || '☕'}</span>
-                <span className="font-semibold text-[#333333] text-sm">{rec.displayName}</span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{METHOD_ICONS[rec.method] || '☕'}</span>
+                  <span className="font-semibold text-[#333333] text-sm">{rec.displayName}</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                  <path d="M6 4L10 8L6 12" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
+
               <p className="text-xs text-[#6B6B6B] leading-relaxed">{rec.rationale}</p>
             </div>
-
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-1 shrink-0">
-              <path d="M6 4L10 8L6 12" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
           </button>
         ))}
 
