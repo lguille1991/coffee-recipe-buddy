@@ -1,19 +1,26 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { createClient } from '@/lib/supabase/server'
 import ShareRecipeClient from './ShareRecipeClient'
 
 type Props = { params: Promise<{ token: string }> }
 
 async function getShareData(token: string): Promise<PublicShareResponse | null> {
-  try {
-    // Use absolute URL for server-side fetch; fall back to localhost in dev
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/share/${token}`, { cache: 'no-store' })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('shared_recipes')
+    .select('share_token, title, created_at, snapshot_json')
+    .eq('share_token', token)
+    .single()
+
+  if (error || !data) return null
+
+  return {
+    shareToken: data.share_token,
+    title: data.title ?? null,
+    createdAt: data.created_at,
+    snapshot: data.snapshot_json,
   }
 }
 

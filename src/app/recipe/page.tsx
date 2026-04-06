@@ -83,7 +83,7 @@ export default function RecipePage() {
 
   // Save state
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   // Track the DB record for this session so adjustments can be PATCHed back
   const [rebrewId, setRebrewId] = useState<string | null>(null)
@@ -120,7 +120,10 @@ export default function RecipePage() {
 
     // Rebrew from a saved recipe — track the existing ID for PATCH updates
     const rebrewRaw = sessionStorage.getItem('rebrew_recipe_id')
-    if (rebrewRaw) setRebrewId(rebrewRaw)
+    if (rebrewRaw) {
+      setRebrewId(rebrewRaw)
+      setLastSavedRound(0) // nothing new to save until an adjustment is made
+    }
   }, [router])
 
   async function handleSave() {
@@ -153,9 +156,9 @@ export default function RecipePage() {
           const data = await res.json()
           throw new Error(data.error ?? 'Update failed')
         }
-        setSaved(true)
+        setSavedMessage('Recipe updated.')
         setLastSavedRound(feedbackRound)
-        setTimeout(() => setSaved(false), 2000)
+        setTimeout(() => setSavedMessage(null), 2000)
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Update failed')
       } finally {
@@ -196,9 +199,9 @@ export default function RecipePage() {
       }
       const data = await res.json()
       setSavedRecipeId(data.id)
-      setSaved(true)
+      setSavedMessage('Recipe saved to your library.')
       setLastSavedRound(feedbackRound)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSavedMessage(null), 2000)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -216,6 +219,7 @@ export default function RecipePage() {
     setAdjustmentHistory([])
     setShowFeedback(false)
     setSelectedSymptom(null)
+    setLastSavedRound(-1)
   }
 
   async function handleAdjust() {
@@ -301,20 +305,22 @@ export default function RecipePage() {
           </button>
           <h2 className="text-lg font-semibold">Your Recipe</h2>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || feedbackRound <= lastSavedRound}
-          className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
-          aria-label="Save recipe"
-        >
-          {saving ? (
-            <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
-          ) : (rebrewId ?? savedRecipeId) && feedbackRound > lastSavedRound && feedbackRound > 0 ? (
-            <Save size={20} />
-          ) : (
-            <Bookmark size={20} fill={lastSavedRound >= 0 && feedbackRound <= lastSavedRound ? 'currentColor' : 'none'} />
-          )}
-        </button>
+        {(saving || feedbackRound > lastSavedRound) && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
+            aria-label="Save recipe"
+          >
+            {saving ? (
+              <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+            ) : rebrewId ?? savedRecipeId ? (
+              <Save size={20} />
+            ) : (
+              <Bookmark size={20} />
+            )}
+          </button>
+        )}
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
@@ -328,9 +334,9 @@ export default function RecipePage() {
         </div>
 
         {/* Save feedback */}
-        {saved && (
+        {savedMessage && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
-            {rebrewId || savedRecipeId ? 'Recipe updated.' : 'Recipe saved to your library.'}
+            {savedMessage}
           </div>
         )}
         {saveError && (
