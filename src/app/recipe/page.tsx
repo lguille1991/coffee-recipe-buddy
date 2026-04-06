@@ -120,7 +120,10 @@ export default function RecipePage() {
 
     // Rebrew from a saved recipe — track the existing ID for PATCH updates
     const rebrewRaw = sessionStorage.getItem('rebrew_recipe_id')
-    if (rebrewRaw) setRebrewId(rebrewRaw)
+    if (rebrewRaw) {
+      setRebrewId(rebrewRaw)
+      setLastSavedRound(0) // nothing new to save until an adjustment is made
+    }
   }, [router])
 
   async function handleSave() {
@@ -216,6 +219,7 @@ export default function RecipePage() {
     setAdjustmentHistory([])
     setShowFeedback(false)
     setSelectedSymptom(null)
+    setLastSavedRound(-1)
   }
 
   async function handleAdjust() {
@@ -301,20 +305,22 @@ export default function RecipePage() {
           </button>
           <h2 className="text-lg font-semibold">Your Recipe</h2>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || feedbackRound <= lastSavedRound}
-          className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
-          aria-label="Save recipe"
-        >
-          {saving ? (
-            <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
-          ) : (rebrewId ?? savedRecipeId) && feedbackRound > lastSavedRound && feedbackRound > 0 ? (
-            <Save size={20} />
-          ) : (
-            <Bookmark size={20} fill={lastSavedRound >= 0 && feedbackRound <= lastSavedRound ? 'currentColor' : 'none'} />
-          )}
-        </button>
+        {(saving || feedbackRound > lastSavedRound) && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
+            aria-label="Save recipe"
+          >
+            {saving ? (
+              <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+            ) : rebrewId ?? savedRecipeId ? (
+              <Save size={20} />
+            ) : (
+              <Bookmark size={20} />
+            )}
+          </button>
+        )}
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
