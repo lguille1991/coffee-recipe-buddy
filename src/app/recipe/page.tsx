@@ -83,7 +83,7 @@ export default function RecipePage() {
 
   // Save state
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   // Track the DB record for this session so adjustments can be PATCHed back
   const [rebrewId, setRebrewId] = useState<string | null>(null)
@@ -153,9 +153,9 @@ export default function RecipePage() {
           const data = await res.json()
           throw new Error(data.error ?? 'Update failed')
         }
-        setSaved(true)
+        setSavedMessage('Recipe updated.')
         setLastSavedRound(feedbackRound)
-        setTimeout(() => setSaved(false), 2000)
+        setTimeout(() => setSavedMessage(null), 2000)
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Update failed')
       } finally {
@@ -196,9 +196,9 @@ export default function RecipePage() {
       }
       const data = await res.json()
       setSavedRecipeId(data.id)
-      setSaved(true)
+      setSavedMessage('Recipe saved to your library.')
       setLastSavedRound(feedbackRound)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSavedMessage(null), 2000)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -328,9 +328,9 @@ export default function RecipePage() {
         </div>
 
         {/* Save feedback */}
-        {saved && (
+        {savedMessage && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
-            {rebrewId || savedRecipeId ? 'Recipe updated.' : 'Recipe saved to your library.'}
+            {savedMessage}
           </div>
         )}
         {saveError && (
