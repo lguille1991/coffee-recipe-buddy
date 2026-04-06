@@ -85,6 +85,10 @@ export default function RecipePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // Track the DB record for this session so adjustments can be PATCHed back
+  const [rebrewId, setRebrewId] = useState<string | null>(null)
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null)
+  const [lastSavedRound, setLastSavedRound] = useState(-1)
 
   // Feedback UI state
   const [showFeedback, setShowFeedback] = useState(false)
@@ -113,11 +117,54 @@ export default function RecipePage() {
 
     const historyRaw = sessionStorage.getItem('adjustment_history')
     if (historyRaw) setAdjustmentHistory(JSON.parse(historyRaw))
+
+    // Rebrew from a saved recipe — track the existing ID for PATCH updates
+    const rebrewRaw = sessionStorage.getItem('rebrew_recipe_id')
+    if (rebrewRaw) setRebrewId(rebrewRaw)
   }, [router])
 
   async function handleSave() {
-    if (!recipe || !originalRecipe || saving || saved) return
+    if (!recipe || !originalRecipe || saving) return
 
+    const effectiveId = rebrewId ?? savedRecipeId
+    const feedbackHistoryPayload = adjustmentHistory.map((a, i) => ({
+      round: i + 1,
+      symptom: a.symptom,
+      variable_changed: a.variable_changed,
+      previous_value: a.previous_value,
+      new_value: a.new_value,
+    }))
+
+    setSaving(true)
+    setSaveError(null)
+
+    if (effectiveId) {
+      // Update an existing saved recipe
+      try {
+        const res = await fetch(`/api/recipes/${effectiveId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            current_recipe_json: recipe,
+            feedback_history: feedbackHistoryPayload,
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error ?? 'Update failed')
+        }
+        setSaved(true)
+        setLastSavedRound(feedbackRound)
+        setTimeout(() => setSaved(false), 2000)
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Update failed')
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
+    // First-time save: POST a new recipe
     const beanRawInner = typeof window !== 'undefined' ? sessionStorage.getItem('confirmedBean') : null
     const beanInner = beanRawInner ? JSON.parse(beanRawInner) : {}
 
@@ -126,24 +173,17 @@ export default function RecipePage() {
       method: recipe.method,
       original_recipe_json: originalRecipe,
       current_recipe_json: recipe,
-      feedback_history: adjustmentHistory.map((a, i) => ({
-        round: i + 1,
-        symptom: a.symptom,
-        variable_changed: a.variable_changed,
-        previous_value: a.previous_value,
-        new_value: a.new_value,
-      })),
+      feedback_history: feedbackHistoryPayload,
     }
 
     if (!user) {
       // Guest: hold payload and redirect to auth
       sessionStorage.setItem('pending_save_recipe', JSON.stringify(payload))
       router.push(`/auth?returnTo=/recipe&pendingRecipe=true`)
+      setSaving(false)
       return
     }
 
-    setSaving(true)
-    setSaveError(null)
     try {
       const res = await fetch('/api/recipes', {
         method: 'POST',
@@ -154,7 +194,11 @@ export default function RecipePage() {
         const data = await res.json()
         throw new Error(data.error ?? 'Save failed')
       }
+      const data = await res.json()
+      setSavedRecipeId(data.id)
       setSaved(true)
+      setLastSavedRound(feedbackRound)
+      setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -259,14 +303,14 @@ export default function RecipePage() {
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || saved}
+          disabled={saving || feedbackRound <= lastSavedRound}
           className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
           aria-label="Save recipe"
         >
           {saving ? (
             <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
+            <Bookmark size={20} fill={lastSavedRound >= 0 && feedbackRound <= lastSavedRound ? 'currentColor' : 'none'} />
           )}
         </button>
       </div>
@@ -284,7 +328,7 @@ export default function RecipePage() {
         {/* Save feedback */}
         {saved && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
-            Recipe saved to your library.
+            {rebrewId || savedRecipeId ? 'Recipe updated.' : 'Recipe saved to your library.'}
           </div>
         )}
         {saveError && (

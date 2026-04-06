@@ -235,7 +235,7 @@ export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
 
 export const UpdateRecipeRequestSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
-  feedback_round: FeedbackRoundSchema,
+  feedback_history: z.array(FeedbackRoundSchema),
 })
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
