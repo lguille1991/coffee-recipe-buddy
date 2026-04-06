@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio } from 'lucide-react'
+import { ArrowLeft, Bookmark, Save, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio } from 'lucide-react'
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
@@ -309,6 +309,8 @@ export default function RecipePage() {
         >
           {saving ? (
             <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+          ) : (rebrewId ?? savedRecipeId) && feedbackRound > lastSavedRound && feedbackRound > 0 ? (
+            <Save size={20} />
           ) : (
             <Bookmark size={20} fill={lastSavedRound >= 0 && feedbackRound <= lastSavedRound ? 'currentColor' : 'none'} />
           )}
