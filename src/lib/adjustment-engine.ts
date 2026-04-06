@@ -1,7 +1,7 @@
 // Feedback adjustment engine — Block 9 navigation rules + Block 10 conflict checks.
 // All adjustments stay within the final operating range. One variable per round.
 
-import { Recipe, Symptom, AdjustmentMetadata, RecipeWithAdjustment } from '@/types/recipe'
+import { Recipe, Symptom, AdjustmentMetadata, RecipeWithAdjustment, GrinderId } from '@/types/recipe'
 import {
   parseKUltraRange,
   kUltraRangeToQAir,
@@ -169,6 +169,7 @@ export function applyFeedbackAdjustment(
   recipe: Recipe,
   symptom: Symptom,
   round: number,
+  preferredGrinder: GrinderId = 'k_ultra',
 ): AdjustResult {
   // Parse operating range
   const operatingRangeRaw = parseKUltraRange(recipe.range_logic.final_operating_range)
@@ -306,8 +307,12 @@ export function applyFeedbackAdjustment(
     )
     updatedRecipe = { ...updatedRecipe, grind: newGrind }
 
-    const prevVal = `${currentClicks} clicks`
-    const newVal = `${newClicks} clicks`
+    const prevVal = preferredGrinder === 'k_ultra'
+      ? `${currentClicks} clicks`
+      : recipe.grind[preferredGrinder].starting_point
+    const newVal = preferredGrinder === 'k_ultra'
+      ? `${newClicks} clicks`
+      : newGrind[preferredGrinder].starting_point
     const dir = plan.direction
 
     adjustment = {

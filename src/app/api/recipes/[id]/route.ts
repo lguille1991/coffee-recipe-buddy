@@ -58,27 +58,11 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  // Fetch existing record (RLS ensures ownership)
-  const { data: existing, error: fetchError } = await supabase
-    .from('recipes')
-    .select('feedback_history')
-    .eq('id', id)
-    .single()
-
-  if (fetchError || !existing) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
-
-  const updatedHistory = [
-    ...(existing.feedback_history ?? []),
-    parsed.data.feedback_round,
-  ]
-
   const { data, error } = await supabase
     .from('recipes')
     .update({
       current_recipe_json: parsed.data.current_recipe_json,
-      feedback_history: updatedHistory,
+      feedback_history: parsed.data.feedback_history,
     })
     .eq('id', id)
     .select()

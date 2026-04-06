@@ -235,7 +235,7 @@ export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
 
 export const UpdateRecipeRequestSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
-  feedback_round: FeedbackRoundSchema,
+  feedback_history: z.array(FeedbackRoundSchema),
 })
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
@@ -247,7 +247,7 @@ export const UpdateNotesRequestSchema = z.object({
 export type UpdateNotesRequest = z.infer<typeof UpdateNotesRequestSchema>
 
 export const UpdateProfileRequestSchema = z.object({
-  display_name: z.string().optional(),
+  display_name: z.string().nullable().optional(),
   default_volume_ml: z.number().int().positive().optional(),
   temp_unit: z.enum(['C', 'F']).optional(),
   preferred_grinder: GrinderIdSchema.optional(),
