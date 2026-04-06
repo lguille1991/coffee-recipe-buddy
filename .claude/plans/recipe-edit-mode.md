@@ -129,7 +129,7 @@ When `isEditing`:
 
 ### Reset to Original
 
-- [ ] When "Reset to Original" is triggered (in the re-brew / `/recipe` page), also strip all `manual_edit` entries from `feedback_history` before calling `PATCH`. Find and update the reset logic in `src/app/recipe/page.tsx`.
+- [ ] `handleReset` in `src/app/recipe/page.tsx` is **purely client-side** — it resets local state and sessionStorage but makes no API call. No PATCH manipulation needed. The fix is in section 5: clearing `manual_edit_history` from sessionStorage in `handleReset` is sufficient — if the user then saves after resetting, `handleSave`'s PATCH won't find any manual edits to include.
 
 ---
 
@@ -139,7 +139,7 @@ When `isEditing`:
 
 ### Fix in `handleBrewAgain` (`src/app/recipes/[id]/page.tsx`)
 
-- [ ] Before writing to sessionStorage, split `feedback_history` by type:
+- [ ] **Line 93** currently does `sessionStorage.setItem('adjustment_history', JSON.stringify(recipe.feedback_history ?? []))`. Replace with a split by type:
   ```ts
   const feedbackRounds = (recipe.feedback_history ?? []).filter(r => !('type' in r) || r.type === 'feedback')
   const manualEdits = (recipe.feedback_history ?? []).filter(r => 'type' in r && r.type === 'manual_edit')
@@ -149,7 +149,7 @@ When `isEditing`:
 
 ### Fix in `handleSave` (rebrew case, `src/app/recipe/page.tsx`)
 
-- [ ] When building the PATCH payload in the rebrew (`effectiveId`) branch, read `manual_edit_history` from sessionStorage and include it:
+- [ ] In the `if (effectiveId)` PATCH branch (currently ~line 144–167), `feedbackHistoryPayload` is built from in-memory `adjustmentHistory`, which is loaded from `adjustment_history` sessionStorage. After the split fix above, that key only contains feedback rounds. Merge manual edits back in:
   ```ts
   const manualEditsRaw = sessionStorage.getItem('manual_edit_history')
   const manualEdits = manualEditsRaw ? JSON.parse(manualEditsRaw) : []
@@ -159,7 +159,9 @@ When `isEditing`:
     feedback_history: [...manualEdits, ...feedbackHistoryPayload],
   })
   ```
-- [ ] On `handleReset`: also clear `manual_edit_history` from sessionStorage (so reset truly wipes all edits)
+- [ ] On `handleReset` (currently ~line 212–223): add `sessionStorage.removeItem('manual_edit_history')` alongside the existing `removeItem('feedback_round')` and `removeItem('adjustment_history')` calls. Note: `setLastSavedRound(-1)` is already present (added in fix commit `a36a9c2`) — just add the sessionStorage removal.
+
+> **Note (from recent fix `a36a9c2`):** When entering rebrew mode, `lastSavedRound` is now initialized to `0` (not `-1`), so the save button is hidden until the user makes an adjustment. This is intentional and does not affect edit mode (which lives on the separate `/recipes/[id]` detail page).
 
 ---
 
