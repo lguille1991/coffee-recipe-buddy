@@ -60,10 +60,24 @@ function micronsToQAirRaw(microns: number): number {
     const [x1, y1] = table[i + 1]
     if (microns >= x0 && microns <= x1) {
       const t = (microns - x0) / (x1 - x0)
-      return Math.round((y0 + t * (y1 - y0)) * 10) / 10
+      return y0 + t * (y1 - y0) // full precision; formatting handled by formatQAirSetting
     }
   }
   return 6.0
+}
+
+/**
+ * Converts a decimal rotation value to Q-Air's R.C.M notation.
+ * R = full rotations, C = clicks (0–9), M = micro-adjustments (0–2).
+ * 10 clicks = 1 rotation; 3 micro-adjustments = 1 click.
+ */
+function formatQAirSetting(rotations: number): string {
+  const totalMicros = Math.round(rotations * 30) // 1 rotation = 30 micro-adjustments
+  const r = Math.floor(totalMicros / 30)
+  const remaining = totalMicros % 30
+  const c = Math.floor(remaining / 3)
+  const m = remaining % 3
+  return `${r}.${c}.${m}`
 }
 
 export function micronsToQAir(microns: number): number {
@@ -84,8 +98,8 @@ export function kUltraRangeToQAir(
   const startSetting = micronsToQAirRaw(startMicrons)
 
   return {
-    range: `${lowSetting.toFixed(1)}–${highSetting.toFixed(1)} rotations`,
-    starting_point: `${startSetting.toFixed(1)} rotations`,
+    range: `${formatQAirSetting(lowSetting)}–${formatQAirSetting(highSetting)}`,
+    starting_point: formatQAirSetting(startSetting),
   }
 }
 

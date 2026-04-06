@@ -1,7 +1,7 @@
 import { RecipeWithAdjustment } from '@/types/recipe'
 import { parseKUltraRange, kUltraRangeToTimemoreC2, kUltraRangeToQAir, kUltraRangeToBaratza } from './grinder-converter'
 
-const CURRENT_SCHEMA_VERSION = 4
+const CURRENT_SCHEMA_VERSION = 5
 
 type MigrationFn = (recipe: RecipeWithAdjustment) => RecipeWithAdjustment
 
@@ -71,6 +71,26 @@ const migrations: Record<number, MigrationFn> = {
         q_air: { ...recipe.grind.q_air, ...qAir },
         baratza_encore_esp: { ...recipe.grind.baratza_encore_esp, ...baratza },
         timemore_c2: { ...recipe.grind.timemore_c2, ...c2 },
+      },
+    }
+  },
+
+  // v4 → v5: reformat Q-Air settings from "X.X rotations" to R.C.M notation
+  // (rotations.clicks.micro-adjustments, e.g. "2.4.0").
+  4: (recipe) => {
+    const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
+    if (!kuRange) return recipe
+
+    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
+    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange.mid
+
+    const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
+
+    return {
+      ...recipe,
+      grind: {
+        ...recipe.grind,
+        q_air: { ...recipe.grind.q_air, range: qAir.range, starting_point: qAir.starting_point },
       },
     }
   },
