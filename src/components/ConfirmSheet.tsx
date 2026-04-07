@@ -24,8 +24,8 @@ export default function ConfirmSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 pb-safe">
-      <div className="bg-[var(--card)] rounded-t-3xl w-full max-w-sm px-6 pt-6 pb-10">
+    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 pb-safe sm:pb-0 lg:pl-56">
+      <div className="bg-[var(--card)] rounded-t-3xl sm:rounded-3xl w-full max-w-sm px-6 pt-6 pb-10">
         <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">{title}</h3>
         <p className="text-sm text-[var(--muted-foreground)] mb-6">{message}</p>
         <div className="flex flex-col gap-2">
