@@ -72,11 +72,13 @@ function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
 
 function SortableStepRow({
   step,
+  stepIndex,
   totalSteps,
   onUpdate,
   onDelete,
 }: {
   step: DraftStep
+  stepIndex: number
   totalSteps: number
   onUpdate: (id: string, updates: Partial<DraftStep>) => void
   onDelete: (id: string) => void
@@ -86,12 +88,16 @@ function SortableStepRow({
 
   return (
     <div ref={setNodeRef} style={style} className="bg-[var(--card)] rounded-2xl p-3 flex gap-2 items-start">
-      <button
-        className="mt-2 p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
-        {...listeners}
-        {...attributes}
-        aria-label="Drag to reorder"
-      >
+      <div className="flex flex-col items-center gap-1 mt-1">
+        <span className="w-5 h-5 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-[10px] font-bold shrink-0">
+          {stepIndex + 1}
+        </span>
+        <button
+          className="p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
+          aria-label="Drag to reorder"
+          {...listeners}
+          {...attributes}
+        >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <circle cx="4" cy="3" r="1.2" fill="currentColor"/>
           <circle cx="4" cy="7" r="1.2" fill="currentColor"/>
@@ -100,15 +106,36 @@ function SortableStepRow({
           <circle cx="10" cy="7" r="1.2" fill="currentColor"/>
           <circle cx="10" cy="11" r="1.2" fill="currentColor"/>
         </svg>
-      </button>
+        </button>
+      </div>
       <div className="flex-1 flex flex-col gap-1.5">
-        <input
-          type="text"
-          placeholder="0:00"
-          value={step.time}
-          onChange={e => onUpdate(step._dndId, { time: e.target.value })}
-          className="w-20 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-        />
+        <div className="flex gap-1.5 items-center">
+          <input
+            type="text"
+            placeholder="0:00"
+            value={step.time}
+            onChange={e => onUpdate(step._dndId, { time: e.target.value.replace(/[^0-9:]/g, '') })}
+            className="w-16 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+          />
+          <div className="relative">
+            <input
+              type="number"
+              min={0}
+              step={0.1}
+              placeholder="0"
+              value={step.water_poured_g === 0 ? '' : step.water_poured_g}
+              onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+              onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
+              className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9CA3AF] pointer-events-none">g</span>
+          </div>
+          {step.water_poured_g > 0 && (
+            <span className="text-[10px] font-mono text-[#9CA3AF] whitespace-nowrap">
+              = {step.water_accumulated_g} g
+            </span>
+          )}
+        </div>
         <input
           type="text"
           maxLength={80}
@@ -169,6 +196,7 @@ export default function SavedRecipeDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
+  const [stepError, setStepError] = useState<string | null>(null)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
@@ -240,6 +268,7 @@ export default function SavedRecipeDetailPage() {
       steps: r.steps.map((s, i) => ({ ...s, _dndId: `step-${i}-${s.step}` })),
     })
     setEditError(null)
+    setStepError(null)
     setAdvancedOpen(false)
     setIsEditing(true)
   }
@@ -248,6 +277,7 @@ export default function SavedRecipeDetailPage() {
     setIsEditing(false)
     setEditDraft(null)
     setEditError(null)
+    setStepError(null)
     setAdvancedOpen(false)
   }
 
@@ -278,8 +308,41 @@ export default function SavedRecipeDetailPage() {
     router.push('/recipe')
   }
 
+  function validateSteps(steps: DraftStep[], targetWaterG: number): string | null {
+    if (steps.length > 20) return 'Recipes can have at most 20 steps.'
+
+    const timeRegex = /^\d+:[0-5]\d$/
+    let prevSeconds = -1
+
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i]
+      const num = i + 1
+
+      if (!s.action.trim()) return `Step ${num} is missing a description.`
+
+      if (!timeRegex.test(s.time)) return `Step ${num} has an invalid time "${s.time}" — use m:ss format (e.g. 1:30).`
+
+      if (s.water_poured_g < 0) return `Step ${num} has a negative water amount.`
+
+      const [m, ss] = s.time.split(':').map(Number)
+      const seconds = m * 60 + ss
+      if (seconds < prevSeconds) return `Step ${num} time (${s.time}) is earlier than the previous step — steps must be in chronological order.`
+      prevSeconds = seconds
+    }
+
+    const totalPoured = Math.round(steps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
+    if (Math.abs(totalPoured - targetWaterG) > 1) {
+      return `Step water amounts total ${totalPoured} g but the recipe targets ${targetWaterG} g. Adjust individual step amounts to match.`
+    }
+
+    return null
+  }
+
   async function handleSaveEdit() {
     if (!recipe || !editDraft) return
+
+    setEditError(null)
+    setStepError(null)
 
     // 1. Validate brew time
     if (!/^\d+:[0-5]\d(\s*[–-]\s*\d+:[0-5]\d)?$/.test(editDraft.total_time)) {
@@ -287,7 +350,14 @@ export default function SavedRecipeDetailPage() {
       return
     }
 
-    // 2. Convert temperature to Celsius
+    // 2. Validate steps
+    const stepsValidationError = validateSteps(editDraft.steps, editDraft.water_g)
+    if (stepsValidationError) {
+      setStepError(stepsValidationError)
+      return
+    }
+
+    // 3. Convert temperature to Celsius
     const newTempC = tempUnit === 'F'
       ? Math.round((editDraft.temperature_display - 32) * 5 / 9)
       : editDraft.temperature_display
@@ -298,20 +368,8 @@ export default function SavedRecipeDetailPage() {
     const r = recipe.current_recipe_json
     const oldWaterG = r.parameters.water_g
 
-    // 4. If water_g changed via Advanced section, rescale step volumes then recompute accumulated
-    let newSteps: DraftStep[]
-    if (editDraft.water_g !== oldWaterG) {
-      const scale = editDraft.water_g / oldWaterG
-      newSteps = recomputeAccumulated(
-        editDraft.steps.map(s => ({
-          ...s,
-          water_poured_g: Math.round(s.water_poured_g * scale * 10) / 10,
-        }))
-      )
-    } else {
-      // Always recompute accumulated to keep integrity after any step edits
-      newSteps = recomputeAccumulated(editDraft.steps)
-    }
+    // 4. Recompute accumulated totals (water_g is derived from step amounts)
+    const newSteps = recomputeAccumulated(editDraft.steps)
 
     // 5. Compute ratio
     const newRatio = `1:${(editDraft.water_g / editDraft.coffee_g).toFixed(1)}`
@@ -457,15 +515,22 @@ export default function SavedRecipeDetailPage() {
   function handleStepUpdate(dndId: string, updates: Partial<DraftStep>) {
     setEditDraft(d => {
       if (!d) return d
-      return { ...d, steps: d.steps.map(s => s._dndId === dndId ? { ...s, ...updates } : s) }
+      const updatedSteps = d.steps.map(s => s._dndId === dndId ? { ...s, ...updates } : s)
+      if ('water_poured_g' in updates) {
+        const newSteps = recomputeAccumulated(updatedSteps)
+        const totalPoured = Math.round(newSteps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
+        return { ...d, steps: newSteps, water_g: totalPoured }
+      }
+      return { ...d, steps: updatedSteps }
     })
   }
 
   function handleStepDelete(dndId: string) {
     setEditDraft(d => {
       if (!d) return d
-      const remaining = d.steps.filter(s => s._dndId !== dndId)
-      return { ...d, steps: recomputeAccumulated(remaining) }
+      const newSteps = recomputeAccumulated(d.steps.filter(s => s._dndId !== dndId))
+      const totalPoured = Math.round(newSteps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
+      return { ...d, steps: newSteps, water_g: totalPoured }
     })
   }
 
@@ -755,16 +820,12 @@ export default function SavedRecipeDetailPage() {
                         className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
                       />
                     </label>
-                    <label className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
-                      <input
-                        type="number"
-                        min={50} max={1000} step={1}
-                        value={editDraft.water_g}
-                        onChange={e => setEditDraft(d => d ? { ...d, water_g: parseFloat(e.target.value) || d.water_g } : d)}
-                        className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-                      />
-                    </label>
+                      <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
+                        <p className="text-sm font-semibold text-[var(--foreground)]">{editDraft.water_g}</p>
+                      </div>
+                    </div>
                   </div>
                   <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
                     <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-0.5">Ratio (auto)</p>
@@ -870,12 +931,18 @@ export default function SavedRecipeDetailPage() {
           <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
           {isEditing && editDraft ? (
             <div className="flex flex-col gap-2">
+              {stepError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-xs text-red-700">
+                  {stepError}
+                </div>
+              )}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={editDraft.steps.map(s => s._dndId)} strategy={verticalListSortingStrategy}>
-                  {editDraft.steps.map(step => (
+                  {editDraft.steps.map((step, i) => (
                     <SortableStepRow
                       key={step._dndId}
                       step={step}
+                      stepIndex={i}
                       totalSteps={editDraft.steps.length}
                       onUpdate={handleStepUpdate}
                       onDelete={handleStepDelete}
