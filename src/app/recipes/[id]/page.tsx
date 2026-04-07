@@ -12,8 +12,9 @@ import { useProfile } from '@/hooks/useProfile'
 import {
   kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2,
   parseKUltraRange, parseGrinderValueForEdit, grinderValueToKUltraClicks,
-  parseGrinderRange,
+  kUltraClicksToGrinderValue, parseGrinderRange,
 } from '@/lib/grinder-converter'
+import { computeGrindScalingDelta } from '@/lib/grind-scaling-engine'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
 import {
@@ -44,6 +45,9 @@ type DraftStep = RecipeStep & { _dndId: string }
 type EditDraft = {
   coffee_g: number
   water_g: number
+  ratio_multiplier: number
+  scaledFromDose: boolean
+  scaledFromRatio: boolean
   temperature_display: number
   total_time: string
   grind_preferred_value: number
@@ -66,6 +70,25 @@ function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
     acc = Math.round((acc + s.water_poured_g) * 10) / 10
     return { ...s, water_accumulated_g: acc }
   })
+}
+
+function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater: number): DraftStep[] {
+  if (oldWater === 0 || oldWater === newWater) return steps
+  const scaled = steps.map(s => ({
+    ...s,
+    water_poured_g: s.water_poured_g === 0 ? 0 : Math.round(s.water_poured_g / oldWater * newWater * 10) / 10,
+  }))
+  // Absorb rounding remainder into last non-zero step so sum equals newWater exactly
+  const currentSum = Math.round(scaled.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
+  const remainder = Math.round((newWater - currentSum) * 10) / 10
+  if (remainder !== 0) {
+    const lastNonZero = scaled.reduceRight((found, s, i) => found === -1 && s.water_poured_g > 0 ? i : found, -1)
+    if (lastNonZero !== -1) scaled[lastNonZero] = {
+      ...scaled[lastNonZero],
+      water_poured_g: Math.round((scaled[lastNonZero].water_poured_g + remainder) * 10) / 10,
+    }
+  }
+  return recomputeAccumulated(scaled)
 }
 
 // ─── Sortable step row ────────────────────────────────────────────────────────
@@ -260,6 +283,9 @@ export default function SavedRecipeDetailPage() {
     setEditDraft({
       coffee_g: r.parameters.coffee_g,
       water_g: r.parameters.water_g,
+      ratio_multiplier: r.parameters.water_g / r.parameters.coffee_g,
+      scaledFromDose: false,
+      scaledFromRatio: false,
       temperature_display: tempUnit === 'F'
         ? Math.round(r.parameters.temperature_c * 9 / 5 + 32)
         : r.parameters.temperature_c,
@@ -519,7 +545,7 @@ export default function SavedRecipeDetailPage() {
       if ('water_poured_g' in updates) {
         const newSteps = recomputeAccumulated(updatedSteps)
         const totalPoured = Math.round(newSteps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
-        return { ...d, steps: newSteps, water_g: totalPoured }
+        return { ...d, steps: newSteps, water_g: totalPoured, ratio_multiplier: d.coffee_g > 0 ? totalPoured / d.coffee_g : d.ratio_multiplier }
       }
       return { ...d, steps: updatedSteps }
     })
@@ -530,7 +556,7 @@ export default function SavedRecipeDetailPage() {
       if (!d) return d
       const newSteps = recomputeAccumulated(d.steps.filter(s => s._dndId !== dndId))
       const totalPoured = Math.round(newSteps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
-      return { ...d, steps: newSteps, water_g: totalPoured }
+      return { ...d, steps: newSteps, water_g: totalPoured, ratio_multiplier: d.coffee_g > 0 ? totalPoured / d.coffee_g : d.ratio_multiplier }
     })
   }
 
@@ -793,12 +819,12 @@ export default function SavedRecipeDetailPage() {
                 </label>
               </div>
 
-              {/* Advanced collapsible (coffee / water / ratio) */}
+              {/* Advanced collapsible (dose & ratio) */}
               <button
                 onClick={() => setAdvancedOpen(o => !o)}
                 className="flex items-center justify-between w-full py-2 text-left"
               >
-                <span className="text-xs font-medium text-[var(--muted-foreground)]">Advanced (dose &amp; water)</span>
+                <span className="text-xs font-medium text-[var(--muted-foreground)]">Advanced (dose &amp; ratio)</span>
                 <svg
                   width="14" height="14" viewBox="0 0 14 14" fill="none"
                   className={`transition-transform text-[#9CA3AF] ${advancedOpen ? 'rotate-180' : ''}`}
@@ -807,34 +833,102 @@ export default function SavedRecipeDetailPage() {
                 </svg>
               </button>
 
-              {advancedOpen && (
-                <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Coffee (g)</span>
-                      <input
-                        type="number"
-                        min={1} max={50} step={0.1}
-                        value={editDraft.coffee_g}
-                        onChange={e => setEditDraft(d => d ? { ...d, coffee_g: parseFloat(e.target.value) || d.coffee_g } : d)}
-                        className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-                      />
-                    </label>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
-                      <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
-                        <p className="text-sm font-semibold text-[var(--foreground)]">{editDraft.water_g}</p>
+              {advancedOpen && (() => {
+                const showWarning = editDraft.scaledFromDose || editDraft.scaledFromRatio
+                const savedParams = recipe?.current_recipe_json.parameters
+                const d1 = savedParams?.coffee_g ?? editDraft.coffee_g
+                const r1 = savedParams ? savedParams.water_g / savedParams.coffee_g : editDraft.ratio_multiplier
+                const savedGrindValue = recipe ? parseGrinderValueForEdit(preferredGrinder, recipe.current_recipe_json.grind[preferredGrinder].starting_point) : editDraft.grind_preferred_value
+
+                // Compute grind sentence from engine result
+                let grindSentence: string | null = null
+                if (showWarning) {
+                  const { deltaKUltraClicks, direction, magnitude } = computeGrindScalingDelta(
+                    d1, editDraft.coffee_g, r1, editDraft.ratio_multiplier
+                  )
+                  if (deltaKUltraClicks !== 0 && direction !== 'none') {
+                    const magnitudeWord = magnitude === 'slight' ? 'slightly' : magnitude === 'moderate' ? 'moderately' : 'significantly'
+                    grindSentence = `Grind adjusted ${magnitudeWord} ${direction} — fine-tune by taste.`
+                  }
+                }
+
+                return (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Coffee (g)</span>
+                        <input
+                          type="number"
+                          min={1} max={50} step={0.1}
+                          value={editDraft.coffee_g}
+                          onChange={e => setEditDraft(d => d ? { ...d, coffee_g: parseFloat(e.target.value) || d.coffee_g } : d)}
+                          onBlur={() => {
+                            if (!recipe) return
+                            setEditDraft(d => {
+                              if (!d) return d
+                              const newCoffee = d.coffee_g
+                              if (newCoffee <= 0) return d
+                              const newWater = Math.round(newCoffee * d.ratio_multiplier * 10) / 10
+                              const newSteps = scaleStepsToWater(d.steps, d.water_g, newWater)
+                              const { deltaKUltraClicks } = computeGrindScalingDelta(d1, newCoffee, r1, d.ratio_multiplier)
+                              let newGrindValue = d.grind_preferred_value
+                              if (deltaKUltraClicks !== 0) {
+                                const baseKUltra = grinderValueToKUltraClicks(preferredGrinder, savedGrindValue)
+                                const newKUltra = Math.max(40, Math.min(120, baseKUltra + deltaKUltraClicks))
+                                newGrindValue = kUltraClicksToGrinderValue(preferredGrinder, newKUltra)
+                              }
+                              return { ...d, coffee_g: newCoffee, water_g: newWater, steps: newSteps, grind_preferred_value: newGrindValue, scaledFromDose: true }
+                            })
+                          }}
+                          className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                        />
+                      </label>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
+                        <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
+                          <p className="text-sm font-semibold text-[var(--foreground)]">{editDraft.water_g}</p>
+                        </div>
                       </div>
                     </div>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Ratio</span>
+                      <div className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] focus-within:ring-1 focus-within:ring-[var(--foreground)]/20">
+                        <span className="text-sm font-semibold text-[var(--foreground)]">1:</span>
+                        <input
+                          type="number"
+                          min={1} max={50} step={0.1}
+                          value={parseFloat(editDraft.ratio_multiplier.toFixed(1))}
+                          onChange={e => setEditDraft(d => d ? { ...d, ratio_multiplier: parseFloat(e.target.value) || d.ratio_multiplier } : d)}
+                          onBlur={() => {
+                            if (!recipe) return
+                            setEditDraft(d => {
+                              if (!d) return d
+                              const newRatio = d.ratio_multiplier
+                              if (newRatio <= 0) return d
+                              const newWater = Math.round(d.coffee_g * newRatio * 10) / 10
+                              const newSteps = scaleStepsToWater(d.steps, d.water_g, newWater)
+                              const { deltaKUltraClicks } = computeGrindScalingDelta(d1, d.coffee_g, r1, newRatio)
+                              let newGrindValue = d.grind_preferred_value
+                              if (deltaKUltraClicks !== 0) {
+                                const baseKUltra = grinderValueToKUltraClicks(preferredGrinder, savedGrindValue)
+                                const newKUltra = Math.max(40, Math.min(120, baseKUltra + deltaKUltraClicks))
+                                newGrindValue = kUltraClicksToGrinderValue(preferredGrinder, newKUltra)
+                              }
+                              return { ...d, ratio_multiplier: newRatio, water_g: newWater, steps: newSteps, grind_preferred_value: newGrindValue, scaledFromRatio: true }
+                            })
+                          }}
+                          className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-[var(--foreground)] focus:outline-none"
+                        />
+                      </div>
+                    </label>
+                    {showWarning && (
+                      <p className="text-xs text-amber-500 font-medium">
+                        Step amounts were scaled proportionally.{grindSentence ? ` ${grindSentence}` : ''}
+                      </p>
+                    )}
                   </div>
-                  <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
-                    <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-0.5">Ratio (auto)</p>
-                    <p className="text-sm font-semibold text-[var(--foreground)]">
-                      1:{(editDraft.water_g / editDraft.coffee_g).toFixed(1)}
-                    </p>
-                  </div>
-                </div>
-              )}
+                )
+              })()}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
