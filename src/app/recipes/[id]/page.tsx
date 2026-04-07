@@ -15,6 +15,7 @@ import {
   parseGrinderRange,
 } from '@/lib/grinder-converter'
 import ConfirmSheet from '@/components/ConfirmSheet'
+import { useNavGuard } from '@/components/NavGuardContext'
 import {
   DndContext,
   closestCenter,
@@ -137,6 +138,7 @@ export default function SavedRecipeDetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { setGuard } = useNavGuard()
 
   const [recipe, setRecipe] = useState<SavedRecipe | null>(null)
   const [loading, setLoading] = useState(true)
@@ -169,6 +171,7 @@ export default function SavedRecipeDetailPage() {
   const [editError, setEditError] = useState<string | null>(null)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [showEditHistorySheet, setShowEditHistorySheet] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
@@ -209,6 +212,19 @@ export default function SavedRecipeDetailPage() {
         }
       })
   }, [id, router])
+
+  useEffect(() => {
+    if (isEditing) {
+      setGuard((href) => {
+        setPendingNavHref(href)
+        setShowDiscardConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+    return () => setGuard(null)
+  }, [isEditing, setGuard])
 
   function enterEditMode() {
     if (!recipe) return
@@ -1106,8 +1122,15 @@ export default function SavedRecipeDetailPage() {
         message="Your edits to this recipe won't be saved."
         confirmLabel="Discard"
         destructive
-        onConfirm={() => { exitEditMode(); setShowDiscardConfirm(false); }}
-        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          exitEditMode()
+          setShowDiscardConfirm(false)
+          if (pendingNavHref) {
+            router.push(pendingNavHref)
+            setPendingNavHref(null)
+          }
+        }}
+        onCancel={() => { setShowDiscardConfirm(false); setPendingNavHref(null) }}
       />
     </div>
   )

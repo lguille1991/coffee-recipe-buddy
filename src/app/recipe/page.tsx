@@ -7,6 +7,7 @@ import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, G
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
+import { useNavGuard } from '@/components/NavGuardContext'
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
@@ -76,6 +77,7 @@ export default function RecipePage() {
   const router = useRouter()
   const { user } = useAuth()
   const { preferredGrinder } = useProfile()
+  const { setGuard } = useNavGuard()
 
   const [recipe, setRecipe] = useState<RecipeWithAdjustment | null>(null)
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null)
@@ -94,6 +96,7 @@ export default function RecipePage() {
   // Confirmation modals
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
 
   // Feedback UI state
   const [showFeedback, setShowFeedback] = useState(false)
@@ -130,6 +133,19 @@ export default function RecipePage() {
       setLastSavedRound(0) // nothing new to save until an adjustment is made
     }
   }, [router])
+
+  useEffect(() => {
+    if (feedbackRound > lastSavedRound) {
+      setGuard((href) => {
+        setPendingNavHref(href)
+        setShowLeaveConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+    return () => setGuard(null)
+  }, [feedbackRound, lastSavedRound, setGuard])
 
   async function handleSave() {
     if (!recipe || !originalRecipe || saving) return
@@ -650,8 +666,15 @@ export default function RecipePage() {
         message="Your recipe won't be added to your library."
         confirmLabel="Leave"
         destructive
-        onConfirm={() => router.back()}
-        onCancel={() => setShowLeaveConfirm(false)}
+        onConfirm={() => {
+          if (pendingNavHref) {
+            router.push(pendingNavHref)
+          } else {
+            router.back()
+          }
+          setPendingNavHref(null)
+        }}
+        onCancel={() => { setShowLeaveConfirm(false); setPendingNavHref(null) }}
       />
 
       {/* Case B: reset to original */}

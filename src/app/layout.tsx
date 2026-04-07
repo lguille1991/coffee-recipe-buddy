@@ -4,6 +4,7 @@ import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import SideNav from '@/components/SideNav'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { NavGuardProvider } from '@/components/NavGuardContext'
 
 const roboto = Roboto({
   variable: '--font-roboto',
@@ -31,13 +32,15 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
         <ThemeProvider>
-          <SideNav />
-          <div className="lg:ml-56">
-            <div className="max-w-sm mx-auto lg:max-w-md">
-              {children}
+          <NavGuardProvider>
+            <SideNav />
+            <div className="lg:ml-56">
+              <div className="max-w-sm mx-auto lg:max-w-md">
+                {children}
+              </div>
             </div>
-          </div>
-          <BottomNav />
+            <BottomNav />
+          </NavGuardProvider>
         </ThemeProvider>
       </body>
     </html>

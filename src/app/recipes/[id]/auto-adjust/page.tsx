@@ -7,6 +7,7 @@ import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
+import { useNavGuard } from '@/components/NavGuardContext'
 
 const SCALE_OPTIONS: { value: number; label: string }[] = [
   { value: 0.5, label: '½×' },
@@ -25,6 +26,7 @@ export default function AutoAdjustPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { setGuard } = useNavGuard()
 
   const { profile } = useProfile()
   const tempUnit = profile?.temp_unit ?? 'C'
@@ -41,6 +43,8 @@ export default function AutoAdjustPage() {
   const [saving, setSaving] = useState(false)
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -59,6 +63,19 @@ export default function AutoAdjustPage() {
       })
       .finally(() => setLoadingSource(false))
   }, [id, router])
+
+  useEffect(() => {
+    if (result) {
+      setGuard((href) => {
+        setPendingNavHref(href)
+        setShowLeaveConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+    return () => setGuard(null)
+  }, [result, setGuard])
 
   const canGenerate = !(scaleFactor === 1.0 && intent.trim() === '')
 
@@ -355,6 +372,22 @@ export default function AutoAdjustPage() {
         loading={saving}
         onConfirm={handleReplace}
         onCancel={() => setShowReplaceConfirm(false)}
+      />
+
+      <ConfirmSheet
+        open={showLeaveConfirm}
+        title="Leave without saving?"
+        message="Your adjusted recipe won't be saved."
+        confirmLabel="Leave"
+        destructive
+        onConfirm={() => {
+          setShowLeaveConfirm(false)
+          if (pendingNavHref) {
+            router.push(pendingNavHref)
+            setPendingNavHref(null)
+          }
+        }}
+        onCancel={() => { setShowLeaveConfirm(false); setPendingNavHref(null) }}
       />
     </div>
   )
