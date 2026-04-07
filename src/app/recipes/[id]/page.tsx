@@ -1228,7 +1228,16 @@ export default function SavedRecipeDetailPage() {
                   <div className="flex flex-col gap-1">
                     {edit.changes.map((ch, i) => (
                       <p key={i} className="text-xs text-[var(--muted-foreground)]">
-                        <span className="font-medium text-[var(--foreground)]">{ch.field}</span>: {ch.previous_value} → {ch.new_value}
+                        <span className="font-medium text-[var(--foreground)]">{{
+                          coffee_g: 'Coffee Dose (g)',
+                          water_g: 'Water (ml)',
+                          temperature_c: 'Temperature (°C)',
+                          total_time: 'Total Time (m:ss)',
+                          grind: 'Grind Setting (clicks)',
+                          ratio: 'Ratio',
+                          steps: 'Steps',
+                          notes: 'Notes',
+                        }[ch.field] ?? ch.field}</span>: {ch.previous_value} → {ch.new_value}
                       </p>
                     ))}
                   </div>
