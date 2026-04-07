@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { SaveRecipeRequestSchema } from '@/types/recipe'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
 
+type FeedbackHistoryRow = Array<{ type?: string }>;
+
 // ─── POST /api/recipes — save a recipe ───────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -79,7 +81,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('recipes')
-    .select('id, method, bean_info, image_url, created_at, schema_version')
+    .select('id, method, bean_info, image_url, created_at, schema_version, feedback_history')
     .eq('user_id', user.id)
     .eq('archived', false)
     .order('created_at', { ascending: false })
@@ -102,5 +104,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ recipes: data ?? [], page, limit })
+  const recipes = (data ?? []).map((row: { feedback_history?: FeedbackHistoryRow; [key: string]: unknown }) => {
+    const history: FeedbackHistoryRow = row.feedback_history ?? []
+    const has_manual_edits = history.some(r => r.type === 'manual_edit')
+    const has_feedback_adjustments = history.some(r => !('type' in r) || r.type === 'feedback')
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { feedback_history: _fh, ...rest } = row
+    return { ...rest, has_manual_edits, has_feedback_adjustments }
+  })
+
+  return NextResponse.json({ recipes, page, limit })
 }

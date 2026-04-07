@@ -6,6 +6,7 @@ import { ArrowLeft, Bookmark, Save, Droplets, Scale, Thermometer, Timer, CircleD
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
+import ConfirmSheet from '@/components/ConfirmSheet'
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
@@ -90,6 +91,10 @@ export default function RecipePage() {
   const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null)
   const [lastSavedRound, setLastSavedRound] = useState(-1)
 
+  // Confirmation modals
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+
   // Feedback UI state
   const [showFeedback, setShowFeedback] = useState(false)
   const [selectedSymptom, setSelectedSymptom] = useState<Symptom | null>(null)
@@ -142,14 +147,16 @@ export default function RecipePage() {
     setSaveError(null)
 
     if (effectiveId) {
-      // Update an existing saved recipe
+      // Update an existing saved recipe — merge manual edits preserved from initial brew load
+      const manualEditsRaw = sessionStorage.getItem('manual_edit_history')
+      const manualEdits = manualEditsRaw ? JSON.parse(manualEditsRaw) : []
       try {
         const res = await fetch(`/api/recipes/${effectiveId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             current_recipe_json: recipe,
-            feedback_history: feedbackHistoryPayload,
+            feedback_history: [...manualEdits, ...feedbackHistoryPayload],
           }),
         })
         if (!res.ok) {
@@ -214,6 +221,7 @@ export default function RecipePage() {
     sessionStorage.setItem('recipe', JSON.stringify(originalRecipe))
     sessionStorage.removeItem('feedback_round')
     sessionStorage.removeItem('adjustment_history')
+    sessionStorage.removeItem('manual_edit_history')
     setRecipe(originalRecipe)
     setFeedbackRound(0)
     setAdjustmentHistory([])
@@ -300,7 +308,16 @@ export default function RecipePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2">
+          <button
+            onClick={() => {
+              if (feedbackRound > lastSavedRound) {
+                setShowLeaveConfirm(true)
+              } else {
+                router.back()
+              }
+            }}
+            className="p-2 -ml-2"
+          >
             <ArrowLeft size={20} />
           </button>
           <h2 className="text-lg font-semibold">Your Recipe</h2>
@@ -351,7 +368,7 @@ export default function RecipePage() {
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-amber-700">Adjustment {feedbackRound} of 3</p>
               <button
-                onClick={handleReset}
+                onClick={() => setShowResetConfirm(true)}
                 className="text-[10px] text-[var(--muted-foreground)] underline"
               >
                 Reset to original
@@ -544,7 +561,7 @@ export default function RecipePage() {
               </svg>
             </button>
             <button
-              onClick={handleReset}
+              onClick={() => setShowResetConfirm(true)}
               className="text-xs text-[var(--muted-foreground)] underline text-center"
             >
               Reset recipe to original
@@ -565,7 +582,7 @@ export default function RecipePage() {
             </button>
             {feedbackRound > 0 && (
               <button
-                onClick={handleReset}
+                onClick={() => setShowResetConfirm(true)}
                 className="text-xs text-[#9CA3AF] underline text-center"
               >
                 Reset to original
@@ -625,6 +642,28 @@ export default function RecipePage() {
           </div>
         )}
       </div>
+
+      {/* Case A: leave without saving */}
+      <ConfirmSheet
+        open={showLeaveConfirm}
+        title="Leave without saving?"
+        message="Your recipe won't be added to your library."
+        confirmLabel="Leave"
+        destructive
+        onConfirm={() => router.back()}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
+
+      {/* Case B: reset to original */}
+      <ConfirmSheet
+        open={showResetConfirm}
+        title="Reset to original recipe?"
+        message="This will discard all adjustments made in this session."
+        confirmLabel="Reset"
+        destructive
+        onConfirm={() => { handleReset(); setShowResetConfirm(false) }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   )
 }

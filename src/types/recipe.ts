@@ -164,6 +164,7 @@ export interface ValidationResult {
 // ─── Phase 3: Persistence types ──────────────────────────────────────────────
 
 export const FeedbackRoundSchema = z.object({
+  type: z.literal('feedback').default('feedback'),
   round: z.number().int().min(1).max(3),
   symptom: SymptomSchema,
   variable_changed: z.string(),
@@ -172,6 +173,21 @@ export const FeedbackRoundSchema = z.object({
 })
 
 export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
+
+export const ManualEditRoundSchema = z.object({
+  type: z.literal('manual_edit'),
+  version: z.number().int().positive(),
+  edited_at: z.string(),
+  changes: z.array(z.object({
+    field: z.string(),
+    previous_value: z.string(),
+    new_value: z.string(),
+  })),
+})
+
+export type ManualEditRound = z.infer<typeof ManualEditRoundSchema>
+
+export const AnyFeedbackRoundSchema = z.union([FeedbackRoundSchema, ManualEditRoundSchema])
 
 export const GrinderIdSchema = z.enum(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
 export type GrinderId = z.infer<typeof GrinderIdSchema>
@@ -200,7 +216,7 @@ export const SavedRecipeSchema = z.object({
   method: z.string(),
   original_recipe_json: RecipeSchema,
   current_recipe_json: RecipeWithAdjustmentSchema,
-  feedback_history: z.array(FeedbackRoundSchema).default([]),
+  feedback_history: z.array(AnyFeedbackRoundSchema).default([]),
   image_url: z.string().nullable().optional(),
   notes: z.string().max(1000).nullable().optional(),
   created_at: z.string(),
@@ -216,7 +232,7 @@ export const SaveRecipeRequestSchema = z.object({
   method: z.string().min(1),
   original_recipe_json: RecipeSchema,
   current_recipe_json: RecipeWithAdjustmentSchema,
-  feedback_history: z.array(FeedbackRoundSchema).default([]),
+  feedback_history: z.array(AnyFeedbackRoundSchema).default([]),
   image_data_url: z.string().optional(), // base64 data URL — uploaded server-side
 })
 
@@ -229,13 +245,15 @@ export const RecipeListItemSchema = z.object({
   image_url: z.string().nullable().optional(),
   created_at: z.string(),
   schema_version: z.number().int(),
+  has_manual_edits: z.boolean().default(false),
+  has_feedback_adjustments: z.boolean().default(false),
 })
 
 export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
 
 export const UpdateRecipeRequestSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
-  feedback_history: z.array(FeedbackRoundSchema),
+  feedback_history: z.array(AnyFeedbackRoundSchema),
 })
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
+import ConfirmSheet from '@/components/ConfirmSheet'
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
@@ -23,6 +24,8 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false)
+  const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { snapshot } = data
@@ -261,7 +264,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                     </div>
                     {user && comment.author_id === user.id && (
                       <button
-                        onClick={() => handleDeleteComment(comment.id)}
+                        onClick={() => { setPendingDeleteCommentId(comment.id); setShowDeleteCommentConfirm(true) }}
                         disabled={deletingId === comment.id}
                         className="shrink-0 p-1 text-[#9CA3AF] active:opacity-60 disabled:opacity-40"
                         aria-label="Delete comment"
@@ -345,6 +348,24 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           )}
         </button>
       </div>
+
+      {/* Case D: delete comment confirmation */}
+      <ConfirmSheet
+        open={showDeleteCommentConfirm}
+        title="Delete comment?"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={deletingId === pendingDeleteCommentId}
+        onConfirm={async () => {
+          if (pendingDeleteCommentId) {
+            await handleDeleteComment(pendingDeleteCommentId)
+          }
+          setShowDeleteCommentConfirm(false)
+          setPendingDeleteCommentId(null)
+        }}
+        onCancel={() => { setShowDeleteCommentConfirm(false); setPendingDeleteCommentId(null) }}
+      />
     </div>
   )
 }

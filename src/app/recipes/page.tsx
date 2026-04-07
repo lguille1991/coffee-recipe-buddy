@@ -18,6 +18,12 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   const roaster = recipe.bean_info.roaster
   const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+  const badge = recipe.has_manual_edits
+    ? 'edited'
+    : recipe.has_feedback_adjustments
+      ? 'auto-adjusted'
+      : null
+
   return (
     <Link
       href={`/recipes/${recipe.id}`}
@@ -34,7 +40,18 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
         {roaster && <p className="text-[10px] text-[#9CA3AF] truncate">{roaster}</p>}
-        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="text-xs text-[var(--muted-foreground)]">{displayName}</p>
+          {badge && (
+            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+              badge === 'edited'
+                ? 'bg-blue-100 text-blue-600'
+                : 'bg-amber-100 text-amber-600'
+            }`}>
+              {badge}
+            </span>
+          )}
+        </div>
       </div>
       <div className="text-right shrink-0">
         <p className="text-[10px] text-[#9CA3AF]">{date}</p>

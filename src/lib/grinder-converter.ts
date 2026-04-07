@@ -253,3 +253,144 @@ export function parseKUltraRange(rangeStr: string): { low: number; high: number;
   const mid = Math.round((low + high) / 2)
   return { low, high, mid }
 }
+
+// ─── Back-conversion utilities (for edit mode) ────────────────────────────────
+
+// Inverse of K_ULTRA_TABLE: microns → K-Ultra clicks
+export function micronsToKUltraClicks(microns: number): number {
+  const table = K_ULTRA_TABLE
+  if (microns <= table[0][1]) return table[0][0]
+  if (microns >= table[table.length - 1][1]) return table[table.length - 1][0]
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (microns >= y0 && microns <= y1) {
+      const t = (microns - y0) / (y1 - y0)
+      return Math.round(x0 + t * (x1 - x0))
+    }
+  }
+  return Math.round(microns / 11)
+}
+
+// Inverse of Q_AIR_TABLE: rotations → microns
+function qAirRotationsToMicrons(rotations: number): number {
+  const table = Q_AIR_TABLE
+  if (rotations <= table[0][1]) return table[0][0]
+  if (rotations >= table[table.length - 1][1]) return table[table.length - 1][0]
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (rotations >= y0 && rotations <= y1) {
+      const t = (rotations - y0) / (y1 - y0)
+      return Math.round(x0 + t * (x1 - x0))
+    }
+  }
+  return 700
+}
+
+// Inverse of BARATZA_TABLE: clicks → microns
+function baratzaClicksToMicrons(clicks: number): number {
+  const table = BARATZA_TABLE
+  if (clicks <= table[0][1]) return table[0][0]
+  if (clicks >= table[table.length - 1][1]) return table[table.length - 1][0]
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (clicks >= y0 && clicks <= y1) {
+      const t = (clicks - y0) / (y1 - y0)
+      return Math.round(x0 + t * (x1 - x0))
+    }
+  }
+  return 800
+}
+
+// Inverse of TIMEMORE_C2_TABLE: clicks → microns
+function timemoreC2ClicksToMicrons(clicks: number): number {
+  const table = TIMEMORE_C2_TABLE
+  if (clicks <= table[0][1]) return table[0][0]
+  if (clicks >= table[table.length - 1][1]) return table[table.length - 1][0]
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (clicks >= y0 && clicks <= y1) {
+      const t = (clicks - y0) / (y1 - y0)
+      return Math.round(x0 + t * (x1 - x0))
+    }
+  }
+  return 800
+}
+
+/**
+ * Parse a grinder's starting_point string into a plain integer for use in edit inputs.
+ * - K-Ultra / Baratza / Timemore: extract the number from "81 clicks" or "clicks 81"
+ * - Q-Air: parse R.C.M → total Q-Air clicks (R*10 + C), ignoring micro-adjustments
+ */
+export function parseGrinderValueForEdit(grinder: string, startingPoint: string): number {
+  if (grinder === 'q_air') {
+    const parts = startingPoint.split('.')
+    if (parts.length >= 2) {
+      const r = parseInt(parts[0], 10) || 0
+      const c = parseInt(parts[1], 10) || 0
+      return r * 10 + c
+    }
+    return 12
+  }
+  const match = startingPoint.match(/(\d+)/)
+  return match ? parseInt(match[1], 10) : 80
+}
+
+/**
+ * Convert a grinder's edit-input value to K-Ultra clicks.
+ * - K-Ultra: identity
+ * - Q-Air: total Q-Air clicks → rotations → microns → K-Ultra clicks
+ * - Baratza / Timemore C2: clicks → microns → K-Ultra clicks
+ */
+export function grinderValueToKUltraClicks(grinder: string, value: number): number {
+  if (grinder === 'k_ultra') return Math.round(value)
+  if (grinder === 'q_air') {
+    const rotations = value / 10
+    const microns = qAirRotationsToMicrons(rotations)
+    return micronsToKUltraClicks(microns)
+  }
+  if (grinder === 'baratza_encore_esp') {
+    return micronsToKUltraClicks(baratzaClicksToMicrons(value))
+  }
+  if (grinder === 'timemore_c2') {
+    return micronsToKUltraClicks(timemoreC2ClicksToMicrons(value))
+  }
+  return Math.round(value)
+}
+
+/**
+ * Convert K-Ultra clicks to the preferred grinder's edit-input value.
+ * - K-Ultra: identity
+ * - Q-Air: microns → rotations → total Q-Air clicks (integer)
+ * - Baratza / Timemore C2: microns → clicks (integer)
+ */
+export function kUltraClicksToGrinderValue(grinder: string, clicks: number): number {
+  if (grinder === 'k_ultra') return clicks
+  if (grinder === 'q_air') {
+    const microns = kUltraClicksToMicrons(clicks)
+    const rotations = micronsToQAirRaw(microns)
+    return Math.round(rotations * 10)
+  }
+  if (grinder === 'baratza_encore_esp') {
+    return micronsToBaratzaRaw(kUltraClicksToMicrons(clicks))
+  }
+  if (grinder === 'timemore_c2') {
+    return micronsToTimemoreC2Raw(kUltraClicksToMicrons(clicks))
+  }
+  return clicks
+}
+
+/**
+ * Parse the K-Ultra final_operating_range and return low/high in the preferred grinder's units.
+ */
+export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { low: number; high: number } | null {
+  const parsed = parseKUltraRange(kUltraRangeStr)
+  if (!parsed) return null
+  return {
+    low: kUltraClicksToGrinderValue(grinder, parsed.low),
+    high: kUltraClicksToGrinderValue(grinder, parsed.high),
+  }
+}
