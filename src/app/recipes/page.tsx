@@ -22,7 +22,9 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
     ? 'edited'
     : recipe.has_feedback_adjustments
       ? 'auto-adjusted'
-      : null
+      : recipe.is_scaled
+        ? 'scaled'
+        : null
 
   return (
     <Link
@@ -46,7 +48,9 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
             <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
               badge === 'edited'
                 ? 'bg-blue-100 text-blue-600'
-                : 'bg-amber-100 text-amber-600'
+                : badge === 'scaled'
+                  ? 'bg-purple-100 text-purple-600'
+                  : 'bg-amber-100 text-amber-600'
             }`}>
               {badge}
             </span>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
-  SavedRecipe, RecipeWithAdjustment, METHOD_DISPLAY_NAMES, MethodId,
+  SavedRecipe, RecipeWithAdjustment, RecipeStep, METHOD_DISPLAY_NAMES, MethodId,
   GrinderId, GRINDER_DISPLAY_NAMES, ManualEditRound, FeedbackRound,
 } from '@/types/recipe'
 import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recalculator'
@@ -12,13 +12,33 @@ import { useProfile } from '@/hooks/useProfile'
 import {
   kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2,
   parseKUltraRange, parseGrinderValueForEdit, grinderValueToKUltraClicks,
-  kUltraClicksToGrinderValue, parseGrinderRange,
+  parseGrinderRange,
 } from '@/lib/grinder-converter'
 import ConfirmSheet from '@/components/ConfirmSheet'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
+
+type DraftStep = RecipeStep & { _dndId: string }
 
 type EditDraft = {
   coffee_g: number
@@ -26,6 +46,7 @@ type EditDraft = {
   temperature_display: number
   total_time: string
   grind_preferred_value: number
+  steps: DraftStep[]
 }
 
 type AnyFeedbackRound = FeedbackRound | ManualEditRound
@@ -35,8 +56,82 @@ function isFeedbackRound(fh: AnyFeedbackRound): fh is FeedbackRound {
 }
 
 function isManualEditRound(fh: AnyFeedbackRound): fh is ManualEditRound {
-  return 'type' in fh && fh.type === 'manual_edit'
+  return 'type' in fh && (fh.type === 'manual_edit' || fh.type === 'auto_adjust')
 }
+
+function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
+  let acc = 0
+  return steps.map(s => {
+    acc = Math.round((acc + s.water_poured_g) * 10) / 10
+    return { ...s, water_accumulated_g: acc }
+  })
+}
+
+// ─── Sortable step row ────────────────────────────────────────────────────────
+
+function SortableStepRow({
+  step,
+  totalSteps,
+  onUpdate,
+  onDelete,
+}: {
+  step: DraftStep
+  totalSteps: number
+  onUpdate: (id: string, updates: Partial<DraftStep>) => void
+  onDelete: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step._dndId })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+
+  return (
+    <div ref={setNodeRef} style={style} className="bg-[var(--card)] rounded-2xl p-3 flex gap-2 items-start">
+      <button
+        className="mt-2 p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
+        {...listeners}
+        {...attributes}
+        aria-label="Drag to reorder"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="4" cy="3" r="1.2" fill="currentColor"/>
+          <circle cx="4" cy="7" r="1.2" fill="currentColor"/>
+          <circle cx="4" cy="11" r="1.2" fill="currentColor"/>
+          <circle cx="10" cy="3" r="1.2" fill="currentColor"/>
+          <circle cx="10" cy="7" r="1.2" fill="currentColor"/>
+          <circle cx="10" cy="11" r="1.2" fill="currentColor"/>
+        </svg>
+      </button>
+      <div className="flex-1 flex flex-col gap-1.5">
+        <input
+          type="text"
+          placeholder="0:00"
+          value={step.time}
+          onChange={e => onUpdate(step._dndId, { time: e.target.value })}
+          className="w-20 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+        />
+        <input
+          type="text"
+          maxLength={80}
+          placeholder="Step description…"
+          value={step.action}
+          onChange={e => onUpdate(step._dndId, { action: e.target.value })}
+          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+        />
+      </div>
+      <button
+        onClick={() => onDelete(step._dndId)}
+        disabled={totalSteps <= 1}
+        className="mt-2 p-1 text-red-400 disabled:opacity-30 active:opacity-60"
+        aria-label="Delete step"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 4H12M5 4V2.5C5 2.22 5.22 2 5.5 2H8.5C8.78 2 9 2.22 9 2.5V4M5.5 6.5V10.5M8.5 6.5V10.5M3.5 4L4.5 12H9.5L10.5 4H3.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function SavedRecipeDetailPage() {
   const router = useRouter()
@@ -75,6 +170,12 @@ export default function SavedRecipeDetailPage() {
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [showEditHistorySheet, setShowEditHistorySheet] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -120,8 +221,10 @@ export default function SavedRecipeDetailPage() {
         : r.parameters.temperature_c,
       total_time: r.parameters.total_time,
       grind_preferred_value: parseGrinderValueForEdit(preferredGrinder, r.grind[preferredGrinder].starting_point),
+      steps: r.steps.map((s, i) => ({ ...s, _dndId: `step-${i}-${s.step}` })),
     })
     setEditError(null)
+    setAdvancedOpen(false)
     setIsEditing(true)
   }
 
@@ -129,6 +232,7 @@ export default function SavedRecipeDetailPage() {
     setIsEditing(false)
     setEditDraft(null)
     setEditError(null)
+    setAdvancedOpen(false)
   }
 
   async function handleDelete() {
@@ -158,12 +262,12 @@ export default function SavedRecipeDetailPage() {
     router.push('/recipe')
   }
 
-  async function handleSaveEdit(brewAfter: boolean) {
+  async function handleSaveEdit() {
     if (!recipe || !editDraft) return
 
     // 1. Validate brew time
-    if (!/^\d+:[0-5]\d$/.test(editDraft.total_time)) {
-      setEditError('Brew time must be in m:ss format (e.g. 3:30)')
+    if (!/^\d+:[0-5]\d(\s*[–-]\s*\d+:[0-5]\d)?$/.test(editDraft.total_time)) {
+      setEditError('Brew time must be in m:ss format (e.g. 3:30) or a range (e.g. 3:30 – 4:00)')
       return
     }
 
@@ -178,13 +282,20 @@ export default function SavedRecipeDetailPage() {
     const r = recipe.current_recipe_json
     const oldWaterG = r.parameters.water_g
 
-    // 4. Rescale step volumes
-    const scale = editDraft.water_g / oldWaterG
-    const newSteps = r.steps.map(step => ({
-      ...step,
-      water_poured_g: Math.round(step.water_poured_g * scale * 10) / 10,
-      water_accumulated_g: Math.round(step.water_accumulated_g * scale * 10) / 10,
-    }))
+    // 4. If water_g changed via Advanced section, rescale step volumes then recompute accumulated
+    let newSteps: DraftStep[]
+    if (editDraft.water_g !== oldWaterG) {
+      const scale = editDraft.water_g / oldWaterG
+      newSteps = recomputeAccumulated(
+        editDraft.steps.map(s => ({
+          ...s,
+          water_poured_g: Math.round(s.water_poured_g * scale * 10) / 10,
+        }))
+      )
+    } else {
+      // Always recompute accumulated to keep integrity after any step edits
+      newSteps = recomputeAccumulated(editDraft.steps)
+    }
 
     // 5. Compute ratio
     const newRatio = `1:${(editDraft.water_g / editDraft.coffee_g).toFixed(1)}`
@@ -218,11 +329,13 @@ export default function SavedRecipeDetailPage() {
     const oldGrindValue = parseGrinderValueForEdit(preferredGrinder, r.grind[preferredGrinder].starting_point)
     if (editDraft.grind_preferred_value !== oldGrindValue)
       changes.push({ field: 'grind', previous_value: String(oldGrindValue), new_value: String(editDraft.grind_preferred_value) })
+    const stepsChanged = JSON.stringify(newSteps.map(({ _dndId: _, ...s }) => s)) !== JSON.stringify(r.steps)
+    if (stepsChanged)
+      changes.push({ field: 'steps', previous_value: `${r.steps.length} steps`, new_value: `${newSteps.length} steps` })
 
     // 8. No changes — exit silently
     if (changes.length === 0) {
       exitEditMode()
-      if (brewAfter) handleBrewAgain()
       return
     }
 
@@ -235,6 +348,8 @@ export default function SavedRecipeDetailPage() {
       changes,
     }
 
+    const cleanedSteps = newSteps.map(({ _dndId: _, ...s }) => ({ ...s, step: 0 })).map((s, i) => ({ ...s, step: i + 1 }))
+
     const updatedRecipeJson: RecipeWithAdjustment = {
       ...r,
       parameters: {
@@ -246,7 +361,7 @@ export default function SavedRecipeDetailPage() {
         ratio: newRatio,
       },
       grind: newGrind,
-      steps: newSteps,
+      steps: cleanedSteps,
     }
 
     const updatedHistory = [...allHistory, newEditRound]
@@ -269,21 +384,6 @@ export default function SavedRecipeDetailPage() {
       const saved = await res.json()
       setRecipe({ ...recipe, ...saved, current_recipe_json: updatedRecipeJson, feedback_history: updatedHistory })
       exitEditMode()
-      if (brewAfter) {
-        // Re-run brew-again logic with the updated recipe already in state — use updated data directly
-        const migrated = migrateRecipe(updatedRecipeJson, recipe.schema_version)
-        sessionStorage.setItem('recipe', JSON.stringify(migrated))
-        const migratedOriginal = migrateRecipe(recipe.original_recipe_json as RecipeWithAdjustment, recipe.schema_version)
-        sessionStorage.setItem('recipe_original', JSON.stringify(migratedOriginal))
-        sessionStorage.setItem('confirmedBean', JSON.stringify(recipe.bean_info))
-        sessionStorage.setItem('feedback_round', '0')
-        const feedbackRounds = updatedHistory.filter(isFeedbackRound)
-        const manualEdits = updatedHistory.filter(isManualEditRound)
-        sessionStorage.setItem('adjustment_history', JSON.stringify(feedbackRounds))
-        sessionStorage.setItem('manual_edit_history', JSON.stringify(manualEdits))
-        sessionStorage.setItem('rebrew_recipe_id', id)
-        router.push('/recipe')
-      }
     } catch (err) {
       setEditError(err instanceof Error ? err.message : 'Failed to save. Please try again.')
     } finally {
@@ -336,6 +436,47 @@ export default function SavedRecipeDetailPage() {
     } finally {
       setRevoking(false)
     }
+  }
+
+  function handleStepUpdate(dndId: string, updates: Partial<DraftStep>) {
+    setEditDraft(d => {
+      if (!d) return d
+      return { ...d, steps: d.steps.map(s => s._dndId === dndId ? { ...s, ...updates } : s) }
+    })
+  }
+
+  function handleStepDelete(dndId: string) {
+    setEditDraft(d => {
+      if (!d) return d
+      const remaining = d.steps.filter(s => s._dndId !== dndId)
+      return { ...d, steps: recomputeAccumulated(remaining) }
+    })
+  }
+
+  function handleStepAdd() {
+    setEditDraft(d => {
+      if (!d) return d
+      const newStep: DraftStep = {
+        step: d.steps.length + 1,
+        time: '0:00',
+        action: '',
+        water_poured_g: 0,
+        water_accumulated_g: 0,
+        _dndId: `new-${Date.now()}`,
+      }
+      return { ...d, steps: [...d.steps, newStep] }
+    })
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setEditDraft(d => {
+      if (!d) return d
+      const oldIndex = d.steps.findIndex(s => s._dndId === active.id)
+      const newIndex = d.steps.findIndex(s => s._dndId === over.id)
+      return { ...d, steps: recomputeAccumulated(arrayMove(d.steps, oldIndex, newIndex)) }
+    })
   }
 
   // Live grind preview for edit mode
@@ -418,7 +559,7 @@ export default function SavedRecipeDetailPage() {
               <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <h2 className="text-lg font-semibold">{isEditing ? 'Adjust Recipe' : 'Saved Recipe'}</h2>
+          <h2 className="text-lg font-semibold">{isEditing ? 'Edit Recipe' : 'Saved Recipe'}</h2>
         </div>
         {!isEditing && (
           <div className="flex items-center gap-1">
@@ -494,6 +635,17 @@ export default function SavedRecipeDetailPage() {
           {recipe.bean_info.roaster && (
             <p className="text-xs text-[#9CA3AF] mt-0.5">{recipe.bean_info.roaster}</p>
           )}
+          {recipe.parent_recipe_id && !isEditing && (
+            <button
+              onClick={() => router.push(`/recipes/${recipe.parent_recipe_id}`)}
+              className="flex items-center gap-1 mt-1 text-xs text-[var(--muted-foreground)] active:opacity-60"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Scaled from original recipe{recipe.scale_factor && recipe.scale_factor !== 1 ? ` (×${recipe.scale_factor})` : ''}
+            </button>
+          )}
           <p className="text-xs text-[#9CA3AF] mt-1">
             Saved {new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
@@ -534,39 +686,7 @@ export default function SavedRecipeDetailPage() {
 
           {isEditing && editDraft ? (
             <div className="flex flex-col gap-3">
-              {/* Coffee + Water row */}
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Coffee (g)</span>
-                  <input
-                    type="number"
-                    min={1} max={50} step={0.1}
-                    value={editDraft.coffee_g}
-                    onChange={e => setEditDraft(d => d ? { ...d, coffee_g: parseFloat(e.target.value) || d.coffee_g } : d)}
-                    className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
-                  <input
-                    type="number"
-                    min={50} max={1000} step={1}
-                    value={editDraft.water_g}
-                    onChange={e => setEditDraft(d => d ? { ...d, water_g: parseFloat(e.target.value) || d.water_g } : d)}
-                    className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-                  />
-                </label>
-              </div>
-
-              {/* Ratio (read-only) */}
-              <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
-                <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-0.5">Ratio (auto)</p>
-                <p className="text-sm font-semibold text-[var(--foreground)]">
-                  1:{(editDraft.water_g / editDraft.coffee_g).toFixed(1)}
-                </p>
-              </div>
-
-              {/* Temperature + Brew Time row */}
+              {/* Temperature + Brew Time row (primary) */}
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1">
                   <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Temp (°{tempUnit})</span>
@@ -591,6 +711,53 @@ export default function SavedRecipeDetailPage() {
                   />
                 </label>
               </div>
+
+              {/* Advanced collapsible (coffee / water / ratio) */}
+              <button
+                onClick={() => setAdvancedOpen(o => !o)}
+                className="flex items-center justify-between w-full py-2 text-left"
+              >
+                <span className="text-xs font-medium text-[var(--muted-foreground)]">Advanced (dose &amp; water)</span>
+                <svg
+                  width="14" height="14" viewBox="0 0 14 14" fill="none"
+                  className={`transition-transform text-[#9CA3AF] ${advancedOpen ? 'rotate-180' : ''}`}
+                >
+                  <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {advancedOpen && (
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Coffee (g)</span>
+                      <input
+                        type="number"
+                        min={1} max={50} step={0.1}
+                        value={editDraft.coffee_g}
+                        onChange={e => setEditDraft(d => d ? { ...d, coffee_g: parseFloat(e.target.value) || d.coffee_g } : d)}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
+                      <input
+                        type="number"
+                        min={50} max={1000} step={1}
+                        value={editDraft.water_g}
+                        onChange={e => setEditDraft(d => d ? { ...d, water_g: parseFloat(e.target.value) || d.water_g } : d)}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                      />
+                    </label>
+                  </div>
+                  <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
+                    <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-0.5">Ratio (auto)</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                      1:{(editDraft.water_g / editDraft.coffee_g).toFixed(1)}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -682,10 +849,35 @@ export default function SavedRecipeDetailPage() {
           )
         })()}
 
-        {/* Brew steps */}
-        {!isEditing && (
-          <div>
-            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
+        {/* Brew Steps — view mode or editor */}
+        <div>
+          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
+          {isEditing && editDraft ? (
+            <div className="flex flex-col gap-2">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={editDraft.steps.map(s => s._dndId)} strategy={verticalListSortingStrategy}>
+                  {editDraft.steps.map(step => (
+                    <SortableStepRow
+                      key={step._dndId}
+                      step={step}
+                      totalSteps={editDraft.steps.length}
+                      onUpdate={handleStepUpdate}
+                      onDelete={handleStepDelete}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              <button
+                onClick={handleStepAdd}
+                className="w-full py-2.5 rounded-2xl border border-dashed border-[var(--border)] text-xs font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Add Step
+              </button>
+            </div>
+          ) : (
             <div className="flex flex-col gap-2">
               {r.steps.map(step => (
                 <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-[var(--card)]">
@@ -702,8 +894,8 @@ export default function SavedRecipeDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Feedback history (only FeedbackRound entries, only when not editing) */}
         {!isEditing && feedbackRounds.length > 0 && (
@@ -747,29 +939,15 @@ export default function SavedRecipeDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto px-4 pb-20 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
         {isEditing ? (
           <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleSaveEdit(false)}
-                disabled={isSavingEdit}
-                className="flex-1 py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
-              >
-                {isSavingEdit ? (
-                  <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
-                ) : 'Save'}
-              </button>
-              <button
-                onClick={() => handleSaveEdit(true)}
-                disabled={isSavingEdit}
-                className="flex-1 py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 7C2 4.24 4.24 2 7 2C8.8 2 10.4 2.94 11.25 4.38M12 7C12 9.76 9.76 12 7 12C5.2 12 3.6 11.06 2.75 9.62" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                  <path d="M10.5 2.5V5H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M1 9V11.5H3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Save &amp; Brew
-              </button>
-            </div>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSavingEdit}
+              className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+            >
+              {isSavingEdit ? (
+                <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+              ) : 'Save'}
+            </button>
             <button
               onClick={() => setShowDiscardConfirm(true)}
               disabled={isSavingEdit}
@@ -779,16 +957,41 @@ export default function SavedRecipeDetailPage() {
             </button>
           </div>
         ) : (
-          <button
-            onClick={enterEditMode}
-            className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 14L5.5 13L13.5 5C14.05 4.45 14.05 3.55 13.5 3L13 2.5C12.45 1.95 11.55 1.95 11 2.5L3 10.5L2 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M10.5 3L13 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            Adjust Recipe
-          </button>
+          <div className="flex flex-col gap-2">
+            {/* Primary: Brew */}
+            <button
+              onClick={handleBrewAgain}
+              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.5 10C4.5 12 5.5 13 8 13C10.5 13 11.5 12 11.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M11 3C11 3 13 3.5 13 5.5C13 7.5 11 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              Brew
+            </button>
+            {/* Secondary: Edit Recipe */}
+            <button
+              onClick={enterEditMode}
+              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 14L5.5 13L13.5 5C14.05 4.45 14.05 3.55 13.5 3L13 2.5C12.45 1.95 11.55 1.95 11 2.5L3 10.5L2 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10.5 3L13 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              Edit Recipe
+            </button>
+            {/* Ghost: Auto Adjust */}
+            <button
+              onClick={() => router.push(`/recipes/${id}/auto-adjust`)}
+              className="w-full flex items-center justify-center gap-2 text-[var(--muted-foreground)] text-sm font-medium rounded-[14px] py-3 active:opacity-60 transition-opacity"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L9.5 6H14L10.5 8.5L12 12.5L8 10L4 12.5L5.5 8.5L2 6H6.5L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Auto Adjust
+            </button>
+          </div>
         )}
       </div>
 
@@ -836,7 +1039,9 @@ export default function SavedRecipeDetailPage() {
               {manualEditRounds.map(edit => (
                 <div key={edit.version} className="bg-[var(--background)] rounded-xl px-4 py-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-[var(--foreground)]">Edit v{edit.version}</span>
+                    <span className="text-xs font-semibold text-[var(--foreground)]">
+                      {edit.type === 'auto_adjust' ? 'Auto Adjusted' : `Edit v${edit.version}`}
+                    </span>
                     <span className="text-[10px] text-[#9CA3AF]">
                       {new Date(edit.edited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>

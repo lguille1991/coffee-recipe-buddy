@@ -175,7 +175,7 @@ export const FeedbackRoundSchema = z.object({
 export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
 
 export const ManualEditRoundSchema = z.object({
-  type: z.literal('manual_edit'),
+  type: z.enum(['manual_edit', 'auto_adjust']),
   version: z.number().int().positive(),
   edited_at: z.string(),
   changes: z.array(z.object({
@@ -221,6 +221,8 @@ export const SavedRecipeSchema = z.object({
   notes: z.string().max(1000).nullable().optional(),
   created_at: z.string(),
   archived: z.boolean().default(false),
+  parent_recipe_id: z.string().uuid().nullable().optional(),
+  scale_factor: z.number().nullable().optional(),
 })
 
 export type SavedRecipe = z.infer<typeof SavedRecipeSchema>
@@ -234,6 +236,8 @@ export const SaveRecipeRequestSchema = z.object({
   current_recipe_json: RecipeWithAdjustmentSchema,
   feedback_history: z.array(AnyFeedbackRoundSchema).default([]),
   image_data_url: z.string().optional(), // base64 data URL — uploaded server-side
+  parent_recipe_id: z.string().uuid().nullable().optional(),
+  scale_factor: z.number().nullable().optional(),
 })
 
 export type SaveRecipeRequest = z.infer<typeof SaveRecipeRequestSchema>
@@ -247,6 +251,7 @@ export const RecipeListItemSchema = z.object({
   schema_version: z.number().int(),
   has_manual_edits: z.boolean().default(false),
   has_feedback_adjustments: z.boolean().default(false),
+  is_scaled: z.boolean().default(false),
 })
 
 export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
