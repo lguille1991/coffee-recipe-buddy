@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, memo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
@@ -12,7 +13,7 @@ const METHOD_FILTERS: { id: string; label: string }[] = [
   ...Object.entries(METHOD_DISPLAY_NAMES).map(([id, label]) => ({ id, label })),
 ]
 
-function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
+const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
   const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
   const roaster = recipe.bean_info.roaster
@@ -33,8 +34,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
     >
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
         {recipe.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
+          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
         ) : (
           <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
         )}
@@ -65,7 +65,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
       </div>
     </Link>
   )
-}
+})
 
 export default function RecipesPage() {
   const router = useRouter()
@@ -77,21 +77,25 @@ export default function RecipesPage() {
   const [method, setMethod] = useState('')
   const [q, setQ] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchRecipes = useCallback(async (nextPage: number, methodFilter: string, search: string, replace: boolean) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setFetching(true)
     try {
       const params = new URLSearchParams({ page: String(nextPage), limit: '20' })
       if (methodFilter) params.set('method', methodFilter)
       if (search) params.set('q', search)
-      const res = await fetch(`/api/recipes?${params}`)
+      const res = await fetch(`/api/recipes?${params}`, { signal: controller.signal })
       const data = await res.json()
       const items: RecipeListItem[] = data.recipes ?? []
       setRecipes(prev => replace ? items : [...prev, ...items])
       setHasMore(items.length === 20)
       setPage(nextPage)
-    } catch {
-      // ignore
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
     } finally {
       setFetching(false)
     }

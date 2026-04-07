@@ -117,5 +117,7 @@ export async function GET(request: Request) {
     return { ...rest, has_manual_edits, has_feedback_adjustments, is_scaled }
   })
 
-  return NextResponse.json({ recipes, page, limit })
+  return NextResponse.json({ recipes, page, limit }, {
+    headers: { 'Cache-Control': 'private, max-age=60' },
+  })
 }
