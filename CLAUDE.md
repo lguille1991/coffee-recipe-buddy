@@ -119,3 +119,17 @@ Product specs for each phase live in the repo root:
 - `phase1_image_first_range_system.md` — completed
 - `phase2_feedback_block9_manual_fallback.md` — completed
 - `phase3_persistence_accounts_final.md` — completed (auth, recipes CRUD, sharing, comments, clone, re-brew freshness)
+
+## Versioning
+
+The app version is stored in `package.json`. **Always bump the version before committing changes** using Semantic Versioning (SemVer):
+
+| Bump | Trigger | Examples |
+|------|---------|----------|
+| **MAJOR** (X.0.0) | Breaking user-facing changes | API route removals, database migrations breaking backward compatibility, auth flow changes, removed features |
+| **MINOR** (0.X.0) | New features / enhancements | New API endpoints, new brew methods, new UI flows, new settings/options, non-breaking additions |
+| **PATCH** (0.0.X) | Fixes / refinements | Bug fixes, typo corrections, styling tweaks, performance improvements, refactors with no behavior change |
+
+**When to skip**: Documentation-only changes (README updates), test additions, dependency updates with no API changes.
+
+**How to bump**: Edit `package.json` directly and update the `"version"` field.
