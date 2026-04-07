@@ -232,6 +232,10 @@ export default function SettingsPage() {
         </button>
       </form>
 
+      <p className="text-center text-xs text-[#9CA3AF] pb-4">
+        v{process.env.NEXT_PUBLIC_APP_VERSION}
+      </p>
+
       <div className="h-24" />
     </div>
   )
