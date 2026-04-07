@@ -55,7 +55,7 @@ function EditableField({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
+        className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
       />
     </div>
   )
@@ -143,10 +143,10 @@ export default function AnalysisPage() {
               value={bean.bean_name || ''}
               onChange={e => updateField('bean_name', e.target.value || undefined)}
               placeholder="Unknown Bean"
-              className="w-full font-semibold text-[var(--foreground)] text-sm bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
+              className="w-full font-semibold text-[var(--foreground)] text-base bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
             />
-            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
-            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
+            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
+            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
             </p>
           </div>
@@ -205,7 +205,7 @@ export default function AnalysisPage() {
               type="date"
               value={roastDate}
               onChange={e => setRoastDate(e.target.value)}
-              className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
+              className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="Optional — leave blank for optimal window"
             />
             {!roastDate && (
@@ -224,7 +224,7 @@ export default function AnalysisPage() {
               onChange={e => setTargetVolume(e.target.value)}
               min={50}
               max={2000}
-              className="flex-1 text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
+              className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="250"
             />
             <span className="text-sm text-[var(--muted-foreground)]">ml</span>
@@ -237,7 +237,7 @@ export default function AnalysisPage() {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 disabled:opacity-50"
         >
           {generating ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />

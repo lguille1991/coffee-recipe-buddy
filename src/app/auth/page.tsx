@@ -123,7 +123,7 @@ function AuthForm() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -138,14 +138,14 @@ function AuthForm() {
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="••••••••"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 mt-1 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+          className="w-full bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 mt-1 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -162,7 +162,7 @@ function AuthForm() {
       <button
         onClick={handleGoogleOAuth}
         disabled={loading}
-        className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2.5"
+        className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2.5"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>

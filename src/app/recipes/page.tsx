@@ -146,7 +146,7 @@ export default function RecipesPage() {
             placeholder="Search bean, origin, roaster…"
             value={q}
             onChange={e => handleSearchChange(e.target.value)}
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] pl-9 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] pl-9 pr-4 py-2.5 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
       </div>

@@ -31,7 +31,7 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
-        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
+        <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
       </div>
 
       {/* Date */}
@@ -85,14 +85,14 @@ export default function HomePage() {
       <div className="px-6 mt-6 flex flex-col items-center gap-3">
         <Link
           href="/scan"
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
           <Camera size={20} />
           Scan Your Coffee Bag
         </Link>
         <Link
           href="/manual"
-          className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
         >
           <PenLine size={16} />
           Enter Manually
@@ -100,7 +100,7 @@ export default function HomePage() {
         {!loading && !user && (
           <Link
             href="/auth"
-            className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+            className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
           >
             <LogIn size={16} />
             Sign In
@@ -125,7 +125,7 @@ export default function HomePage() {
               <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
                 No saved recipes yet.
               </p>
-              <p className="text-xs text-[var(--muted-foreground)] mt-1">Scan your first bag to get started!</p>
+              <p className="text-sm text-[var(--muted-foreground)] mt-1">Scan your first bag to get started!</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">

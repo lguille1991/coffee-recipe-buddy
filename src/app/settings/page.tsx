@@ -95,7 +95,7 @@ export default function SettingsPage() {
       <div className="px-6 pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
         {user?.email && (
-          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{user.email}</p>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{user.email}</p>
         )}
       </div>
 
@@ -110,7 +110,7 @@ export default function SettingsPage() {
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
             placeholder="Optional"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                 key={unit}
                 type="button"
                 onClick={() => setTempUnit(unit)}
-                className={`flex-1 py-3 rounded-[12px] text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 rounded-[12px] text-base font-medium transition-colors ${
                   tempUnit === unit
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -148,7 +148,7 @@ export default function SettingsPage() {
                 key={grinder}
                 type="button"
                 onClick={() => setPreferredGrinder(grinder)}
-                className={`w-full py-3 rounded-[12px] text-sm font-medium transition-colors text-left px-4 ${
+                className={`w-full py-3 rounded-[12px] text-base font-medium transition-colors text-left px-4 ${
                   preferredGrinder === grinder
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -171,7 +171,7 @@ export default function SettingsPage() {
                 key={t}
                 type="button"
                 onClick={() => setTheme(t)}
-                className={`flex-1 py-3 rounded-[12px] text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 rounded-[12px] text-base font-medium transition-colors ${
                   theme === t
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -195,18 +195,18 @@ export default function SettingsPage() {
             min={100}
             max={1000}
             step={10}
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
         {/* Feedback */}
         {saved && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm font-medium text-green-800">
             Settings saved.
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-xs text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -215,7 +215,7 @@ export default function SettingsPage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {saving ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -226,7 +226,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full py-3.5 text-sm font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
+          className="w-full py-3.5 text-base font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
         >
           Sign Out
         </button>

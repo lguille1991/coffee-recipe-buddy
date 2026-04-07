@@ -416,17 +416,17 @@ export default function RecipePage() {
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
             {bean.bean_name || 'Your Coffee'}{bean.roast_level ? ` · ${bean.roast_level.charAt(0).toUpperCase() + bean.roast_level.slice(1)} Roast` : ''}
           </p>
-          <p className="text-xs text-[var(--muted-foreground)] mt-1.5 leading-relaxed">{recipe.objective}</p>
+          <p className="text-sm text-[var(--muted-foreground)] mt-1.5 leading-relaxed">{recipe.objective}</p>
         </div>
 
         {/* Save feedback */}
         {savedMessage && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs font-medium text-green-800">
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm font-medium text-green-800">
             {savedMessage}
           </div>
         )}
         {saveError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-xs text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
             {saveError}
           </div>
         )}
@@ -435,7 +435,7 @@ export default function RecipePage() {
         {adj && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-amber-700">Adjustment {feedbackRound} of 3</p>
+              <p className="text-sm font-semibold text-amber-700">Adjustment {feedbackRound} of 3</p>
               <button
                 onClick={() => setShowResetConfirm(true)}
                 className="text-[10px] text-[var(--muted-foreground)] underline"
@@ -443,7 +443,7 @@ export default function RecipePage() {
                 Reset to original
               </button>
             </div>
-            <p className="text-xs text-amber-800">
+            <p className="text-sm text-amber-800">
               {adj.variable_changed === 'technique'
                 ? adj.note
                 : `${adj.variable_changed.charAt(0).toUpperCase() + adj.variable_changed.slice(1)}: ${adj.previous_value} → ${adj.new_value} (${adj.direction})`}
@@ -513,15 +513,15 @@ export default function RecipePage() {
                   <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                 </div>
                 <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-                <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
+                <p className="text-sm opacity-60 mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
-                  <p className="text-xs opacity-80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
+                  <p className="text-sm opacity-80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
                 )}
                 {primaryData.description && (
-                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
+                  <p className="text-sm opacity-50 mt-1 italic">{primaryData.description}</p>
                 )}
                 {primaryData.note && (
-                  <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
+                  <p className="text-sm opacity-50 mt-1 italic">{primaryData.note}</p>
                 )}
               </div>
 
@@ -552,7 +552,7 @@ export default function RecipePage() {
             <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Brew Steps</h3>
             <div className="flex items-center gap-2">
               {(timerRunning || elapsedSeconds > 0) && (
-                <span className={`text-xs font-mono font-semibold tabular-nums ${timerOverrun ? 'text-red-500' : 'text-[var(--foreground)]'}`}>
+                <span className={`text-sm font-mono font-semibold tabular-nums ${timerOverrun ? 'text-red-500' : 'text-[var(--foreground)]'}`}>
                   {formatElapsed(elapsedSeconds)}
                 </span>
               )}
@@ -591,10 +591,10 @@ export default function RecipePage() {
                   </div>
                   <div className="flex-1 relative">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
-                    <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                    <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                   </div>
                 </div>
               )
@@ -610,7 +610,7 @@ export default function RecipePage() {
                 <p className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-0.5">
                   {key.replace(/_/g, ' ')}
                 </p>
-                <p className="text-xs text-[var(--foreground)] leading-relaxed">{value}</p>
+                <p className="text-sm text-[var(--foreground)] leading-relaxed">{value}</p>
               </div>
             ))}
           </div>
@@ -648,7 +648,7 @@ export default function RecipePage() {
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3">
             <div>
               <p className="text-sm font-semibold text-[var(--foreground)]">This bean might work better with a different method</p>
-              <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              <p className="text-sm text-[var(--muted-foreground)] mt-1 leading-relaxed">
                 You&apos;ve reached the 3-round adjustment limit. Sometimes the bean profile is better served by a different brewing approach.
               </p>
             </div>
@@ -657,7 +657,7 @@ export default function RecipePage() {
                 // Navigate back to methods with the same bean data already in sessionStorage
                 router.push('/methods')
               }}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[12px] py-3 active:opacity-80"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[12px] py-3 active:opacity-80"
             >
               Try a Different Method
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -676,7 +676,7 @@ export default function RecipePage() {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setShowFeedback(true)}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="currentColor" strokeWidth="1.3"/>
@@ -721,20 +721,20 @@ export default function RecipePage() {
             </div>
 
             {adjustError && (
-              <p className="text-xs text-red-500">{adjustError}</p>
+              <p className="text-sm text-red-500">{adjustError}</p>
             )}
 
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowFeedback(false); setSelectedSymptom(null); setAdjustError(null) }}
-                className="flex-1 py-3 rounded-[12px] text-sm font-medium text-[var(--muted-foreground)] bg-[var(--background)] active:opacity-80"
+                className="flex-1 py-3 rounded-[12px] text-base font-medium text-[var(--muted-foreground)] bg-[var(--background)] active:opacity-80"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdjust}
                 disabled={!selectedSymptom || adjusting}
-                className="flex-1 py-3 rounded-[12px] text-sm font-semibold text-[var(--background)] bg-[var(--foreground)] disabled:opacity-40 active:opacity-80 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-[12px] text-base font-semibold text-[var(--background)] bg-[var(--foreground)] disabled:opacity-40 active:opacity-80 flex items-center justify-center gap-2"
               >
                 {adjusting ? (
                   <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />

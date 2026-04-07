@@ -632,12 +632,12 @@ export default function SavedRecipeDetailPage() {
           </div>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {recipe.bean_info.roaster && (
-            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{recipe.bean_info.roaster}</p>
+            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{recipe.bean_info.roaster}</p>
           )}
           {recipe.parent_recipe_id && !isEditing && (
             <button
               onClick={() => router.push(`/recipes/${recipe.parent_recipe_id}`)}
-              className="flex items-center gap-1 mt-1 text-xs text-[var(--muted-foreground)] active:opacity-60"
+              className="flex items-center gap-1 mt-1 text-sm text-[var(--muted-foreground)] active:opacity-60"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -645,7 +645,7 @@ export default function SavedRecipeDetailPage() {
               Scaled from original recipe{recipe.scale_factor && recipe.scale_factor !== 1 ? ` (×${recipe.scale_factor})` : ''}
             </button>
           )}
-          <p className="text-xs text-[var(--muted-foreground)] mt-1">
+          <p className="text-sm text-[var(--muted-foreground)] mt-1">
             Saved {new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
@@ -653,8 +653,8 @@ export default function SavedRecipeDetailPage() {
         {/* Freshness notice */}
         {freshnessAdj && !freshnessIgnored && !isEditing && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-2">
-            <p className="text-xs font-semibold text-amber-700">Freshness updated</p>
-            <p className="text-xs text-amber-800">
+            <p className="text-sm font-semibold text-amber-700">Freshness updated</p>
+            <p className="text-sm text-amber-800">
               This coffee is now {freshnessAdj.daysPostRoast} days post-roast ({freshnessAdj.freshnessLabel}).
               Recipe adjusted for freshness.
             </p>
@@ -674,7 +674,7 @@ export default function SavedRecipeDetailPage() {
 
         {/* Edit error */}
         {editError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-xs text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
             {editError}
           </div>
         )}
@@ -696,7 +696,7 @@ export default function SavedRecipeDetailPage() {
                     step={1}
                     value={editDraft.temperature_display}
                     onChange={e => setEditDraft(d => d ? { ...d, temperature_display: parseInt(e.target.value) || d.temperature_display } : d)}
-                    className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                    className="w-full rounded-xl px-3 py-2.5 text-base font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -706,7 +706,7 @@ export default function SavedRecipeDetailPage() {
                     placeholder="e.g. 3:30"
                     value={editDraft.total_time}
                     onChange={e => setEditDraft(d => d ? { ...d, total_time: e.target.value } : d)}
-                    className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                    className="w-full rounded-xl px-3 py-2.5 text-base font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
                   />
                 </label>
               </div>
@@ -772,7 +772,7 @@ export default function SavedRecipeDetailPage() {
                               return { ...d, coffee_g: newCoffee, water_g: newWater, steps: newSteps, grind_preferred_value: newGrindValue, scaledFromDose: true }
                             })
                           }}
-                          className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                          className="w-full rounded-xl px-3 py-2.5 text-base font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
                         />
                       </label>
                       <div className="flex flex-col gap-1">
@@ -809,12 +809,12 @@ export default function SavedRecipeDetailPage() {
                               return { ...d, ratio_multiplier: newRatio, water_g: newWater, steps: newSteps, grind_preferred_value: newGrindValue, scaledFromRatio: true }
                             })
                           }}
-                          className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-[var(--foreground)] focus:outline-none"
+                          className="flex-1 min-w-0 bg-transparent text-base font-semibold text-[var(--foreground)] focus:outline-none"
                         />
                       </div>
                     </label>
                     {showWarning && (
-                      <p className="text-xs text-amber-500 font-medium">
+                      <p className="text-sm text-amber-500 font-medium">
                         Step amounts were scaled proportionally.{grindSentence ? ` ${grindSentence}` : ''}
                       </p>
                     )}
@@ -865,7 +865,7 @@ export default function SavedRecipeDetailPage() {
                       className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
                     />
                     {grindRange && (
-                      <p className="text-xs opacity-60 mt-1.5">
+                      <p className="text-sm opacity-60 mt-1.5">
                         Recommended: {grindRange.low}–{grindRange.high} clicks
                       </p>
                     )}
@@ -881,12 +881,12 @@ export default function SavedRecipeDetailPage() {
                     <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
                   </div>
                   <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-                  <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
+                  <p className="text-sm opacity-60 mt-0.5">Range: {primaryData.range}</p>
                   {primaryData.description && (
-                    <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
+                    <p className="text-sm opacity-50 mt-1 italic">{primaryData.description}</p>
                   )}
                   {primaryData.note && (
-                    <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
+                    <p className="text-sm opacity-50 mt-1 italic">{primaryData.note}</p>
                   )}
                 </div>
               )}
@@ -898,8 +898,8 @@ export default function SavedRecipeDetailPage() {
                 return (
                   <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                     <div>
-                      <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
+                      <p className="text-sm font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Range: {data.range}</p>
                       {data.note && (
                         <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
                       )}
@@ -933,10 +933,10 @@ export default function SavedRecipeDetailPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
-                    <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                    <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                   </div>
                 </div>
               ))}
@@ -950,7 +950,7 @@ export default function SavedRecipeDetailPage() {
             <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Adjustment History</h3>
             <div className="flex flex-col gap-2">
               {feedbackRounds.map((fh, i) => (
-                <div key={i} className="bg-[var(--card)] rounded-xl px-4 py-2.5 text-xs text-[var(--muted-foreground)]">
+                <div key={i} className="bg-[var(--card)] rounded-xl px-4 py-2.5 text-sm text-[var(--muted-foreground)]">
                   <span className="font-medium text-[var(--foreground)]">Round {fh.round}</span>
                   {' · '}
                   {fh.variable_changed}: {fh.previous_value} → {fh.new_value}
@@ -975,7 +975,7 @@ export default function SavedRecipeDetailPage() {
               maxLength={1000}
               placeholder="Add notes about this brew…"
               rows={3}
-              className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+              className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
             />
             <p className="text-[10px] text-[var(--muted-foreground)] text-right mt-1">{notes.length}/1000</p>
           </div>
@@ -990,7 +990,7 @@ export default function SavedRecipeDetailPage() {
             <button
               onClick={handleSaveEdit}
               disabled={isSavingEdit}
-              className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+              className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
             >
               {isSavingEdit ? (
                 <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -999,7 +999,7 @@ export default function SavedRecipeDetailPage() {
             <button
               onClick={() => setShowDiscardConfirm(true)}
               disabled={isSavingEdit}
-              className="w-full py-3 text-sm font-medium text-[var(--muted-foreground)] bg-[var(--card)] rounded-[14px] active:opacity-80 disabled:opacity-50"
+              className="w-full py-3 text-base font-medium text-[var(--muted-foreground)] bg-[var(--card)] rounded-[14px] active:opacity-80 disabled:opacity-50"
             >
               Discard
             </button>
@@ -1009,7 +1009,7 @@ export default function SavedRecipeDetailPage() {
             {/* Primary: Brew */}
             <button
               onClick={handleBrewAgain}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1021,7 +1021,7 @@ export default function SavedRecipeDetailPage() {
             {/* Secondary: Edit Recipe */}
             <button
               onClick={enterEditMode}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M2 14L5.5 13L13.5 5C14.05 4.45 14.05 3.55 13.5 3L13 2.5C12.45 1.95 11.55 1.95 11 2.5L3 10.5L2 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1032,7 +1032,7 @@ export default function SavedRecipeDetailPage() {
             {/* Ghost: Auto Adjust */}
             <button
               onClick={() => router.push(`/recipes/${id}/auto-adjust`)}
-              className="w-full flex items-center justify-center gap-2 text-[var(--muted-foreground)] text-sm font-medium rounded-[14px] py-3 active:opacity-60 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 text-[var(--muted-foreground)] text-base font-medium rounded-[14px] py-3 active:opacity-60 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L9.5 6H14L10.5 8.5L12 12.5L8 10L4 12.5L5.5 8.5L2 6H6.5L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
