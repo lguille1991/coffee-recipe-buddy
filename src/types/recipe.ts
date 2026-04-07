@@ -11,7 +11,7 @@ export const BeanProfileSchema = z.object({
   process: z.enum(['washed', 'natural', 'honey', 'anaerobic', 'unknown']),
   origin: z.string().nullable().optional(),
   altitude_masl: z.number().nullable().optional(),
-  roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark']),
+  roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark']).catch('medium'),
   tasting_notes: z.array(z.string()).nullable().optional(),
   roast_date: z.string().nullable().optional(), // ISO date string YYYY-MM-DD
 })
