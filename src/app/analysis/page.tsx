@@ -48,7 +48,7 @@ function EditableField({
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
       <div className="flex items-center justify-between mb-1">
-        <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider">{label}</label>
+        <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider">{label}</label>
         <ConfidenceBadge score={confidence} />
       </div>
       <input
@@ -143,10 +143,10 @@ export default function AnalysisPage() {
               value={bean.bean_name || ''}
               onChange={e => updateField('bean_name', e.target.value || undefined)}
               placeholder="Unknown Bean"
-              className="w-full font-semibold text-[var(--foreground)] text-sm bg-transparent outline-none placeholder:text-[#9CA3AF]"
+              className="w-full font-semibold text-[var(--foreground)] text-sm bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
             />
             <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
-            <p className="text-xs text-[#9CA3AF] mt-0.5">
+            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
             </p>
           </div>
@@ -209,7 +209,7 @@ export default function AnalysisPage() {
               placeholder="Optional — leave blank for optimal window"
             />
             {!roastDate && (
-              <p className="text-[10px] text-[#9CA3AF] mt-1">Assuming optimal window (8–21 days)</p>
+              <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
             )}
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function AnalysisPage() {
               className="flex-1 text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="250"
             />
-            <span className="text-sm text-[#9CA3AF]">ml</span>
+            <span className="text-sm text-[var(--muted-foreground)]">ml</span>
           </div>
         </div>
       </div>

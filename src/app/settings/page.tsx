@@ -95,7 +95,7 @@ export default function SettingsPage() {
       <div className="px-6 pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
         {user?.email && (
-          <p className="text-xs text-[#9CA3AF] mt-0.5">{user.email}</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{user.email}</p>
         )}
       </div>
 
@@ -110,7 +110,7 @@ export default function SettingsPage() {
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
             placeholder="Optional"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -232,7 +232,7 @@ export default function SettingsPage() {
         </button>
       </form>
 
-      <p className="text-center text-xs text-[#9CA3AF] pb-4">
+      <p className="text-center text-xs text-[var(--muted-foreground)] pb-4">
         v{process.env.NEXT_PUBLIC_APP_VERSION}
       </p>
 

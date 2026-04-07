@@ -46,7 +46,7 @@ function ParamCard({
     }`}>
       <div className="text-[var(--muted-foreground)]">{icon}</div>
       <p className="text-sm font-semibold text-[var(--foreground)]">{value}</p>
-      <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{label}</p>
       {changed && annotation && (
         <p className="text-[9px] text-amber-600 font-medium leading-tight">{annotation}</p>
       )}
@@ -416,7 +416,7 @@ export default function RecipePage() {
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
             {bean.bean_name || 'Your Coffee'}{bean.roast_level ? ` · ${bean.roast_level.charAt(0).toUpperCase() + bean.roast_level.slice(1)} Roast` : ''}
           </p>
-          <p className="text-xs text-[#9CA3AF] mt-1.5 leading-relaxed">{recipe.objective}</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1.5 leading-relaxed">{recipe.objective}</p>
         </div>
 
         {/* Save feedback */}
@@ -533,9 +533,9 @@ export default function RecipePage() {
                   <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                     <div>
                       <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                      <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
                       {data.note && (
-                        <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
+                        <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
                     <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
@@ -592,7 +592,7 @@ export default function RecipePage() {
                   <div className="flex-1 relative">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
                     <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                   </div>
@@ -607,7 +607,7 @@ export default function RecipePage() {
           <div className="flex flex-col gap-2.5">
             {Object.entries(recipe.quick_adjustments).map(([key, value]) => (
               <div key={key}>
-                <p className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-0.5">
+                <p className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-0.5">
                   {key.replace(/_/g, ' ')}
                 </p>
                 <p className="text-xs text-[var(--foreground)] leading-relaxed">{value}</p>
@@ -629,7 +629,7 @@ export default function RecipePage() {
               ['Starting Point', recipe.range_logic.starting_point],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3">
-                <p className="text-[10px] text-[#9CA3AF] shrink-0">{label}</p>
+                <p className="text-[10px] text-[var(--muted-foreground)] shrink-0">{label}</p>
                 <p className="text-[10px] text-[var(--foreground)] text-right">{value}</p>
               </div>
             ))}
@@ -687,7 +687,7 @@ export default function RecipePage() {
             {feedbackRound > 0 && (
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="text-xs text-[#9CA3AF] underline text-center"
+                className="text-xs text-[var(--muted-foreground)] underline text-center"
               >
                 Reset to original
               </button>
@@ -698,7 +698,7 @@ export default function RecipePage() {
           <div className="bg-[var(--card)] rounded-2xl p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-[var(--foreground)]">What was off?</p>
-              <p className="text-[10px] text-[#9CA3AF]">
+              <p className="text-[10px] text-[var(--muted-foreground)]">
                 Round {feedbackRound + 1} of 3
               </p>
             </div>

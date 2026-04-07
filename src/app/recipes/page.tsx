@@ -36,12 +36,12 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
         {recipe.image_url ? (
           <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
         ) : (
-          <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
+          <MethodIcon method={recipe.method} size={28} className="text-[var(--muted-foreground)]" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
-        {roaster && <p className="text-[10px] text-[#9CA3AF] truncate">{roaster}</p>}
+        {roaster && <p className="text-[10px] text-[var(--muted-foreground)] truncate">{roaster}</p>}
         <div className="flex items-center gap-1.5 mt-0.5">
           <p className="text-xs text-[var(--muted-foreground)]">{displayName}</p>
           {badge && (
@@ -58,7 +58,7 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
         </div>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-[10px] text-[#9CA3AF]">{date}</p>
+        <p className="text-[10px] text-[var(--muted-foreground)]">{date}</p>
         <svg className="mt-1.5 ml-auto" width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M5 3L9 7L5 11" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -137,7 +137,7 @@ export default function RecipesPage() {
       {/* Search */}
       <div className="px-6 mb-3">
         <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3" />
             <path d="M10.5 10.5L13 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
@@ -146,7 +146,7 @@ export default function RecipesPage() {
             placeholder="Search bean, origin, roaster…"
             value={q}
             onChange={e => handleSearchChange(e.target.value)}
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] pl-9 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] pl-9 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
       </div>

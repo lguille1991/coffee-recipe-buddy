@@ -47,7 +47,7 @@ const SortableStepRow = memo(function SortableStepRow({
           {stepIndex + 1}
         </span>
         <button
-          className="p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
+          className="p-1 touch-none cursor-grab text-[var(--muted-foreground)] active:cursor-grabbing"
           aria-label="Drag to reorder"
           {...listeners}
           {...attributes}
@@ -82,10 +82,10 @@ const SortableStepRow = memo(function SortableStepRow({
               onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
               className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9CA3AF] pointer-events-none">g</span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--muted-foreground)] pointer-events-none">g</span>
           </div>
           {step.water_poured_g > 0 && (
-            <span className="text-[10px] font-mono text-[#9CA3AF] whitespace-nowrap">
+            <span className="text-[10px] font-mono text-[var(--muted-foreground)] whitespace-nowrap">
               = {step.water_accumulated_g} g
             </span>
           )}

@@ -82,7 +82,7 @@ function TextField({
 }) {
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
-      <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+      <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
         {label}
       </label>
       <input
@@ -177,7 +177,7 @@ export default function ManualPage() {
         </button>
         <div>
           <h2 className="text-lg font-semibold">Enter Manually</h2>
-          <p className="text-[11px] text-[#9CA3AF]">Process & roast level required</p>
+          <p className="text-[11px] text-[var(--muted-foreground)]">Process & roast level required</p>
         </div>
       </div>
 
@@ -231,7 +231,7 @@ export default function ManualPage() {
             ))}
           </div>
           <div className="bg-[var(--card)] rounded-xl p-3">
-            <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+            <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
               Or type a variety
             </label>
             <input
@@ -246,7 +246,7 @@ export default function ManualPage() {
 
         {/* Altitude */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
             Altitude (masl, optional)
           </label>
           <input
@@ -257,7 +257,7 @@ export default function ManualPage() {
             className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
           {!altitude && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
         </div>
 
@@ -304,7 +304,7 @@ export default function ManualPage() {
 
         {/* Roast date */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
             Roast Date (optional)
           </label>
           <input
@@ -314,13 +314,13 @@ export default function ManualPage() {
             className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
           {!roastDate && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">Assuming optimal window (8–21 days)</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
           )}
         </div>
 
         {/* Sparse data notice */}
         {!origin && !altitude && tastingNotes.length === 0 && (
-          <p className="text-[11px] text-[#9CA3AF] text-center leading-relaxed px-2">
+          <p className="text-[11px] text-[var(--muted-foreground)] text-center leading-relaxed px-2">
             With just process and roast level, the app will recommend versatile methods and note assumptions in the recipe.
           </p>
         )}
@@ -333,7 +333,7 @@ export default function ManualPage() {
           className={`w-full flex items-center justify-center gap-2 text-sm font-semibold rounded-[14px] py-4 transition-colors ${
             hasRequiredFields
               ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
-              : 'bg-[var(--border)] text-[#9CA3AF]'
+              : 'bg-[var(--border)] text-[var(--muted-foreground)]'
           }`}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

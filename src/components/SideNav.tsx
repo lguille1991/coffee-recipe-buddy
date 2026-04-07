@@ -43,7 +43,7 @@ export default function SideNav() {
       {/* Brand */}
       <div className="px-6 py-8 border-b border-[var(--border)]">
         <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">QAfe</span>
-        <p className="text-xs text-[#9CA3AF] mt-0.5">Coffee Recipe Buddy</p>
+        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">Coffee Recipe Buddy</p>
       </div>
 
       {/* Nav items */}

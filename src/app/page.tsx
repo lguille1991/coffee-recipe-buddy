@@ -24,7 +24,7 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
         {recipe.image_url ? (
           <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
         ) : (
-          <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
+          <MethodIcon method={recipe.method} size={28} className="text-[var(--muted-foreground)]" />
         )}
       </div>
 
@@ -35,7 +35,7 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
       </div>
 
       {/* Date */}
-      <p className="text-[10px] text-[#9CA3AF] shrink-0">{date}</p>
+      <p className="text-[10px] text-[var(--muted-foreground)] shrink-0">{date}</p>
     </Link>
   )
 })
@@ -125,7 +125,7 @@ export default function HomePage() {
               <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
                 No saved recipes yet.
               </p>
-              <p className="text-xs text-[#9CA3AF] mt-1">Scan your first bag to get started!</p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">Scan your first bag to get started!</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">

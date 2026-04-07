@@ -133,9 +133,9 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {snapshot.bean_info.roaster && (
-            <p className="text-xs text-[#9CA3AF] mt-0.5">{snapshot.bean_info.roaster}</p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{snapshot.bean_info.roaster}</p>
           )}
-          <p className="text-xs text-[#9CA3AF] mt-1">
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">
             Shared by{' '}
             <span className="font-medium text-[var(--muted-foreground)]">
               {snapshot.owner_display_name ?? 'a Brygg user'}
@@ -159,7 +159,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
                 <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{p.label}</p>
+                <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{p.label}</p>
               </div>
             ))}
           </div>
@@ -193,9 +193,9 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                 <div>
                   <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                  <p className="text-xs text-[#9CA3AF]">Range: {gdata.range}</p>
+                  <p className="text-xs text-[var(--muted-foreground)]">Range: {gdata.range}</p>
                   {gdata.note && (
-                    <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{gdata.note}</p>
+                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{gdata.note}</p>
                   )}
                 </div>
                 <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
@@ -216,7 +216,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                    <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                 </div>
@@ -245,7 +245,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-[#9CA3AF] py-2">No comments yet. Be the first!</p>
+            <p className="text-xs text-[var(--muted-foreground)] py-2">No comments yet. Be the first!</p>
           ) : (
             <div className="flex flex-col gap-3 mb-4">
               {comments.map(comment => (
@@ -256,7 +256,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                         <span className="text-xs font-semibold text-[var(--foreground)] truncate">
                           {comment.author_display_name ?? 'Brygg user'}
                         </span>
-                        <span className="text-[10px] text-[#9CA3AF] shrink-0">
+                        <span className="text-[10px] text-[var(--muted-foreground)] shrink-0">
                           {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
@@ -266,7 +266,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                       <button
                         onClick={() => { setPendingDeleteCommentId(comment.id); setShowDeleteCommentConfirm(true) }}
                         disabled={deletingId === comment.id}
-                        className="shrink-0 p-1 text-[#9CA3AF] active:opacity-60 disabled:opacity-40"
+                        className="shrink-0 p-1 text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
                         aria-label="Delete comment"
                       >
                         {deletingId === comment.id ? (
@@ -294,10 +294,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 maxLength={500}
                 placeholder="Add a comment…"
                 rows={2}
-                className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
               />
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-[#9CA3AF]">{commentBody.length}/500</p>
+                <p className="text-[10px] text-[var(--muted-foreground)]">{commentBody.length}/500</p>
                 <button
                   onClick={handlePostComment}
                   disabled={posting || !commentBody.trim()}

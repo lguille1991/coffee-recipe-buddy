@@ -200,7 +200,7 @@ export default function AutoAdjustPage() {
         <div className="flex items-center gap-2 bg-[var(--card)] rounded-xl px-3 py-2.5">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-[var(--foreground)] truncate">{beanName}</p>
-            <p className="text-[10px] text-[#9CA3AF]">{displayName}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)]">{displayName}</p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-xs text-[var(--muted-foreground)]">
@@ -228,7 +228,7 @@ export default function AutoAdjustPage() {
             ))}
           </div>
           {scaleFactor !== 1.0 && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1.5">
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-1.5">
               {Math.round(sourceRecipe.current_recipe_json.parameters.coffee_g * scaleFactor * 10) / 10}g coffee ·{' '}
               {Math.round(sourceRecipe.current_recipe_json.parameters.water_g * scaleFactor)}ml water
             </p>
@@ -244,14 +244,14 @@ export default function AutoAdjustPage() {
             maxLength={500}
             rows={3}
             placeholder="e.g. Make it sweeter and rounder, slightly coarser grind for a lazy morning…"
-            className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+            className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
           />
-          <p className="text-[10px] text-[#9CA3AF] text-right mt-1">{intent.length}/500</p>
+          <p className="text-[10px] text-[var(--muted-foreground)] text-right mt-1">{intent.length}/500</p>
         </div>
 
         {/* Disabled hint */}
         {!canGenerate && (
-          <p className="text-xs text-[#9CA3AF] text-center -mt-2">Change the scale or describe what you&apos;d like to adjust</p>
+          <p className="text-xs text-[var(--muted-foreground)] text-center -mt-2">Change the scale or describe what you&apos;d like to adjust</p>
         )}
 
         {/* Generate button */}
@@ -287,7 +287,7 @@ export default function AutoAdjustPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-[var(--border)]" />
-              <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Result</span>
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Result</span>
               <div className="flex-1 h-px bg-[var(--border)]" />
             </div>
 
@@ -303,7 +303,7 @@ export default function AutoAdjustPage() {
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--card)]">
                   <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider leading-tight">{p.label}</p>
+                  <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider leading-tight">{p.label}</p>
                 </div>
               ))}
             </div>
@@ -318,7 +318,7 @@ export default function AutoAdjustPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
                     <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                   </div>

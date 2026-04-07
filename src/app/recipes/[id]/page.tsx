@@ -632,7 +632,7 @@ export default function SavedRecipeDetailPage() {
           </div>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {recipe.bean_info.roaster && (
-            <p className="text-xs text-[#9CA3AF] mt-0.5">{recipe.bean_info.roaster}</p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{recipe.bean_info.roaster}</p>
           )}
           {recipe.parent_recipe_id && !isEditing && (
             <button
@@ -645,7 +645,7 @@ export default function SavedRecipeDetailPage() {
               Scaled from original recipe{recipe.scale_factor && recipe.scale_factor !== 1 ? ` (×${recipe.scale_factor})` : ''}
             </button>
           )}
-          <p className="text-xs text-[#9CA3AF] mt-1">
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">
             Saved {new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
@@ -688,7 +688,7 @@ export default function SavedRecipeDetailPage() {
               {/* Temperature + Brew Time row (primary) */}
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Temp (°{tempUnit})</span>
+                  <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Temp (°{tempUnit})</span>
                   <input
                     type="number"
                     min={tempUnit === 'F' ? 140 : 60}
@@ -700,7 +700,7 @@ export default function SavedRecipeDetailPage() {
                   />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Brew Time</span>
+                  <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Brew Time</span>
                   <input
                     type="text"
                     placeholder="e.g. 3:30"
@@ -719,7 +719,7 @@ export default function SavedRecipeDetailPage() {
                 <span className="text-xs font-medium text-[var(--muted-foreground)]">Advanced (dose &amp; ratio)</span>
                 <svg
                   width="14" height="14" viewBox="0 0 14 14" fill="none"
-                  className={`transition-transform text-[#9CA3AF] ${advancedOpen ? 'rotate-180' : ''}`}
+                  className={`transition-transform text-[var(--muted-foreground)] ${advancedOpen ? 'rotate-180' : ''}`}
                 >
                   <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -748,7 +748,7 @@ export default function SavedRecipeDetailPage() {
                   <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1">
-                        <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Coffee (g)</span>
+                        <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Coffee (g)</span>
                         <input
                           type="number"
                           min={1} max={50} step={0.1}
@@ -776,14 +776,14 @@ export default function SavedRecipeDetailPage() {
                         />
                       </label>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Water (g)</span>
+                        <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Water (g)</span>
                         <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
                           <p className="text-sm font-semibold text-[var(--foreground)]">{editDraft.water_g}</p>
                         </div>
                       </div>
                     </div>
                     <label className="flex flex-col gap-1">
-                      <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Ratio</span>
+                      <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Ratio</span>
                       <div className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] focus-within:ring-1 focus-within:ring-[var(--foreground)]/20">
                         <span className="text-sm font-semibold text-[var(--foreground)]">1:</span>
                         <input
@@ -834,7 +834,7 @@ export default function SavedRecipeDetailPage() {
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
                   <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{p.label}</p>
+                  <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{p.label}</p>
                 </div>
               ))}
             </div>
@@ -899,9 +899,9 @@ export default function SavedRecipeDetailPage() {
                   <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                     <div>
                       <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                      <p className="text-xs text-[#9CA3AF]">Range: {data.range}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
                       {data.note && (
-                        <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{data.note}</p>
+                        <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
                       )}
                     </div>
                     <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
@@ -934,7 +934,7 @@ export default function SavedRecipeDetailPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
                     <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                   </div>
@@ -966,7 +966,7 @@ export default function SavedRecipeDetailPage() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Notes</h3>
               {notesSaving && (
-                <span className="text-[10px] text-[#9CA3AF]">Saving…</span>
+                <span className="text-[10px] text-[var(--muted-foreground)]">Saving…</span>
               )}
             </div>
             <textarea
@@ -975,9 +975,9 @@ export default function SavedRecipeDetailPage() {
               maxLength={1000}
               placeholder="Add notes about this brew…"
               rows={3}
-              className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+              className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
             />
-            <p className="text-[10px] text-[#9CA3AF] text-right mt-1">{notes.length}/1000</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] text-right mt-1">{notes.length}/1000</p>
           </div>
         )}
       </div>
@@ -1091,7 +1091,7 @@ export default function SavedRecipeDetailPage() {
                     <span className="text-xs font-semibold text-[var(--foreground)]">
                       {edit.type === 'auto_adjust' ? 'Auto Adjusted' : `Edit v${edit.version}`}
                     </span>
-                    <span className="text-[10px] text-[#9CA3AF]">
+                    <span className="text-[10px] text-[var(--muted-foreground)]">
                       {new Date(edit.edited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>

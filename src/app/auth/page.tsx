@@ -123,7 +123,7 @@ function AuthForm() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -138,7 +138,7 @@ function AuthForm() {
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="••••••••"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
           />
         </div>
 
@@ -155,7 +155,7 @@ function AuthForm() {
 
       <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-px bg-[var(--border)]" />
-        <span className="text-xs text-[#9CA3AF]">or</span>
+        <span className="text-xs text-[var(--muted-foreground)]">or</span>
         <div className="flex-1 h-px bg-[var(--border)]" />
       </div>
 
