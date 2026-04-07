@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, Save, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio } from 'lucide-react'
+import { ArrowLeft, Bookmark, Save, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio, Play, Square } from 'lucide-react'
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
@@ -11,6 +11,18 @@ import { useNavGuard } from '@/components/NavGuardContext'
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
+}
+
+function parseTimeToSeconds(t: string): number {
+  const lower = t.split('–')[0].trim()
+  const [m, s] = lower.split(':').map(Number)
+  return m * 60 + s
+}
+
+function formatElapsed(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${m}:${String(sec).padStart(2, '0')}`
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -104,10 +116,32 @@ export default function RecipePage() {
   const [adjusting, setAdjusting] = useState(false)
   const [adjustError, setAdjustError] = useState<string | null>(null)
 
+  // Brew timer
+  const [timerRunning, setTimerRunning] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  function startTimer() {
+    setTimerRunning(true)
+    intervalRef.current = setInterval(() => {
+      setElapsedSeconds(s => s + 1)
+    }, 1000)
+  }
+
+  function stopTimer() {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+    setTimerRunning(false)
+    setElapsedSeconds(0)
+  }
+
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
+
   useEffect(() => {
     const raw = sessionStorage.getItem('recipe')
     if (!raw) { router.replace('/'); return }
     const parsed: RecipeWithAdjustment = JSON.parse(raw)
+    stopTimer()
     setRecipe(parsed)
 
     // Store original recipe on first load (only if not already stored)
@@ -317,6 +351,25 @@ export default function RecipePage() {
   const selectedMethodRaw = typeof window !== 'undefined' ? sessionStorage.getItem('selectedMethod') : null
   const selectedMethod = selectedMethodRaw ? JSON.parse(selectedMethodRaw) : null
 
+  // Timer derived values
+  const totalTimeSeconds = recipe ? parseTimeToSeconds(recipe.parameters.total_time) : 0
+  const timerOverrun = elapsedSeconds > totalTimeSeconds && totalTimeSeconds > 0
+  const activeStepIndex = timerRunning && recipe
+    ? recipe.steps.reduce((active, step, i) => {
+        return parseTimeToSeconds(step.time) <= elapsedSeconds ? i : active
+      }, -1)
+    : -1
+
+  function getStepProgress(index: number): number {
+    if (!recipe || activeStepIndex !== index) return 0
+    const stepStart = parseTimeToSeconds(recipe.steps[index].time)
+    const nextStart = index + 1 < recipe.steps.length
+      ? parseTimeToSeconds(recipe.steps[index + 1].time)
+      : totalTimeSeconds
+    if (nextStart <= stepStart) return 1
+    return Math.min(1, (elapsedSeconds - stepStart) / (nextStart - stepStart))
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />
@@ -495,22 +548,57 @@ export default function RecipePage() {
 
         {/* Brew Steps */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Brew Steps</h3>
+            <div className="flex items-center gap-2">
+              {(timerRunning || elapsedSeconds > 0) && (
+                <span className={`text-xs font-mono font-semibold tabular-nums ${timerOverrun ? 'text-red-500' : 'text-[var(--foreground)]'}`}>
+                  {formatElapsed(elapsedSeconds)}
+                </span>
+              )}
+              <button
+                onClick={timerRunning ? stopTimer : startTimer}
+                className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center active:opacity-70"
+                aria-label={timerRunning ? 'Stop timer' : 'Start timer'}
+              >
+                {timerRunning
+                  ? <Square size={12} fill="currentColor" />
+                  : <Play size={12} fill="currentColor" className="translate-x-px" />}
+              </button>
+            </div>
+          </div>
           <div className="flex flex-col gap-2">
-            {recipe.steps.map(step => (
-              <div key={step.step} className={`rounded-2xl p-4 flex gap-3 ${ratioChanged() ? 'bg-amber-50' : 'bg-[var(--card)]'}`}>
-                <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
-                  {step.step}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                    <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+            {recipe.steps.map((step, index) => {
+              const isActive = activeStepIndex === index
+              const isPast = activeStepIndex > index
+              const progress = getStepProgress(index)
+              return (
+                <div
+                  key={step.step}
+                  className={`relative overflow-hidden rounded-2xl p-4 flex gap-3 transition-all duration-300 ${
+                    ratioChanged() ? 'bg-amber-50' : 'bg-[var(--card)]'
+                  } ${isActive ? 'ring-2 ring-[var(--foreground)] scale-[1.01]' : ''} ${isPast ? 'opacity-50' : ''}`}
+                >
+                  {/* Progress fill */}
+                  {isActive && (
+                    <div
+                      className="absolute inset-0 bg-[var(--foreground)]/[0.06] pointer-events-none transition-[width] duration-1000 ease-linear rounded-2xl"
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  )}
+                  <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0 relative">
+                    {step.step}
                   </div>
-                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                  <div className="flex-1 relative">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
+                      <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                    </div>
+                    <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
