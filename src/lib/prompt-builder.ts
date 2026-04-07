@@ -120,7 +120,8 @@ ${timemoreC2Table}
 8. ratio must be within the method's Block 1B range.
 9. Output ONLY the JSON object — zero extra text before or after.
 10. compressed field in range_logic MUST be true if you applied Block 5B compression, false otherwise.
-11. If target_volume_ml is provided in the input, scale the recipe so that water_g equals that value exactly. Adjust coffee_g to maintain the method's ratio.`
+11. If target_volume_ml is provided in the input, scale the recipe so that water_g equals that value exactly. Adjust coffee_g to maintain the method's ratio.
+12. coffee_g MUST be a whole integer — always round to the nearest gram. Never output a decimal dose (e.g. 14.97 → 15).`
 
   const payload: Record<string, unknown> = { method, bean }
   if (targetVolumeMl && targetVolumeMl > 0) {
