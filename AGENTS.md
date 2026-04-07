@@ -19,3 +19,15 @@ export async function GET(_req: Request, { params }: Params) {
   const { id } = await params
 }
 ```
+
+# Version Bumping
+
+**ALWAYS bump `package.json` version when introducing code changes.** Follow SemVer logic:
+
+- **MAJOR (X.0.0)**: Breaking changes — API route removals, breaking DB migrations, auth flow changes, feature removals
+- **MINOR (0.X.0)**: New features — new API endpoints, new components/flows, new brew methods, new user-facing options
+- **PATCH (0.0.X)**: Fixes/refinements — bug fixes, typos, styling adjustments, performance improvements, pure refactors
+
+**Process**: Read `package.json` → determine bump level based on change type → update `"version"` field → include in the same commit as the code changes.
+
+**Skip for**: Docs-only updates, test additions, dependency bumps with no API changes.
