@@ -66,6 +66,7 @@ Supabase client setup:
 | `POST /api/recipes` | Required | Save a recipe |
 | `GET /api/recipes/[id]` | Required | Single recipe detail |
 | `PATCH /api/recipes/[id]` | Required | Update recipe + append feedback round |
+| `POST /api/recipes/[id]/auto-adjust` | Required | Scale and/or LLM-adjust a saved recipe; pure-scale path is deterministic and recalculates all grinder settings via a per-scale click offset |
 | `DELETE /api/recipes/[id]` | Required | Soft-delete (archive) |
 | `GET /api/recipes/[id]/share` | Required | Get existing share token/URL |
 | `POST /api/recipes/[id]/share` | Required | Create share link (idempotent) |
@@ -97,9 +98,15 @@ All LLM routes use `google/gemini-2.0-flash-001` via OpenRouter (OpenAI-compatib
 - `src/hooks/useProfile.ts` — user profile preferences with local optimistic update
 - `src/hooks/useTheme.ts` — theme preference (system/light/dark)
 
+### Key components
+
+- `src/components/NavGuardContext.tsx` — `NavGuardProvider` + `useNavGuard` hook. Pages call `setGuard(fn)` to register a navigation blocker (e.g. unsaved edits); `BottomNav` calls `requestNavigate(href)` so the guard can intercept. Provider is mounted in the root layout wrapping everything.
+
 ### Types
 
 All domain types live in `src/types/recipe.ts` and are defined as Zod schemas with inferred TypeScript types. Supported brew methods: `v60`, `origami`, `orea_v4`, `hario_switch`, `kalita_wave`, `chemex`, `ceado_hoop`, `pulsar`, `aeropress`.
+
+`total_time` accepts either a single time (`3:30`) or a range (`3:30 – 4:00`), both in `m:ss` format.
 
 ### Styling
 

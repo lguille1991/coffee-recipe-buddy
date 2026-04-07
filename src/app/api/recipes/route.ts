@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { SaveRecipeRequestSchema } from '@/types/recipe'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
 
+type FeedbackHistoryRow = Array<{ type?: string }>
+type RecipeRow = { feedback_history?: FeedbackHistoryRow; parent_recipe_id?: string | null; [key: string]: unknown }
+
 // ─── POST /api/recipes — save a recipe ───────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -16,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { bean_info, method, original_recipe_json, current_recipe_json, feedback_history, image_data_url } = parsed.data
+  const { bean_info, method, original_recipe_json, current_recipe_json, feedback_history, image_data_url, parent_recipe_id, scale_factor } = parsed.data
 
   let image_url: string | null = null
 
@@ -52,6 +55,8 @@ export async function POST(request: Request) {
       current_recipe_json,
       feedback_history,
       image_url,
+      parent_recipe_id: parent_recipe_id ?? null,
+      scale_factor: scale_factor ?? null,
     })
     .select()
     .single()
@@ -79,7 +84,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('recipes')
-    .select('id, method, bean_info, image_url, created_at, schema_version')
+    .select('id, method, bean_info, image_url, created_at, schema_version, feedback_history, parent_recipe_id')
     .eq('user_id', user.id)
     .eq('archived', false)
     .order('created_at', { ascending: false })
@@ -102,5 +107,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ recipes: data ?? [], page, limit })
+  const recipes = (data ?? []).map((row: RecipeRow) => {
+    const history: FeedbackHistoryRow = row.feedback_history ?? []
+    const has_manual_edits = history.some(r => r.type === 'manual_edit' || r.type === 'auto_adjust')
+    const has_feedback_adjustments = history.some(r => !('type' in r) || r.type === 'feedback')
+    const is_scaled = row.parent_recipe_id != null
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { feedback_history: _fh, parent_recipe_id: _pid, ...rest } = row
+    return { ...rest, has_manual_edits, has_feedback_adjustments, is_scaled }
+  })
+
+  return NextResponse.json({ recipes, page, limit })
 }

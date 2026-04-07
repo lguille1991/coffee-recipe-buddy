@@ -127,7 +127,8 @@
                   "fill": "$p:--muted-foreground",
                   "content": "Good morning",
                   "fontFamily": "Inter",
-                  "fontSize": 16
+                  "fontSize": 16,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -190,7 +191,8 @@
               "content": "or browse recipes",
               "textAlign": "center",
               "fontFamily": "Inter",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -496,7 +498,8 @@
                   "content": "Take a photo of your coffee bag",
                   "textAlign": "center",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -591,7 +594,8 @@
               "content": "We'll analyze your coffee beans and create a personalized recipe",
               "textAlign": "center",
               "fontFamily": "Inter",
-              "fontSize": 13
+              "fontSize": 13,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -1964,6 +1968,908 @@
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WnlsE",
+      "x": 2700,
+      "y": 0,
+      "name": "Recipe Edit Mode",
+      "width": 390,
+      "height": 844,
+      "fill": "$p:--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "w81Id",
+          "name": "statusBar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "ORdt5",
+              "name": "timeText",
+              "fill": "$p:--foreground",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "6Xiza",
+              "name": "statusIcons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "MXBcs",
+                  "name": "wifiIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "wifi",
+                  "iconFontFamily": "lucide",
+                  "fill": "$p:--foreground"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "GUP1g",
+                  "name": "signalIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "signal",
+                  "iconFontFamily": "lucide",
+                  "fill": "$p:--foreground"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "d59yq",
+                  "name": "battIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "battery-medium",
+                  "iconFontFamily": "lucide",
+                  "fill": "$p:--foreground"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Uwvxy",
+          "name": "header",
+          "width": "fill_container",
+          "height": 48,
+          "padding": [
+            0,
+            20
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "HXjVT",
+              "name": "backRow",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "6fXVe",
+                  "name": "backIcon",
+                  "width": 22,
+                  "height": 22,
+                  "iconFontName": "arrow-left",
+                  "iconFontFamily": "lucide",
+                  "fill": "$p:--foreground"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "NbXRa",
+              "name": "headerTitle",
+              "fill": "$p:--foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Edit Recipe",
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "icon_font",
+              "id": "ytOYW",
+              "name": "discardX",
+              "width": 22,
+              "height": 22,
+              "iconFontName": "x",
+              "iconFontFamily": "lucide",
+              "fill": "$p:--muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "YTARr",
+          "name": "scrollContent",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "KHi4s",
+              "name": "recipeHeaderSection",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "q5xmE",
+                  "name": "recipeHeaderRow",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "DcW82",
+                      "name": "recipeName",
+                      "fill": "$p:--foreground",
+                      "content": "Pour Over",
+                      "fontFamily": "Inter",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WuNKj",
+                      "name": "editedBadge",
+                      "fill": "$p:--muted",
+                      "cornerRadius": 12,
+                      "padding": [
+                        4,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "DSbQB",
+                          "name": "badgeText",
+                          "fill": "$p:--muted-foreground",
+                          "content": "v2 edited",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "FgBo2",
+                  "name": "subtitle",
+                  "fill": "$p:--muted-foreground",
+                  "content": "Ethiopian Yirgacheffe · Light Roast",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "595rU",
+              "name": "divider1",
+              "width": "fill_container",
+              "height": 1,
+              "fill": "$p:--border"
+            },
+            {
+              "type": "text",
+              "id": "1ImQM",
+              "name": "paramsLabel",
+              "fill": "$p:--muted-foreground",
+              "content": "PARAMETERS",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "500",
+              "letterSpacing": 1.5
+            },
+            {
+              "type": "frame",
+              "id": "JJYqS",
+              "name": "coffeeGroup",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "A8jtW",
+                  "name": "coffeeLabel",
+                  "fill": "$p:--muted-foreground",
+                  "content": "Coffee Dose",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "VtkYI",
+                  "name": "coffeeInputBox",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$p:--card",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$p:--border"
+                  },
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RnPtl",
+                      "name": "coffeeVal",
+                      "fill": "$p:--foreground",
+                      "content": "15",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zFrvE",
+                      "name": "coffeeUnit",
+                      "fill": "$p:--muted-foreground",
+                      "content": "g",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gRGe8",
+                  "name": "coffeeHelper",
+                  "width": "fill_container",
+                  "gap": 4,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ZIPhc",
+                      "name": "coffeeHelperIcon",
+                      "width": 12,
+                      "height": 12,
+                      "iconFontName": "info",
+                      "iconFontFamily": "lucide",
+                      "fill": "$p:--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "wnjG0",
+                      "name": "coffeeHelperText",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Live ratio: 1:16.7  ·  Water will scale to 250ml",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "D10hw",
+              "name": "tempBrewRow",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "1hTjD",
+                  "name": "tempGroup",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dCiBE",
+                      "name": "tempLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Temperature",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vN0Im",
+                      "name": "tempInputBox",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "$p:--card",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$p:--border"
+                      },
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "jYDD1",
+                          "name": "tempVal",
+                          "fill": "$p:--foreground",
+                          "content": "93",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "X6cZp",
+                          "name": "tempUnit",
+                          "fill": "$p:--muted-foreground",
+                          "content": "°C",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Uj3nP",
+                  "name": "brewGroup",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zyNOx",
+                      "name": "brewLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Brew Time",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Xk3gf",
+                      "name": "brewInputBox",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "$p:--card",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$p:--border"
+                      },
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "giUky",
+                          "name": "brewVal",
+                          "fill": "$p:--foreground",
+                          "content": "3:30",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "iA2nE",
+              "name": "waterRatioRow",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "srFCy",
+                  "name": "waterTile",
+                  "width": "fill_container",
+                  "fill": "$p:--muted",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fyj9q",
+                      "name": "waterTileLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Water",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eEdvg",
+                      "name": "waterTileVal",
+                      "fill": "$p:--foreground",
+                      "content": "250ml",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gNmrh",
+                      "name": "waterTileHint",
+                      "fill": "$p:--muted-foreground",
+                      "content": "read-only",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "v6mwG",
+                  "name": "ratioTile",
+                  "width": "fill_container",
+                  "fill": "$p:--muted",
+                  "cornerRadius": 8,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "1C9mj",
+                      "name": "ratioTileLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Ratio",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "XlMqQ",
+                      "name": "ratioTileVal",
+                      "fill": "$p:--foreground",
+                      "content": "1:16.7",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "JRqb1",
+              "name": "divider2",
+              "width": "fill_container",
+              "height": 1,
+              "fill": "$p:--border"
+            },
+            {
+              "type": "text",
+              "id": "cCKsn",
+              "name": "grindLabel",
+              "fill": "$p:--muted-foreground",
+              "content": "GRIND SETTINGS",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "500",
+              "letterSpacing": 1.5
+            },
+            {
+              "type": "frame",
+              "id": "Ecj7g",
+              "name": "grindGroup",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jVcBK",
+                  "name": "grindInputLabel",
+                  "fill": "$p:--muted-foreground",
+                  "content": "K-Ultra Clicks",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "nDGOE",
+                  "name": "grindInputBox",
+                  "width": "fill_container",
+                  "height": 44,
+                  "fill": "$p:--card",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$p:--border"
+                  },
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "31MTU",
+                      "name": "grindVal",
+                      "fill": "$p:--foreground",
+                      "content": "25",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eiiEU",
+                      "name": "grindUnit",
+                      "fill": "$p:--muted-foreground",
+                      "content": "clicks",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Eah07",
+                  "name": "grindHint",
+                  "fill": "$p:--muted-foreground",
+                  "content": "Recommended: 18–24 clicks",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "QDoQS",
+                  "name": "grindWarning",
+                  "width": "fill_container",
+                  "fill": "$p:--color-warning",
+                  "cornerRadius": 6,
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "mlpOV",
+                      "name": "grindWarnIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "triangle-alert",
+                      "iconFontFamily": "lucide",
+                      "fill": "$p:--color-warning-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ph8fA",
+                      "name": "grindWarnText",
+                      "fill": "$p:--color-warning-foreground",
+                      "content": "Outside recommended range",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4xpn6",
+              "name": "grindConvRow",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "e4CQJ",
+                  "name": "qairTile",
+                  "width": "fill_container",
+                  "fill": "$p:--card",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$p:--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "T0DPV",
+                      "name": "qairLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Q-Air",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "evVsO",
+                      "name": "qairVal",
+                      "fill": "$p:--foreground",
+                      "content": "2.4",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "zKq0y",
+                  "name": "baratzaTile",
+                  "width": "fill_container",
+                  "fill": "$p:--card",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$p:--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "B4ZMM",
+                      "name": "baratzaLabel",
+                      "fill": "$p:--muted-foreground",
+                      "content": "Baratza",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "L5dxd",
+                      "name": "baratzaVal",
+                      "fill": "$p:--foreground",
+                      "content": "18",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Da3GF",
+                  "name": "c2Tile",
+                  "width": "fill_container",
+                  "fill": "$p:--card",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$p:--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "0ZksE",
+                      "name": "c2Label",
+                      "fill": "$p:--muted-foreground",
+                      "content": "C2",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "80UF1",
+                      "name": "c2Val",
+                      "fill": "$p:--foreground",
+                      "content": "22",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4xbbr",
+              "name": "divider3",
+              "width": "fill_container",
+              "height": 1,
+              "fill": "$p:--border"
+            },
+            {
+              "type": "text",
+              "id": "ZLVTZ",
+              "name": "stepsLabel",
+              "fill": "$p:--muted-foreground",
+              "content": "BREW STEPS",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "500",
+              "letterSpacing": 1.5
+            },
+            {
+              "type": "text",
+              "id": "finqE",
+              "name": "stepsHint",
+              "fill": "$p:--muted-foreground",
+              "content": "Steps are not editable",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal",
+              "fontStyle": "italic"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Gh8Bf",
+          "name": "bottomBar",
+          "width": "fill_container",
+          "fill": "$p:--card",
+          "stroke": {
+            "align": "inside",
+            "thickness": {
+              "top": 1
+            },
+            "fill": "$p:--border"
+          },
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            12,
+            20,
+            28,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "AhAmG",
+              "name": "saveBtn",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$p:--foreground",
+              "cornerRadius": 8,
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "tvG5i",
+                  "name": "saveIcon",
+                  "width": 18,
+                  "height": 18,
+                  "iconFontName": "check",
+                  "iconFontFamily": "lucide",
+                  "fill": "$p:--background"
+                },
+                {
+                  "type": "text",
+                  "id": "Iuhjt",
+                  "name": "saveBtnText",
+                  "fill": "$p:--background",
+                  "content": "Save Changes",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "oh9Ql",
+              "name": "discardBtn",
+              "width": "fill_container",
+              "height": 48,
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$p:--border"
+              },
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XREMR",
+                  "name": "discardBtnText",
+                  "fill": "$p:--foreground",
+                  "content": "Discard",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "500"
                 }
               ]
             }
