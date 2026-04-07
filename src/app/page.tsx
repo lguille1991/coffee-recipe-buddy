@@ -1,14 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { useEffect, useState, memo } from 'react'
 import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
 import MethodIcon from '@/components/MethodIcon'
 
-function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
+const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
   const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
   const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -21,8 +22,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
       {/* Thumbnail */}
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
         {recipe.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.image_url} alt={beanName} className="w-full h-full object-cover" />
+          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
         ) : (
           <MethodIcon method={recipe.method} size={28} className="text-[#9CA3AF]" />
         )}
@@ -38,7 +38,7 @@ function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
       <p className="text-[10px] text-[#9CA3AF] shrink-0">{date}</p>
     </Link>
   )
-}
+})
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -70,15 +70,15 @@ export default function HomePage() {
 
       {/* Hero image */}
       <div className="px-6">
-        <div
-          className="w-full aspect-[4/3] rounded-[16px] overflow-hidden bg-[#D4C9B8]"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+        <div className="w-full aspect-[4/3] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
+          <Image
+            src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
+            alt="Coffee brewing"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
       </div>
 
       {/* CTA */}

@@ -96,8 +96,10 @@ export async function GET(request: Request) {
 
   if (q) {
     // Full-text search across bean_info jsonb fields
+    // PostgREST .or() uses column->>key syntax (no quotes around key)
+    const safe = q.replace(/[%_\\]/g, '\\$&')
     query = query.or(
-      `bean_info->>'bean_name'.ilike.%${q}%,bean_info->>'origin'.ilike.%${q}%,bean_info->>'roaster'.ilike.%${q}%`,
+      `bean_info->>bean_name.ilike.%${safe}%,bean_info->>origin.ilike.%${safe}%,bean_info->>roaster.ilike.%${safe}%`,
     )
   }
 
@@ -117,5 +119,7 @@ export async function GET(request: Request) {
     return { ...rest, has_manual_edits, has_feedback_adjustments, is_scaled }
   })
 
-  return NextResponse.json({ recipes, page, limit })
+  return NextResponse.json({ recipes, page, limit }, {
+    headers: { 'Cache-Control': 'private, max-age=60' },
+  })
 }

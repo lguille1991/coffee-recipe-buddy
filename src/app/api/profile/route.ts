@@ -27,14 +27,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
     }
 
-    return NextResponse.json(created)
+    return NextResponse.json(created, {
+      headers: { 'Cache-Control': 'private, max-age=3600' },
+    })
   }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data, {
+    headers: { 'Cache-Control': 'private, max-age=3600' },
+  })
 }
 
 // ─── PATCH /api/profile ───────────────────────────────────────────────────────

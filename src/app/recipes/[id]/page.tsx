@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { useRouter, useParams } from 'next/navigation'
 import {
-  SavedRecipe, RecipeWithAdjustment, RecipeStep, METHOD_DISPLAY_NAMES, MethodId,
+  SavedRecipe, RecipeWithAdjustment, METHOD_DISPLAY_NAMES, MethodId,
   GrinderId, GRINDER_DISPLAY_NAMES, ManualEditRound, FeedbackRound,
 } from '@/types/recipe'
 import { recalculateFreshness, FreshnessAdjustment } from '@/lib/freshness-recalculator'
@@ -17,30 +19,14 @@ import {
 import { computeGrindScalingDelta } from '@/lib/grind-scaling-engine'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import type { DraftStep } from './SortableStepList'
+
+const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: false })
 
 
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
-
-type DraftStep = RecipeStep & { _dndId: string }
 
 type EditDraft = {
   coffee_g: number
@@ -91,97 +77,6 @@ function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater: numbe
   return recomputeAccumulated(scaled)
 }
 
-// ─── Sortable step row ────────────────────────────────────────────────────────
-
-function SortableStepRow({
-  step,
-  stepIndex,
-  totalSteps,
-  onUpdate,
-  onDelete,
-}: {
-  step: DraftStep
-  stepIndex: number
-  totalSteps: number
-  onUpdate: (id: string, updates: Partial<DraftStep>) => void
-  onDelete: (id: string) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step._dndId })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
-
-  return (
-    <div ref={setNodeRef} style={style} className="bg-[var(--card)] rounded-2xl p-3 flex gap-2 items-start">
-      <div className="flex flex-col items-center gap-1 mt-1">
-        <span className="w-5 h-5 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-[10px] font-bold shrink-0">
-          {stepIndex + 1}
-        </span>
-        <button
-          className="p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
-          aria-label="Drag to reorder"
-          {...listeners}
-          {...attributes}
-        >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="4" cy="3" r="1.2" fill="currentColor"/>
-          <circle cx="4" cy="7" r="1.2" fill="currentColor"/>
-          <circle cx="4" cy="11" r="1.2" fill="currentColor"/>
-          <circle cx="10" cy="3" r="1.2" fill="currentColor"/>
-          <circle cx="10" cy="7" r="1.2" fill="currentColor"/>
-          <circle cx="10" cy="11" r="1.2" fill="currentColor"/>
-        </svg>
-        </button>
-      </div>
-      <div className="flex-1 flex flex-col gap-1.5">
-        <div className="flex gap-1.5 items-center">
-          <input
-            type="text"
-            placeholder="0:00"
-            value={step.time}
-            onChange={e => onUpdate(step._dndId, { time: e.target.value.replace(/[^0-9:]/g, '') })}
-            className="w-16 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-          />
-          <div className="relative">
-            <input
-              type="number"
-              min={0}
-              step={0.1}
-              placeholder="0"
-              value={step.water_poured_g === 0 ? '' : step.water_poured_g}
-              onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
-              onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
-              className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-            />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9CA3AF] pointer-events-none">g</span>
-          </div>
-          {step.water_poured_g > 0 && (
-            <span className="text-[10px] font-mono text-[#9CA3AF] whitespace-nowrap">
-              = {step.water_accumulated_g} g
-            </span>
-          )}
-        </div>
-        <input
-          type="text"
-          maxLength={80}
-          placeholder="Step description…"
-          value={step.action}
-          onChange={e => onUpdate(step._dndId, { action: e.target.value })}
-          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
-        />
-      </div>
-      <button
-        onClick={() => onDelete(step._dndId)}
-        disabled={totalSteps <= 1}
-        className="mt-2 p-1 text-red-400 disabled:opacity-30 active:opacity-60"
-        aria-label="Delete step"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 4H12M5 4V2.5C5 2.22 5.22 2 5.5 2H8.5C8.78 2 9 2.22 9 2.5V4M5.5 6.5V10.5M8.5 6.5V10.5M3.5 4L4.5 12H9.5L10.5 4H3.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-    </div>
-  )
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function SavedRecipeDetailPage() {
@@ -226,11 +121,6 @@ export default function SavedRecipeDetailPage() {
   const [showEditHistorySheet, setShowEditHistorySheet] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
-
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
       .then(async r => {
@@ -257,12 +147,18 @@ export default function SavedRecipeDetailPage() {
         if (data) {
           setShareToken(data.shareToken)
           setShareUrl(data.url)
-          fetch(`/api/share/${data.shareToken}/comments?page=1`)
-            .then(r => r.ok ? r.json() : null)
-            .then(res => { if (res) setCommentCount(res.total) })
         }
       })
   }, [id, router])
+
+  // Fetch comment count independently — runs after shareToken is set,
+  // decoupled from the share fetch so it doesn't block recipe rendering.
+  useEffect(() => {
+    if (!shareToken) return
+    fetch(`/api/share/${shareToken}/comments?page=1`)
+      .then(r => r.ok ? r.json() : null)
+      .then(res => { if (res) setCommentCount(res.total) })
+  }, [shareToken])
 
   useEffect(() => {
     if (isEditing) {
@@ -538,7 +434,7 @@ export default function SavedRecipeDetailPage() {
     }
   }
 
-  function handleStepUpdate(dndId: string, updates: Partial<DraftStep>) {
+  const handleStepUpdate = useCallback((dndId: string, updates: Partial<DraftStep>) => {
     setEditDraft(d => {
       if (!d) return d
       const updatedSteps = d.steps.map(s => s._dndId === dndId ? { ...s, ...updates } : s)
@@ -549,18 +445,18 @@ export default function SavedRecipeDetailPage() {
       }
       return { ...d, steps: updatedSteps }
     })
-  }
+  }, [])
 
-  function handleStepDelete(dndId: string) {
+  const handleStepDelete = useCallback((dndId: string) => {
     setEditDraft(d => {
       if (!d) return d
       const newSteps = recomputeAccumulated(d.steps.filter(s => s._dndId !== dndId))
       const totalPoured = Math.round(newSteps.reduce((sum, s) => sum + s.water_poured_g, 0) * 10) / 10
       return { ...d, steps: newSteps, water_g: totalPoured, ratio_multiplier: d.coffee_g > 0 ? totalPoured / d.coffee_g : d.ratio_multiplier }
     })
-  }
+  }, [])
 
-  function handleStepAdd() {
+  const handleStepAdd = useCallback(() => {
     setEditDraft(d => {
       if (!d) return d
       const newStep: DraftStep = {
@@ -573,18 +469,11 @@ export default function SavedRecipeDetailPage() {
       }
       return { ...d, steps: [...d.steps, newStep] }
     })
-  }
+  }, [])
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    setEditDraft(d => {
-      if (!d) return d
-      const oldIndex = d.steps.findIndex(s => s._dndId === active.id)
-      const newIndex = d.steps.findIndex(s => s._dndId === over.id)
-      return { ...d, steps: recomputeAccumulated(arrayMove(d.steps, oldIndex, newIndex)) }
-    })
-  }
+  const handleReorder = useCallback((newSteps: DraftStep[]) => {
+    setEditDraft(d => d ? { ...d, steps: recomputeAccumulated(newSteps) } : d)
+  }, [])
 
   // Live grind preview for edit mode
   const liveGrindSettings = useMemo(() => {
@@ -701,12 +590,15 @@ export default function SavedRecipeDetailPage() {
 
         {/* Bag photo */}
         {recipe.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={recipe.image_url}
-            alt={beanName}
-            className="w-full aspect-[4/3] rounded-2xl object-cover"
-          />
+          <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative">
+            <Image
+              src={recipe.image_url}
+              alt={beanName}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
         )}
 
         {/* Title */}
@@ -1024,36 +916,14 @@ export default function SavedRecipeDetailPage() {
         <div>
           <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
           {isEditing && editDraft ? (
-            <div className="flex flex-col gap-2">
-              {stepError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-xs text-red-700">
-                  {stepError}
-                </div>
-              )}
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={editDraft.steps.map(s => s._dndId)} strategy={verticalListSortingStrategy}>
-                  {editDraft.steps.map((step, i) => (
-                    <SortableStepRow
-                      key={step._dndId}
-                      step={step}
-                      stepIndex={i}
-                      totalSteps={editDraft.steps.length}
-                      onUpdate={handleStepUpdate}
-                      onDelete={handleStepDelete}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
-              <button
-                onClick={handleStepAdd}
-                className="w-full py-2.5 rounded-2xl border border-dashed border-[var(--border)] text-xs font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                Add Step
-              </button>
-            </div>
+            <SortableStepList
+              steps={editDraft.steps}
+              onUpdate={handleStepUpdate}
+              onDelete={handleStepDelete}
+              onAdd={handleStepAdd}
+              onReorder={handleReorder}
+              stepError={stepError}
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {r.steps.map(step => (

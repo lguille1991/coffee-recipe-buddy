@@ -29,6 +29,8 @@ export async function GET(request: Request, { params }: Params) {
   return NextResponse.json({
     shareToken: data.share_token,
     url: `${baseUrl}/share/${data.share_token}`,
+  }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
   })
 }
 
