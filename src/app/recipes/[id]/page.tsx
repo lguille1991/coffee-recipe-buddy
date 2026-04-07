@@ -1113,7 +1113,8 @@ export default function SavedRecipeDetailPage() {
       </div>
 
       {/* Fixed bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto px-4 pb-20 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
+      <div className="fixed bottom-0 left-0 right-0 lg:left-56">
+        <div className="max-w-sm lg:max-w-md mx-auto px-4 pb-20 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <button
@@ -1170,6 +1171,7 @@ export default function SavedRecipeDetailPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {/* Share sheet */}
