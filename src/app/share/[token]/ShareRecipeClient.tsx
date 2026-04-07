@@ -133,9 +133,9 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
           {snapshot.bean_info.roaster && (
-            <p className="text-xs text-[#9CA3AF] mt-0.5">{snapshot.bean_info.roaster}</p>
+            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{snapshot.bean_info.roaster}</p>
           )}
-          <p className="text-xs text-[#9CA3AF] mt-1">
+          <p className="text-sm text-[var(--muted-foreground)] mt-1">
             Shared by{' '}
             <span className="font-medium text-[var(--muted-foreground)]">
               {snapshot.owner_display_name ?? 'a Brygg user'}
@@ -159,7 +159,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
                 <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">{p.label}</p>
+                <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{p.label}</p>
               </div>
             ))}
           </div>
@@ -176,12 +176,12 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
             </div>
             <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-            <p className="text-xs opacity-60 mt-0.5">Range: {primaryData.range}</p>
+            <p className="text-sm opacity-60 mt-0.5">Range: {primaryData.range}</p>
             {primaryData.description && (
-              <p className="text-xs opacity-50 mt-1 italic">{primaryData.description}</p>
+              <p className="text-sm opacity-50 mt-1 italic">{primaryData.description}</p>
             )}
             {primaryData.note && (
-              <p className="text-xs opacity-50 mt-1 italic">{primaryData.note}</p>
+              <p className="text-sm opacity-50 mt-1 italic">{primaryData.note}</p>
             )}
           </div>
 
@@ -192,10 +192,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
             return (
               <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                 <div>
-                  <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                  <p className="text-xs text-[#9CA3AF]">Range: {gdata.range}</p>
+                  <p className="text-sm font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">Range: {gdata.range}</p>
                   {gdata.note && (
-                    <p className="text-[10px] text-[#9CA3AF] mt-0.5 italic">{gdata.note}</p>
+                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{gdata.note}</p>
                   )}
                 </div>
                 <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
@@ -215,10 +215,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-semibold text-[var(--foreground)]">{step.time}</p>
-                    <p className="text-[10px] text-[#9CA3AF]">+{step.water_poured_g}g → {step.water_accumulated_g}g</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                   </div>
-                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                  <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
                 </div>
               </div>
             ))}
@@ -229,7 +229,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         {snapshot.notes && (
           <div className="bg-[var(--card)] rounded-2xl px-4 py-3">
             <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Sharer&apos;s Notes</h3>
-            <p className="text-xs text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
+            <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
           </div>
         )}
 
@@ -245,7 +245,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-[#9CA3AF] py-2">No comments yet. Be the first!</p>
+            <p className="text-sm text-[var(--muted-foreground)] py-2">No comments yet. Be the first!</p>
           ) : (
             <div className="flex flex-col gap-3 mb-4">
               {comments.map(comment => (
@@ -253,20 +253,20 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                        <span className="text-sm font-semibold text-[var(--foreground)] truncate">
                           {comment.author_display_name ?? 'Brygg user'}
                         </span>
-                        <span className="text-[10px] text-[#9CA3AF] shrink-0">
+                        <span className="text-[10px] text-[var(--muted-foreground)] shrink-0">
                           {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
-                      <p className="text-xs text-[var(--muted-foreground)] leading-relaxed whitespace-pre-wrap">{comment.body}</p>
+                      <p className="text-sm text-[var(--muted-foreground)] leading-relaxed whitespace-pre-wrap">{comment.body}</p>
                     </div>
                     {user && comment.author_id === user.id && (
                       <button
                         onClick={() => { setPendingDeleteCommentId(comment.id); setShowDeleteCommentConfirm(true) }}
                         disabled={deletingId === comment.id}
-                        className="shrink-0 p-1 text-[#9CA3AF] active:opacity-60 disabled:opacity-40"
+                        className="shrink-0 p-1 text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
                         aria-label="Delete comment"
                       >
                         {deletingId === comment.id ? (
@@ -294,26 +294,26 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 maxLength={500}
                 placeholder="Add a comment…"
                 rows={2}
-                className="w-full rounded-xl px-3 py-2.5 text-xs text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
               />
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-[#9CA3AF]">{commentBody.length}/500</p>
+                <p className="text-[10px] text-[var(--muted-foreground)]">{commentBody.length}/500</p>
                 <button
                   onClick={handlePostComment}
                   disabled={posting || !commentBody.trim()}
-                  className="px-4 py-1.5 bg-[var(--foreground)] text-[var(--background)] text-xs font-semibold rounded-[10px] active:opacity-80 disabled:opacity-40 flex items-center gap-1.5"
+                  className="px-4 py-1.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[10px] active:opacity-80 disabled:opacity-40 flex items-center gap-1.5"
                 >
                   {posting ? (
                     <div className="w-3 h-3 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
                   ) : 'Post'}
                 </button>
               </div>
-              {postError && <p className="text-xs text-red-500">{postError}</p>}
+              {postError && <p className="text-sm text-red-500">{postError}</p>}
             </div>
           ) : (
             <button
               onClick={() => router.push(`/auth?returnTo=/share/${data.shareToken}`)}
-              className="w-full py-3 rounded-xl border border-[var(--border)] text-xs text-[var(--muted-foreground)] active:opacity-60"
+              className="w-full py-3 rounded-xl border border-[var(--border)] text-sm text-[var(--muted-foreground)] active:opacity-60"
             >
               Sign in to comment
             </button>
@@ -330,7 +330,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         <button
           onClick={handleClone}
           disabled={cloning || cloned}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
         >
           {cloning ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />

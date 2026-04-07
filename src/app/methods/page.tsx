@@ -159,7 +159,7 @@ export default function MethodsPage() {
           <>
             <div className="flex items-start gap-2 bg-[#FFF8E6] border border-[#F0C060] rounded-xl px-3 py-2.5">
               <span className="text-base leading-none mt-0.5">⚠️</span>
-              <p className="text-xs text-[#7A5C00] leading-relaxed">
+              <p className="text-sm text-[#7A5C00] leading-relaxed">
                 These methods are not recommended for this bean. Results may be unexpected.
               </p>
             </div>

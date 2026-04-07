@@ -83,7 +83,7 @@ export default function ScanPage() {
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-3.5 disabled:opacity-50"
           >
             <Camera size={18} />
             Take Photo
@@ -91,7 +91,7 @@ export default function ScanPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 border border-[var(--foreground)] text-[var(--foreground)] text-sm font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 border border-[var(--foreground)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 disabled:opacity-50"
           >
             <Upload size={18} />
             Upload

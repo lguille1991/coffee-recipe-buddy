@@ -12,7 +12,7 @@ The LLM must output **only valid JSON** matching this schema. Zero extra text ou
   "display_name": "string — human name (e.g., 'Hario V60')",
   "objective": "string — 1–2 sentence cup profile goal",
   "parameters": {
-    "coffee_g": "number — grams of coffee",
+    "coffee_g": "integer — grams of coffee, ALWAYS a whole number (round to nearest integer)",
     "water_g": "number — total water in grams",
     "ratio": "string — e.g. '1:15'",
     "temperature_c": "number — brew water temperature in Celsius",

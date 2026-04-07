@@ -82,7 +82,7 @@ function TextField({
 }) {
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
-      <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+      <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
         {label}
       </label>
       <input
@@ -90,7 +90,7 @@ function TextField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+        className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
       />
     </div>
   )
@@ -177,7 +177,7 @@ export default function ManualPage() {
         </button>
         <div>
           <h2 className="text-lg font-semibold">Enter Manually</h2>
-          <p className="text-[11px] text-[#9CA3AF]">Process & roast level required</p>
+          <p className="text-[11px] text-[var(--muted-foreground)]">Process & roast level required</p>
         </div>
       </div>
 
@@ -231,7 +231,7 @@ export default function ManualPage() {
             ))}
           </div>
           <div className="bg-[var(--card)] rounded-xl p-3">
-            <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+            <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
               Or type a variety
             </label>
             <input
@@ -239,14 +239,14 @@ export default function ManualPage() {
               value={variety}
               onChange={e => setVariety(e.target.value)}
               placeholder="e.g. Castillo, Pink Bourbon..."
-              className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
             />
           </div>
         </div>
 
         {/* Altitude */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
             Altitude (masl, optional)
           </label>
           <input
@@ -254,10 +254,10 @@ export default function ManualPage() {
             value={altitude}
             onChange={e => setAltitude(e.target.value)}
             placeholder="e.g. 1800"
-            className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+            className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
           {!altitude && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
         </div>
 
@@ -288,7 +288,7 @@ export default function ManualPage() {
               onChange={e => setNoteInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addNote(noteInput) } }}
               placeholder="e.g. blueberry, chocolate..."
-              className="flex-1 text-sm font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
             />
             {noteInput.trim() && (
               <button
@@ -304,23 +304,23 @@ export default function ManualPage() {
 
         {/* Roast date */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[#9CA3AF] font-medium uppercase tracking-wider block mb-1">
+          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
             Roast Date (optional)
           </label>
           <input
             type="date"
             value={roastDate}
             onChange={e => setRoastDate(e.target.value)}
-            className="w-full text-sm font-medium text-[var(--foreground)] bg-transparent outline-none"
+            className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
           {!roastDate && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">Assuming optimal window (8–21 days)</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
           )}
         </div>
 
         {/* Sparse data notice */}
         {!origin && !altitude && tastingNotes.length === 0 && (
-          <p className="text-[11px] text-[#9CA3AF] text-center leading-relaxed px-2">
+          <p className="text-[11px] text-[var(--muted-foreground)] text-center leading-relaxed px-2">
             With just process and roast level, the app will recommend versatile methods and note assumptions in the recipe.
           </p>
         )}
@@ -330,10 +330,10 @@ export default function ManualPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-[var(--background)] px-4 pt-4 pb-24">
         <button
           onClick={handleSubmit}
-          className={`w-full flex items-center justify-center gap-2 text-sm font-semibold rounded-[14px] py-4 transition-colors ${
+          className={`w-full flex items-center justify-center gap-2 text-base font-semibold rounded-[14px] py-4 transition-colors ${
             hasRequiredFields
               ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
-              : 'bg-[var(--border)] text-[#9CA3AF]'
+              : 'bg-[var(--border)] text-[var(--muted-foreground)]'
           }`}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

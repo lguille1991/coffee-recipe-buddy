@@ -47,7 +47,7 @@ const SortableStepRow = memo(function SortableStepRow({
           {stepIndex + 1}
         </span>
         <button
-          className="p-1 touch-none cursor-grab text-[#9CA3AF] active:cursor-grabbing"
+          className="p-1 touch-none cursor-grab text-[var(--muted-foreground)] active:cursor-grabbing"
           aria-label="Drag to reorder"
           {...listeners}
           {...attributes}
@@ -69,7 +69,7 @@ const SortableStepRow = memo(function SortableStepRow({
             placeholder="0:00"
             value={step.time}
             onChange={e => onUpdate(step._dndId, { time: e.target.value.replace(/[^0-9:]/g, '') })}
-            className="w-16 rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+            className="w-16 rounded-lg px-2.5 py-1.5 text-sm font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
           />
           <div className="relative">
             <input
@@ -80,12 +80,12 @@ const SortableStepRow = memo(function SortableStepRow({
               value={step.water_poured_g === 0 ? '' : step.water_poured_g}
               onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
               onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
-              className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-xs font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+              className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-sm font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9CA3AF] pointer-events-none">g</span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--muted-foreground)] pointer-events-none">g</span>
           </div>
           {step.water_poured_g > 0 && (
-            <span className="text-[10px] font-mono text-[#9CA3AF] whitespace-nowrap">
+            <span className="text-[10px] font-mono text-[var(--muted-foreground)] whitespace-nowrap">
               = {step.water_accumulated_g} g
             </span>
           )}
@@ -96,7 +96,7 @@ const SortableStepRow = memo(function SortableStepRow({
           placeholder="Step description…"
           value={step.action}
           onChange={e => onUpdate(step._dndId, { action: e.target.value })}
-          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+          className="w-full rounded-lg px-2.5 py-1.5 text-base text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
         />
       </div>
       <button
@@ -146,7 +146,7 @@ export default function SortableStepList({
   return (
     <div className="flex flex-col gap-2">
       {stepError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-xs text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-sm text-red-700">
           {stepError}
         </div>
       )}
@@ -166,7 +166,7 @@ export default function SortableStepList({
       </DndContext>
       <button
         onClick={onAdd}
-        className="w-full py-2.5 rounded-2xl border border-dashed border-[var(--border)] text-xs font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
+        className="w-full py-2.5 rounded-2xl border border-dashed border-[var(--border)] text-sm font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

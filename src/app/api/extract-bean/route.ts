@@ -72,7 +72,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json(validated.data)
+    const data = validated.data
+    if (!data.bean.bean_name && data.bean.variety) {
+      data.bean.bean_name = data.bean.variety
+    }
+
+    return NextResponse.json(data)
   } catch (err) {
     console.error('[extract-bean]', err)
     return NextResponse.json(
