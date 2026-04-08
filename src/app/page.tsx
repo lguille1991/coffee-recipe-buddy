@@ -70,7 +70,7 @@ export default function HomePage() {
 
       {/* Hero image */}
       <div className="px-4 sm:px-6">
-        <div className="w-full xl:w-4/5 xl:mx-0 aspect-[4/3] xl:aspect-[16/9] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
+        <div className="w-full aspect-[4/3] xl:aspect-[16/9] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
           <Image
             src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
             alt="Coffee brewing"
