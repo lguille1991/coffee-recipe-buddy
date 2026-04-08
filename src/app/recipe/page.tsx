@@ -116,6 +116,9 @@ export default function RecipePage() {
   const [adjusting, setAdjusting] = useState(false)
   const [adjustError, setAdjustError] = useState<string | null>(null)
 
+  // Grind settings UI state
+  const [secondaryGrindersOpen, setSecondaryGrindersOpen] = useState(false)
+
   // Brew timer
   const [timerRunning, setTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -526,23 +529,41 @@ export default function RecipePage() {
                 )}
               </div>
 
+              {/* Secondary grinders toggle */}
+              <button
+                onClick={() => setSecondaryGrindersOpen(o => !o)}
+                className="flex items-center justify-between w-full py-2 text-left mt-2"
+              >
+                <span className="text-xs font-medium text-[var(--muted-foreground)]">See more grinders</span>
+                <svg
+                  width="14" height="14" viewBox="0 0 14 14" fill="none"
+                  className={`transition-transform text-[var(--muted-foreground)] ${secondaryGrindersOpen ? 'rotate-180' : ''}`}
+                >
+                  <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
               {/* Secondary grinders */}
-              {secondaryGrinders.map((grinder, i) => {
-                const data = recipe.grind[grinder]
-                const isLast = i === secondaryGrinders.length - 1
-                return (
-                  <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
-                    <div>
-                      <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
-                      {data.note && (
-                        <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
-                      )}
-                    </div>
-                    <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
-                  </div>
-                )
-              })}
+              {secondaryGrindersOpen && (
+                <div className="mt-2">
+                  {secondaryGrinders.map((grinder, i) => {
+                    const data = recipe.grind[grinder]
+                    const isLast = i === secondaryGrinders.length - 1
+                    return (
+                      <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
+                        <div>
+                          <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
+                          {data.note && (
+                            <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })()}
