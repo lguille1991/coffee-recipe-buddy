@@ -92,14 +92,14 @@ export default function SettingsPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="px-6 pb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
+      <div className="px-4 sm:px-6 pb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
         {user?.email && (
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{user.email}</p>
         )}
       </div>
 
-      <form onSubmit={handleSave} className="flex-1 px-6 flex flex-col gap-5 pb-8">
+      <form onSubmit={handleSave} className="flex-1 px-4 sm:px-6 flex flex-col gap-5 pb-8">
         {/* Display name */}
         <div>
           <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
@@ -211,25 +211,26 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Save */}
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {saving ? (
-            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
-          ) : 'Save'}
-        </button>
+        {/* Save and Sign out - horizontal on desktop */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+            ) : 'Save'}
+          </button>
 
-        {/* Sign out */}
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="w-full py-3.5 text-base font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
-        >
-          Sign Out
-        </button>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex-1 py-3.5 text-base font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
+          >
+            Sign Out
+          </button>
+        </div>
       </form>
 
       <p className="text-center text-xs text-[var(--muted-foreground)] pb-4">

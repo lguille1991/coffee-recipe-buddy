@@ -31,3 +31,7 @@ export async function GET(_req: Request, { params }: Params) {
 **Process**: Read `package.json` → determine bump level based on change type → update `"version"` field → include in the same commit as the code changes.
 
 **Skip for**: Docs-only updates, test additions, dependency bumps with no API changes.
+
+# Plan Mode Output
+
+When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.

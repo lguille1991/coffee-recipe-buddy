@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Roboto } from 'next/font/google'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
+import ResponsiveContainer from '@/components/ResponsiveContainer'
 import SideNav from '@/components/SideNav'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { NavGuardProvider } from '@/components/NavGuardContext'
@@ -34,10 +35,10 @@ export default function RootLayout({
         <ThemeProvider>
           <NavGuardProvider>
             <SideNav />
-            <div className="lg:ml-56">
-              <div className="max-w-sm mx-auto lg:max-w-md">
+            <div className="lg:ml-56 min-h-screen">
+              <ResponsiveContainer>
                 {children}
-              </div>
+              </ResponsiveContainer>
             </div>
             <BottomNav />
           </NavGuardProvider>

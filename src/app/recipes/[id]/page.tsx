@@ -539,7 +539,7 @@ export default function SavedRecipeDetailPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pb-4">
+      <div className="flex items-center justify-between px-4 sm:px-6 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -586,7 +586,7 @@ export default function SavedRecipeDetailPage() {
         )}
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-4 pb-52 overflow-y-auto">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-52 overflow-y-auto">
 
         {/* Bag photo */}
         {recipe.image_url && (
@@ -984,13 +984,13 @@ export default function SavedRecipeDetailPage() {
 
       {/* Fixed bottom action bar */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-56">
-        <div className="max-w-sm lg:max-w-md mx-auto px-4 pb-20 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
+        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-20 lg:pb-6 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <button
               onClick={handleSaveEdit}
               disabled={isSavingEdit}
-              className="w-full py-3.5 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+              className="w-full py-3 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
             >
               {isSavingEdit ? (
                 <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -999,17 +999,17 @@ export default function SavedRecipeDetailPage() {
             <button
               onClick={() => setShowDiscardConfirm(true)}
               disabled={isSavingEdit}
-              className="w-full py-3 text-base font-medium text-[var(--muted-foreground)] bg-[var(--card)] rounded-[14px] active:opacity-80 disabled:opacity-50"
+              className="w-full py-2.5 text-base font-medium text-[var(--muted-foreground)] bg-[var(--card)] rounded-[14px] active:opacity-80 disabled:opacity-50"
             >
               Discard
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {/* Primary: Brew */}
             <button
               onClick={handleBrewAgain}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-3 active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1021,7 +1021,7 @@ export default function SavedRecipeDetailPage() {
             {/* Secondary: Edit Recipe */}
             <button
               onClick={enterEditMode}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-2.5 border border-[var(--border)] active:opacity-80 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M2 14L5.5 13L13.5 5C14.05 4.45 14.05 3.55 13.5 3L13 2.5C12.45 1.95 11.55 1.95 11 2.5L3 10.5L2 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1032,7 +1032,7 @@ export default function SavedRecipeDetailPage() {
             {/* Ghost: Auto Adjust */}
             <button
               onClick={() => router.push(`/recipes/${id}/auto-adjust`)}
-              className="w-full flex items-center justify-center gap-2 text-[var(--muted-foreground)] text-base font-medium rounded-[14px] py-3 active:opacity-60 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 text-[var(--muted-foreground)] text-base font-medium rounded-[14px] py-2 active:opacity-60 transition-opacity"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L9.5 6H14L10.5 8.5L12 12.5L8 10L4 12.5L5.5 8.5L2 6H6.5L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>

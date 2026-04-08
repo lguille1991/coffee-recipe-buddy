@@ -133,3 +133,7 @@ The app version is stored in `package.json`. **Always bump the version before co
 **When to skip**: Documentation-only changes (README updates), test additions, dependency updates with no API changes.
 
 **How to bump**: Edit `package.json` directly and update the `"version"` field.
+
+## Plan Mode Output
+
+When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.

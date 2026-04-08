@@ -375,7 +375,7 @@ export default function RecipePage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pb-4">
+      <div className="flex items-center justify-between px-4 sm:px-6 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -409,10 +409,11 @@ export default function RecipePage() {
         )}
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-4 pb-24 overflow-y-auto">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-24 overflow-y-auto">
+
         {/* Title */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">{recipe.display_name}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--foreground)]">{recipe.display_name}</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
             {bean.bean_name || 'Your Coffee'}{bean.roast_level ? ` · ${bean.roast_level.charAt(0).toUpperCase() + bean.roast_level.slice(1)} Roast` : ''}
           </p>
@@ -457,7 +458,7 @@ export default function RecipePage() {
         {/* Parameters */}
         <div>
           <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2">
             <ParamCard
               icon={<Droplets size={16} />}
               value={`${recipe.parameters.water_g}ml`}
@@ -548,7 +549,7 @@ export default function RecipePage() {
 
         {/* Brew Steps */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 md:mb-4">
             <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Brew Steps</h3>
             <div className="flex items-center gap-2">
               {(timerRunning || elapsedSeconds > 0) && (
@@ -567,7 +568,7 @@ export default function RecipePage() {
               </button>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 md:gap-3">
             {recipe.steps.map((step, index) => {
               const isActive = activeStepIndex === index
               const isPast = activeStepIndex > index
@@ -575,7 +576,7 @@ export default function RecipePage() {
               return (
                 <div
                   key={step.step}
-                  className={`relative overflow-hidden rounded-2xl p-4 flex gap-3 transition-all duration-300 ${
+                  className={`relative overflow-hidden rounded-2xl p-4 md:p-6 flex gap-3 transition-all duration-300 ${
                     ratioChanged() ? 'bg-amber-50' : 'bg-[var(--card)]'
                   } ${isActive ? 'ring-2 ring-[var(--foreground)] scale-[1.01]' : ''} ${isPast ? 'opacity-50' : ''}`}
                 >

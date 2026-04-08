@@ -46,7 +46,7 @@ export default function ScanPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pb-6">
+      <div className="flex items-center gap-3 px-4 sm:px-6 pb-6">
         <button onClick={() => router.back()} className="p-2 -ml-2 text-[var(--foreground)]">
           <ArrowLeft size={20} />
         </button>
@@ -54,9 +54,9 @@ export default function ScanPage() {
       </div>
 
       {/* Upload zone */}
-      <div className="flex-1 px-6 flex flex-col gap-6">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-6">
         <div
-          className="flex-1 min-h-[280px] border-2 border-dashed border-[var(--border)] rounded-[16px] flex flex-col items-center justify-center gap-3 bg-[var(--card)] cursor-pointer"
+          className="flex-1 min-h-[280px] md:min-h-[320px] xl:max-w-2xl xl:mx-auto w-full border-2 border-dashed border-[var(--border)] rounded-[16px] flex flex-col items-center justify-center gap-3 bg-[var(--card)] cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
         >
           {loading ? (
@@ -79,7 +79,7 @@ export default function ScanPage() {
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 xl:max-w-2xl xl:mx-auto w-full">
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
