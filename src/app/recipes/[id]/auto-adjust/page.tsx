@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Recipe, SavedRecipe, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { Recipe, SavedRecipe, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
@@ -27,7 +27,7 @@ export default function AutoAdjustPage() {
   const id = params.id as string
   const { setGuard } = useNavGuard()
 
-  const { profile } = useProfile()
+  const { profile, preferredGrinder } = useProfile()
   const tempUnit = profile?.temp_unit ?? 'C'
 
   const [sourceRecipe, setSourceRecipe] = useState<SavedRecipe | null>(null)
@@ -178,6 +178,7 @@ export default function AutoAdjustPage() {
 
   const displayName = METHOD_DISPLAY_NAMES[sourceRecipe.method as MethodId] ?? sourceRecipe.method
   const beanName = sourceRecipe.bean_info.bean_name ?? sourceRecipe.bean_info.origin ?? 'Unknown bean'
+  const preferredGrind = result?.grind[preferredGrinder]
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -297,7 +298,7 @@ export default function AutoAdjustPage() {
                 { value: `${result.parameters.coffee_g}g`, label: 'Coffee' },
                 { value: tempUnit === 'F' ? `${Math.round(result.parameters.temperature_c * 9 / 5 + 32)}°F` : `${result.parameters.temperature_c}°C`, label: 'Temp' },
                 { value: result.parameters.total_time, label: 'Time' },
-                { value: normalizeClickSetting(result.grind.k_ultra.starting_point), label: 'Grind (K-Ultra)' },
+                { value: preferredGrind ? normalizeClickSetting(preferredGrind.starting_point) : 'N/A', label: `Grind (${GRINDER_DISPLAY_NAMES[preferredGrinder]})` },
                 { value: result.parameters.ratio, label: 'Ratio' },
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--card)]">
