@@ -326,11 +326,7 @@ export default function SavedRecipeDetailPage() {
     const oldGrindValue = parseGrinderValueForEdit(preferredGrinder, r.grind[preferredGrinder].starting_point)
     if (editDraft.grind_preferred_value !== oldGrindValue)
       changes.push({ field: 'grind', previous_value: String(oldGrindValue), new_value: String(editDraft.grind_preferred_value) })
-    const stepsChanged = JSON.stringify(newSteps.map(step => {
-      const cleanStep = { ...step }
-      delete cleanStep._dndId
-      return cleanStep
-    })) !== JSON.stringify(r.steps)
+    const stepsChanged = JSON.stringify(newSteps.map(({ _dndId, ...cleanStep }) => cleanStep)) !== JSON.stringify(r.steps)
     if (stepsChanged)
       changes.push({ field: 'steps', previous_value: `${r.steps.length} steps`, new_value: `${newSteps.length} steps` })
 
@@ -350,11 +346,7 @@ export default function SavedRecipeDetailPage() {
     }
 
     const cleanedSteps = newSteps
-      .map(step => {
-        const cleanStep = { ...step }
-        delete cleanStep._dndId
-        return { ...cleanStep, step: 0 }
-      })
+      .map(({ _dndId, ...cleanStep }) => ({ ...cleanStep, step: 0 }))
       .map((s, i) => ({ ...s, step: i + 1 }))
 
     const updatedRecipeJson: RecipeWithAdjustment = {
