@@ -21,7 +21,7 @@ Return ONLY a valid JSON object with this exact structure:
   "bean": {
     "bean_name": "string or null",
     "roaster": "string or null (the coffee brand or roastery — look for logos, brand stamps, company names printed on the bag; NOT the farm or producer)",
-    "variety": "string or null (e.g. Gesha, Bourbon, Typica, Caturra, Pacamara)",
+    "variety": "string or null (e.g. Gesha, Bourbon, Typica, Caturra, Pacamara, SL28, SL34). IMPORTANT: If the bag prominently shows a country name like 'Kenya' but the origin is different (e.g., origin is El Salvador), extract 'Kenya' as the variety - this indicates Kenyan varieties (SL28/SL34) grown outside Kenya",
     "finca": "string or null (farm/estate name, e.g. Finca La Palma)",
     "producer": "string or null (producer or farmer name)",
     "process": "washed" | "natural" | "honey" | "anaerobic" | "unknown",

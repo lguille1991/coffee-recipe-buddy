@@ -113,7 +113,7 @@ export default function ManualPage() {
   const [noteInput, setNoteInput] = useState('')
   const [tastingNotes, setTastingNotes] = useState<string[]>([])
 
-  const [errors, setErrors] = useState<{ process?: string; roastLevel?: string }>({})
+  const [errors, setErrors] = useState<{ process?: string; roastLevel?: string; altitude?: string; roastDate?: string }>({})
 
   function addNote(note: string) {
     const trimmed = note.trim().toLowerCase()
@@ -252,11 +252,19 @@ export default function ManualPage() {
           <input
             type="number"
             value={altitude}
-            onChange={e => setAltitude(e.target.value)}
+            onChange={e => {
+              const val = e.target.value
+              if (val === '' || /^\d+$/.test(val)) {
+                setAltitude(val)
+                setErrors(prev => ({ ...prev, altitude: undefined }))
+              }
+            }}
+            onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault() }}
             placeholder="e.g. 1800"
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
-          {!altitude && (
+          {errors.altitude && <p className="text-[10px] text-red-500 mt-1">{errors.altitude}</p>}
+          {!altitude && !errors.altitude && (
             <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
         </div>
@@ -310,10 +318,22 @@ export default function ManualPage() {
           <input
             type="date"
             value={roastDate}
-            onChange={e => setRoastDate(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
+            onChange={e => {
+              const selected = e.target.value
+              const today = new Date().toISOString().split('T')[0]
+              if (selected > today) {
+                setRoastDate(today)
+                setErrors(prev => ({ ...prev, roastDate: 'Roast date cannot be in the future' }))
+              } else {
+                setRoastDate(selected)
+                setErrors(prev => ({ ...prev, roastDate: undefined }))
+              }
+            }}
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
-          {!roastDate && (
+          {errors.roastDate && <p className="text-[10px] text-red-500 mt-1">{errors.roastDate}</p>}
+          {!roastDate && !errors.roastDate && (
             <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
           )}
         </div>
@@ -327,20 +347,22 @@ export default function ManualPage() {
       </div>
 
       {/* Submit — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--background)] px-4 pt-4 pb-24">
-        <button
-          onClick={handleSubmit}
-          className={`w-full flex items-center justify-center gap-2 text-base font-semibold rounded-[14px] py-4 transition-colors ${
-            hasRequiredFields
-              ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
-              : 'bg-[var(--border)] text-[var(--muted-foreground)]'
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Get Recommendations
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
+        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
+          <button
+            onClick={handleSubmit}
+            className={`w-full flex items-center justify-center gap-2 text-base font-semibold rounded-[14px] py-4 transition-colors ${
+              hasRequiredFields
+                ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
+                : 'bg-[var(--border)] text-[var(--muted-foreground)]'
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Get Recommendations
+          </button>
+        </div>
       </div>
     </div>
   )

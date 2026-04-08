@@ -251,19 +251,21 @@ export default function AnalysisPage() {
       </div>
 
       {/* Generate button — fixed bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--background)] px-4 pt-4 pb-24">
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 disabled:opacity-50"
-        >
-          {generating ? (
-            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Sparkles size={20} />
-          )}
-          Generate Recipe
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
+        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 disabled:opacity-50"
+          >
+            {generating ? (
+              <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Sparkles size={20} />
+            )}
+            Generate Recipe
+          </button>
+        </div>
       </div>
     </div>
   )
