@@ -184,6 +184,8 @@ export default function SettingsPage() {
           </label>
           <input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={volumeMl}
             onChange={e => setVolumeMl(e.target.value)}
             min={100}

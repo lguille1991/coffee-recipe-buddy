@@ -9,6 +9,19 @@ import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
 
+type WakeLockSentinelLike = {
+  released: boolean
+  release: () => Promise<void>
+  addEventListener: (type: 'release', listener: () => void) => void
+  removeEventListener: (type: 'release', listener: () => void) => void
+}
+
+type NavigatorWithWakeLock = Navigator & {
+  wakeLock?: {
+    request: (type: 'screen') => Promise<WakeLockSentinelLike>
+  }
+}
+
 function normalizeClickSetting(value: string): string {
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
@@ -123,12 +136,59 @@ export default function RecipePage() {
   const [timerRunning, setTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null)
+  const wakeLockReleaseHandlerRef = useRef<(() => void) | null>(null)
+
+  async function releaseWakeLock() {
+    const wakeLock = wakeLockRef.current
+    const releaseHandler = wakeLockReleaseHandlerRef.current
+
+    wakeLockRef.current = null
+    wakeLockReleaseHandlerRef.current = null
+
+    if (!wakeLock) return
+
+    if (releaseHandler) {
+      wakeLock.removeEventListener('release', releaseHandler)
+    }
+
+    if (!wakeLock.released) {
+      try {
+        await wakeLock.release()
+      } catch {
+        // Ignore release errors from browsers that already dropped the lock.
+      }
+    }
+  }
+
+  async function requestWakeLock() {
+    if (typeof document === 'undefined' || document.visibilityState !== 'visible') return
+
+    const wakeLockApi = (navigator as NavigatorWithWakeLock).wakeLock
+    if (!wakeLockApi || wakeLockRef.current) return
+
+    try {
+      const wakeLock = await wakeLockApi.request('screen')
+      const handleRelease = () => {
+        wakeLockRef.current = null
+        wakeLockReleaseHandlerRef.current = null
+      }
+
+      wakeLock.addEventListener('release', handleRelease)
+      wakeLockRef.current = wakeLock
+      wakeLockReleaseHandlerRef.current = handleRelease
+    } catch {
+      // Some mobile browsers may reject the request based on battery, policy, or support.
+    }
+  }
 
   function startTimer() {
+    if (intervalRef.current) return
     setTimerRunning(true)
     intervalRef.current = setInterval(() => {
       setElapsedSeconds(s => s + 1)
     }, 1000)
+    void requestWakeLock()
   }
 
   function stopTimer() {
@@ -136,15 +196,43 @@ export default function RecipePage() {
     intervalRef.current = null
     setTimerRunning(false)
     setElapsedSeconds(0)
+    void releaseWakeLock()
   }
 
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      void releaseWakeLock()
+    }
+  }, [])
+
+  useEffect(() => {
+    async function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && timerRunning) {
+        await requestWakeLock()
+        return
+      }
+
+      if (document.visibilityState !== 'visible') {
+        await releaseWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [timerRunning])
 
   useEffect(() => {
     const raw = sessionStorage.getItem('recipe')
     if (!raw) { router.replace('/'); return }
     const parsed: RecipeWithAdjustment = JSON.parse(raw)
-    stopTimer()
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+    setTimerRunning(false)
+    setElapsedSeconds(0)
+    void releaseWakeLock()
     setRecipe(parsed)
 
     // Store original recipe on first load (only if not already stored)
