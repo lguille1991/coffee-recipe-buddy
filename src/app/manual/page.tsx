@@ -265,6 +265,8 @@ export default function ManualPage() {
           </label>
           <input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={altitude}
             onChange={e => {
               const val = e.target.value
@@ -288,6 +290,8 @@ export default function ManualPage() {
           <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
             <input
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={targetVolume}
               onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
               onChange={e => {

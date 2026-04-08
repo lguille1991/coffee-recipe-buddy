@@ -74,6 +74,7 @@ const SortableStepRow = memo(function SortableStepRow({
           <div className="relative">
             <input
               type="number"
+              inputMode="decimal"
               min={0}
               step={0.1}
               placeholder="0"

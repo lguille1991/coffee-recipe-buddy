@@ -695,6 +695,8 @@ export default function SavedRecipeDetailPage() {
                   <span className="ui-overline">Temp (°{tempUnit})</span>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min={tempUnit === 'F' ? 140 : 60}
                     max={tempUnit === 'F' ? 212 : 100}
                     step={1}
@@ -756,6 +758,7 @@ export default function SavedRecipeDetailPage() {
                         <span className="ui-overline">Coffee (g)</span>
                         <input
                           type="number"
+                          inputMode="decimal"
                           min={1} max={50} step={0.1}
                           value={editDraft.coffee_g}
                           onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
@@ -794,6 +797,7 @@ export default function SavedRecipeDetailPage() {
                         <span className="ui-card-title">1:</span>
                         <input
                           type="number"
+                          inputMode="decimal"
                           min={1} max={50} step={0.1}
                           value={parseFloat(editDraft.ratio_multiplier.toFixed(1))}
                           onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
@@ -866,6 +870,8 @@ export default function SavedRecipeDetailPage() {
                     </div>
                     <input
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       min={1} max={150} step={1}
                       value={editDraft.grind_preferred_value}
                       onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
