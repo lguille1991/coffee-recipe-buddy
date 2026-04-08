@@ -8,6 +8,31 @@ const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
 })
 
+const KNOWN_VARIETY_PATTERNS: Array<[RegExp, string]> = [
+  [/\bgeisha\b/i, 'Geisha'],
+  [/\bgesha\b/i, 'Gesha'],
+  [/\bbourbon\b/i, 'Bourbon'],
+  [/\btypica\b/i, 'Typica'],
+  [/\bcaturra\b/i, 'Caturra'],
+  [/\bcatuai\b/i, 'Catuai'],
+  [/\bpacamara\b/i, 'Pacamara'],
+  [/\bmaragogipe\b/i, 'Maragogipe'],
+  [/\blaurina\b/i, 'Laurina'],
+  [/\bsl[\s-]?28\b/i, 'SL28'],
+  [/\bsl[\s-]?34\b/i, 'SL34'],
+  [/\bpink bourbon\b/i, 'Pink Bourbon'],
+]
+
+function inferVarietyFromText(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    if (!value) continue
+    for (const [pattern, normalized] of KNOWN_VARIETY_PATTERNS) {
+      if (pattern.test(value)) return normalized
+    }
+  }
+  return null
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
@@ -73,6 +98,14 @@ export async function POST(req: NextRequest) {
     }
 
     const data = validated.data
+    if (!data.bean.variety) {
+      data.bean.variety = inferVarietyFromText(
+        data.bean.bean_name,
+        data.bean.finca,
+        data.bean.producer,
+      ) ?? undefined
+    }
+
     if (!data.bean.bean_name && data.bean.variety) {
       data.bean.bean_name = data.bean.variety
     }

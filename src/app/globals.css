@@ -32,9 +32,9 @@
   --muted-foreground: #D1D5DB;
   --muted: #8B8E94;
   --surface-subtle: #2E2E2E;
-  --danger-fg: #FECACA;
-  --danger-bg: #451A1A;
-  --danger-border: #7F1D1D;
+  --danger-fg: #F87171;
+  --danger-bg: #3F1316;
+  --danger-border: #B91C1C;
   --warning-fg: #FDE68A;
   --warning-bg: #452B12;
   --warning-border: #92400E;
@@ -120,7 +120,7 @@ body {
 }
 
 @utility ui-button-danger-solid {
-  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--danger-fg)] text-white;
+  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--danger-fg)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)];
 }
 
 @utility ui-button-ghost {

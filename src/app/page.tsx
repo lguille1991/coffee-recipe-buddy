@@ -49,7 +49,7 @@ export default function HomePage() {
     startTransition(() => {
       setRecipesLoading(true)
     })
-    fetch('/api/recipes?limit=20')
+    fetch('/api/recipes?limit=20', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setRecipes(data.recipes ?? []))
       .catch(() => {})
