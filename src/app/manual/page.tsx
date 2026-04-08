@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BeanProfile } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
+import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_OPTIONS = [
   { value: 'washed', label: 'Washed' },
@@ -98,6 +99,7 @@ function TextField({
 
 export default function ManualPage() {
   const router = useRouter()
+  const { profile } = useProfile()
 
   // Required fields
   const [process, setProcess] = useState<BeanProfile['process'] | ''>('')
@@ -109,11 +111,20 @@ export default function ManualPage() {
   const [origin, setOrigin] = useState('')
   const [variety, setVariety] = useState('')
   const [altitude, setAltitude] = useState('')
+  const [targetVolume, setTargetVolume] = useState('')
   const [roastDate, setRoastDate] = useState('')
   const [noteInput, setNoteInput] = useState('')
   const [tastingNotes, setTastingNotes] = useState<string[]>([])
 
   const [errors, setErrors] = useState<{ process?: string; roastLevel?: string; altitude?: string; roastDate?: string }>({})
+
+  useEffect(() => {
+    if (profile?.default_volume_ml) {
+      startTransition(() => {
+        setTargetVolume(String(profile.default_volume_ml))
+      })
+    }
+  }, [profile])
 
   function addNote(note: string) {
     const trimmed = note.trim().toLowerCase()
@@ -155,6 +166,13 @@ export default function ManualPage() {
     }
 
     sessionStorage.setItem('confirmedBean', JSON.stringify(bean))
+
+    const vol = parseInt(targetVolume, 10)
+    if (vol > 0) {
+      sessionStorage.setItem('targetVolumeMl', String(vol))
+    } else {
+      sessionStorage.removeItem('targetVolumeMl')
+    }
 
     const recs = recommendMethods(bean)
     sessionStorage.setItem('methodRecommendations', JSON.stringify(recs))
@@ -263,6 +281,31 @@ export default function ManualPage() {
           {!altitude && !errors.altitude && (
             <p className="ui-meta mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
+        </div>
+
+        <div>
+          <h2 className="ui-overline mb-1.5">Target Volume</h2>
+          <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
+            <input
+              type="number"
+              value={targetVolume}
+              onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+              onChange={e => {
+                const val = e.target.value
+                if (val === '') {
+                  setTargetVolume('')
+                } else {
+                  const num = Math.max(0, parseInt(val) || 0)
+                  setTargetVolume(String(num))
+                }
+              }}
+              min={50}
+              max={2000}
+              className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+              placeholder="250"
+            />
+            <span className="ui-body-muted">ml</span>
+          </div>
         </div>
 
         <div>
