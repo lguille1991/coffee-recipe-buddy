@@ -61,16 +61,16 @@ export default function HomePage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="px-6 pb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">Coffee Recipe Buddy</h1>
-        <p className="text-[var(--muted-foreground)] text-sm mt-0.5">
+      <div className="px-4 sm:px-6 pb-4">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[var(--foreground)]">Coffee Recipe Buddy</h1>
+        <p className="text-[var(--muted-foreground)] text-sm sm:text-base mt-0.5">
           Hey there, what coffee beans do you need a recipe for today?
         </p>
       </div>
 
       {/* Hero image */}
-      <div className="px-6">
-        <div className="w-full aspect-[4/3] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
+      <div className="px-4 sm:px-6">
+        <div className="w-full xl:w-4/5 xl:mx-0 aspect-[4/3] xl:aspect-[16/9] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
           <Image
             src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
             alt="Coffee brewing"
@@ -82,17 +82,17 @@ export default function HomePage() {
       </div>
 
       {/* CTA */}
-      <div className="px-6 mt-6 flex flex-col items-center gap-3">
+      <div className="px-4 sm:px-6 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <Link
           href="/scan"
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
         >
           <Camera size={20} />
           Scan Your Coffee Bag
         </Link>
         <Link
           href="/manual"
-          className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+          className="flex-1 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
         >
           <PenLine size={16} />
           Enter Manually
@@ -100,7 +100,7 @@ export default function HomePage() {
         {!loading && !user && (
           <Link
             href="/auth"
-            className="w-full flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+            className="flex-1 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
           >
             <LogIn size={16} />
             Sign In
@@ -110,7 +110,7 @@ export default function HomePage() {
 
       {/* My Recipes section */}
       {!loading && user && (
-        <div className="px-6 mt-8">
+        <div className="px-4 sm:px-6 mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[var(--foreground)]">My Recipes</h2>
             <Link href="/recipes" className="text-xs text-[var(--muted-foreground)] underline">See all</Link>
@@ -128,8 +128,8 @@ export default function HomePage() {
               <p className="text-sm text-[var(--muted-foreground)] mt-1">Scan your first bag to get started!</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {recipes.slice(0, 5).map(r => (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3">
+              {recipes.slice(0, 6).map(r => (
                 <RecipeCard key={r.id} recipe={r} />
               ))}
             </div>

@@ -121,14 +121,14 @@ export default function AnalysisPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pb-4">
+      <div className="flex items-center gap-3 px-4 sm:px-6 pb-4">
         <button onClick={() => router.back()} className="p-2 -ml-2">
           <ArrowLeft size={20} />
         </button>
         <h2 className="text-lg font-semibold">Coffee Analysis</h2>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-48">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-5 overflow-y-auto pb-48">
         {/* Bean identity card */}
         <div className="bg-[var(--card)] rounded-2xl p-4 flex items-start gap-3">
           <div className="w-14 h-14 rounded-xl bg-[#D4C9B8] flex items-center justify-center shrink-0">
@@ -155,7 +155,7 @@ export default function AnalysisPage() {
         {/* Bean profile grid */}
         <div>
           <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Bean Profile</h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
             <EditableField
               label="Origin"
               value={bean.origin || ''}

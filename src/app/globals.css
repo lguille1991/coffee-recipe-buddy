@@ -30,3 +30,15 @@ body {
   font-family: var(--font-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+@utility text-responsive-h1 {
+  @apply text-3xl sm:text-4xl lg:text-5xl;
+}
+
+@utility text-responsive-h2 {
+  @apply text-2xl sm:text-3xl lg:text-4xl;
+}
+
+@utility text-responsive-body {
+  @apply text-sm sm:text-base lg:text-lg;
+}
