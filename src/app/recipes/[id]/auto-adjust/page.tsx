@@ -6,7 +6,6 @@ import { Recipe, SavedRecipe, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId } 
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
-import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
 import { useNavGuard } from '@/components/NavGuardContext'
 
 const SCALE_OPTIONS: { value: number; label: string }[] = [
@@ -171,8 +170,8 @@ export default function AutoAdjustPage() {
   if (!sourceRecipe) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center px-6 gap-4">
-        <p className="text-sm text-[var(--muted-foreground)]">Recipe not found.</p>
-        <button onClick={() => router.replace('/recipes')} className="text-sm text-[var(--foreground)] underline">Back to recipes</button>
+        <p className="ui-body-muted">Recipe not found.</p>
+        <button onClick={() => router.replace('/recipes')} className="ui-body-muted text-[var(--foreground)] underline">Back to recipes</button>
       </div>
     )
   }
@@ -186,12 +185,12 @@ export default function AutoAdjustPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="p-2 -ml-2">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+          <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h2 className="text-lg font-semibold">Auto Adjust</h2>
+        <h2 className="ui-section-title">Auto Adjust</h2>
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-5 pb-8 overflow-y-auto">
@@ -199,11 +198,11 @@ export default function AutoAdjustPage() {
         {/* Source recipe summary */}
         <div className="flex items-center gap-2 bg-[var(--card)] rounded-xl px-3 py-2.5">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
-            <p className="text-xs text-[var(--muted-foreground)]">{displayName}</p>
+            <p className="ui-card-title truncate">{beanName}</p>
+            <p className="ui-meta">{displayName}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-xs text-[var(--muted-foreground)]">
+            <p className="ui-meta">
               {sourceRecipe.current_recipe_json.parameters.coffee_g}g · {sourceRecipe.current_recipe_json.parameters.water_g}ml
             </p>
           </div>
@@ -211,13 +210,13 @@ export default function AutoAdjustPage() {
 
         {/* Scale selector */}
         <div>
-          <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Scale</p>
+          <p className="ui-overline mb-2">Scale</p>
           <div className="flex gap-1.5 flex-wrap">
             {SCALE_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setScaleFactor(opt.value)}
-                className={`flex-1 min-w-0 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-1 min-w-0 min-h-10 rounded-xl text-sm font-semibold transition-colors ${
                   scaleFactor === opt.value
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)]'
@@ -228,7 +227,7 @@ export default function AutoAdjustPage() {
             ))}
           </div>
           {scaleFactor !== 1.0 && (
-            <p className="text-[10px] text-[var(--muted-foreground)] mt-1.5">
+            <p className="ui-meta mt-1.5">
               {Math.round(sourceRecipe.current_recipe_json.parameters.coffee_g * scaleFactor * 10) / 10}g coffee ·{' '}
               {Math.round(sourceRecipe.current_recipe_json.parameters.water_g * scaleFactor)}ml water
             </p>
@@ -237,28 +236,28 @@ export default function AutoAdjustPage() {
 
         {/* Intent field */}
         <div>
-          <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Intent (optional)</p>
+          <p className="ui-overline mb-2">Intent (optional)</p>
           <textarea
             value={intent}
             onChange={e => setIntent(e.target.value)}
             maxLength={500}
             rows={3}
             placeholder="e.g. Make it sweeter and rounder, slightly coarser grind for a lazy morning…"
-            className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+            className="ui-textarea"
           />
-          <p className="text-[10px] text-[var(--muted-foreground)] text-right mt-1">{intent.length}/500</p>
+          <p className="ui-meta text-right mt-1">{intent.length}/500</p>
         </div>
 
         {/* Disabled hint */}
         {!canGenerate && (
-          <p className="text-sm text-[var(--muted-foreground)] text-center -mt-2">Change the scale or describe what you&apos;d like to adjust</p>
+          <p className="ui-body-muted text-center -mt-2">Change the scale or describe what you&apos;d like to adjust</p>
         )}
 
         {/* Generate button */}
         <button
           onClick={handleGenerate}
           disabled={!canGenerate || generating}
-          className="w-full py-4 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2"
+          className="w-full ui-button-primary font-semibold disabled:opacity-40"
         >
           {generating ? (
             <>
@@ -277,7 +276,7 @@ export default function AutoAdjustPage() {
 
         {/* Generation error */}
         {genError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
+          <div className="ui-alert-danger text-sm text-red-700">
             {genError}
           </div>
         )}
@@ -287,7 +286,7 @@ export default function AutoAdjustPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-[var(--border)]" />
-              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">Result</span>
+              <span className="ui-overline">Result</span>
               <div className="flex-1 h-px bg-[var(--border)]" />
             </div>
 
@@ -302,8 +301,8 @@ export default function AutoAdjustPage() {
                 { value: result.parameters.ratio, label: 'Ratio' },
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--card)]">
-                  <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider leading-tight">{p.label}</p>
+                  <p className="ui-card-title">{p.value}</p>
+                  <p className="ui-overline leading-tight">{p.label}</p>
                 </div>
               ))}
             </div>
@@ -315,12 +314,12 @@ export default function AutoAdjustPage() {
                   <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
                     {step.step}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="ui-card-title">{step.time}</p>
+                      <p className="ui-body-muted">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
-                    <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                    <p className="ui-body-muted leading-relaxed">{step.action}</p>
                   </div>
                 </div>
               ))}
@@ -328,7 +327,7 @@ export default function AutoAdjustPage() {
 
             {/* Save error */}
             {saveError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
+              <div className="ui-alert-danger text-sm text-red-700">
                 {saveError}
               </div>
             )}
@@ -338,7 +337,7 @@ export default function AutoAdjustPage() {
               <button
                 onClick={handleSaveAsNew}
                 disabled={saving}
-                className="w-full py-4 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] active:opacity-80 disabled:opacity-50 flex items-center justify-center"
+                className="w-full ui-button-primary font-semibold"
               >
                 {saving ? (
                   <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -347,14 +346,14 @@ export default function AutoAdjustPage() {
               <button
                 onClick={() => setShowReplaceConfirm(true)}
                 disabled={saving}
-                className="w-full py-3.5 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] border border-[var(--border)] active:opacity-80 disabled:opacity-50"
+                className="w-full ui-button-secondary"
               >
                 Replace This Recipe
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={generating || saving}
-                className="w-full py-3 text-[var(--muted-foreground)] text-base font-medium active:opacity-60 disabled:opacity-40"
+                className="w-full ui-button-ghost disabled:opacity-40"
               >
                 Regenerate
               </button>

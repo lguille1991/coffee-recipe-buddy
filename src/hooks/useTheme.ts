@@ -15,22 +15,20 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>('system')
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
+    return (localStorage.getItem('theme') as Theme | null) ?? 'system'
+  })
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null
-    const initial = stored ?? 'system'
-    setThemeState(initial)
-    applyTheme(initial)
-
+    applyTheme(theme)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     function handleChange() {
-      const current = (localStorage.getItem('theme') as Theme | null) ?? 'system'
-      if (current === 'system') applyTheme('system')
+      if (theme === 'system') applyTheme('system')
     }
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
+  }, [theme])
 
   function setTheme(t: Theme) {
     localStorage.setItem('theme', t)

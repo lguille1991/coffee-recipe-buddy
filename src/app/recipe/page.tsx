@@ -45,10 +45,10 @@ function ParamCard({
       changed ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-[var(--background)]'
     }`}>
       <div className="text-[var(--muted-foreground)]">{icon}</div>
-      <p className="text-sm font-semibold text-[var(--foreground)]">{value}</p>
-      <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{label}</p>
+      <p className="ui-card-title">{value}</p>
+      <p className="ui-overline">{label}</p>
       {changed && annotation && (
-        <p className="text-[9px] text-amber-600 font-medium leading-tight">{annotation}</p>
+        <p className="ui-meta text-amber-600 font-medium leading-tight">{annotation}</p>
       )}
     </div>
   )
@@ -62,10 +62,10 @@ function Collapsible({ title, children }: { title: string; children: React.React
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3.5 text-left"
       >
-        <span className="text-sm font-semibold text-[var(--foreground)]">{title}</span>
+        <span className="ui-card-title">{title}</span>
         <svg
-          width="16" height="16" viewBox="0 0 16 16" fill="none"
-          className={`transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`ui-icon-inline transition-transform ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 16 16" fill="none"
         >
           <path d="M4 6L8 10L12 6" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -351,9 +351,6 @@ export default function RecipePage() {
   }
 
   const maxRoundsReached = feedbackRound >= 3
-  const selectedMethodRaw = typeof window !== 'undefined' ? sessionStorage.getItem('selectedMethod') : null
-  const selectedMethod = selectedMethodRaw ? JSON.parse(selectedMethodRaw) : null
-
   // Timer derived values
   const totalTimeSeconds = recipe ? parseTimeToSeconds(recipe.parameters.total_time) : 0
   const timerOverrun = elapsedSeconds > totalTimeSeconds && totalTimeSeconds > 0
@@ -388,17 +385,17 @@ export default function RecipePage() {
                 router.back()
               }
             }}
-            className="p-2 -ml-2"
+            className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft className="ui-icon-action" />
           </button>
-          <h2 className="text-lg font-semibold">Your Recipe</h2>
+          <h2 className="ui-section-title">Your Recipe</h2>
         </div>
         {(saving || feedbackRound > lastSavedRound) && (
           <button
             onClick={handleSave}
             disabled={saving}
-            className="p-2 text-[var(--foreground)] disabled:opacity-50 relative"
+            className="min-h-10 min-w-10 p-2 text-[var(--foreground)] disabled:opacity-50 relative flex items-center justify-center"
             aria-label="Save recipe"
           >
             {saving ? (
@@ -416,51 +413,51 @@ export default function RecipePage() {
 
         {/* Title */}
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--foreground)]">{recipe.display_name}</h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
+          <h1 className="ui-page-title-hero">{recipe.display_name}</h1>
+          <p className="ui-body-muted mt-0.5">
             {bean.bean_name || 'Your Coffee'}{bean.roast_level ? ` · ${bean.roast_level.charAt(0).toUpperCase() + bean.roast_level.slice(1)} Roast` : ''}
           </p>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1.5 leading-relaxed">{recipe.objective}</p>
+          <p className="ui-body-muted mt-1.5 leading-relaxed">{recipe.objective}</p>
         </div>
 
         {/* Save feedback */}
         {savedMessage && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm font-medium text-green-800">
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
             {savedMessage}
           </div>
         )}
         {saveError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
+          <div className="ui-alert-danger text-sm text-red-700">
             {saveError}
           </div>
         )}
 
         {/* Adjustment banner */}
         {adj && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-1">
+          <div className="ui-alert-warning flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-amber-700">Adjustment {feedbackRound} of 3</p>
+              <p className="ui-card-title text-amber-700">Adjustment {feedbackRound} of 3</p>
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="text-[10px] text-[var(--muted-foreground)] underline"
+                className="ui-meta underline"
               >
                 Reset to original
               </button>
             </div>
-            <p className="text-sm text-amber-800">
+            <p className="ui-body-muted text-amber-800">
               {adj.variable_changed === 'technique'
                 ? adj.note
                 : `${adj.variable_changed.charAt(0).toUpperCase() + adj.variable_changed.slice(1)}: ${adj.previous_value} → ${adj.new_value} (${adj.direction})`}
             </p>
             {adj.note && adj.variable_changed !== 'technique' && (
-              <p className="text-[10px] text-amber-600 italic">{adj.note}</p>
+              <p className="ui-meta text-amber-600 italic">{adj.note}</p>
             )}
           </div>
         )}
 
         {/* Parameters */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
+          <h3 className="ui-overline mb-2">Parameters</h3>
           <div className="grid grid-cols-3 xl:grid-cols-6 gap-2">
             <ParamCard
               icon={<Droplets size={16} />}
@@ -508,24 +505,24 @@ export default function RecipePage() {
           const primaryData = recipe.grind[preferredGrinder]
           return (
             <div className={`bg-[var(--card)] rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
-              <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">Grind Settings</h3>
+              <h3 className="ui-overline mb-3">Grind Settings</h3>
 
               {/* Primary grinder */}
               <div className={`rounded-xl p-3 mb-3 text-[var(--background)] ${grindChanged() ? 'bg-amber-700' : 'bg-[var(--foreground)]'}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                  <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
+                  <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
                 </div>
                 <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-                <p className="text-sm opacity-60 mt-0.5">Range: {primaryData.range}</p>
+                <p className="ui-body-muted text-[var(--background)]/70 mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
-                  <p className="text-sm opacity-80 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
+                  <p className="ui-body-muted text-[var(--background)]/85 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
                 )}
                 {primaryData.description && (
-                  <p className="text-sm opacity-50 mt-1 italic">{primaryData.description}</p>
+                  <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.description}</p>
                 )}
                 {primaryData.note && (
-                  <p className="text-sm opacity-50 mt-1 italic">{primaryData.note}</p>
+                  <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.note}</p>
                 )}
               </div>
 
@@ -534,10 +531,10 @@ export default function RecipePage() {
                 onClick={() => setSecondaryGrindersOpen(o => !o)}
                 className="flex items-center justify-between w-full py-2 text-left mt-2"
               >
-                <span className="text-xs font-medium text-[var(--muted-foreground)]">See more grinders</span>
+                <span className="ui-overline normal-case tracking-normal font-medium">See more grinders</span>
                 <svg
-                  width="14" height="14" viewBox="0 0 14 14" fill="none"
-                  className={`transition-transform text-[var(--muted-foreground)] ${secondaryGrindersOpen ? 'rotate-180' : ''}`}
+                  className={`size-3.5 transition-transform text-[var(--muted-foreground)] ${secondaryGrindersOpen ? 'rotate-180' : ''}`}
+                  viewBox="0 0 14 14" fill="none"
                 >
                   <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -552,13 +549,13 @@ export default function RecipePage() {
                     return (
                       <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                         <div>
-                          <p className="text-xs font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                          <p className="text-xs text-[var(--muted-foreground)]">Range: {data.range}</p>
+                          <p className="ui-meta font-medium">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                          <p className="ui-meta">Range: {data.range}</p>
                           {data.note && (
-                            <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{data.note}</p>
+                            <p className="ui-meta mt-0.5 italic">{data.note}</p>
                           )}
                         </div>
-                        <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(data.starting_point)}</p>
+                        <p className="ui-card-title shrink-0">{normalizeClickSetting(data.starting_point)}</p>
                       </div>
                     )
                   })}
@@ -571,7 +568,7 @@ export default function RecipePage() {
         {/* Brew Steps */}
         <div>
           <div className="flex items-center justify-between mb-2 md:mb-4">
-            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Brew Steps</h3>
+            <h3 className="ui-overline">Brew Steps</h3>
             <div className="flex items-center gap-2">
               {(timerRunning || elapsedSeconds > 0) && (
                 <span className={`text-sm font-mono font-semibold tabular-nums ${timerOverrun ? 'text-red-500' : 'text-[var(--foreground)]'}`}>
@@ -613,10 +610,10 @@ export default function RecipePage() {
                   </div>
                   <div className="flex-1 relative">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                      <p className="ui-card-title">{step.time}</p>
+                      <p className="ui-body-muted">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                     </div>
-                    <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                    <p className="ui-body-muted leading-relaxed">{step.action}</p>
                   </div>
                 </div>
               )
@@ -629,10 +626,10 @@ export default function RecipePage() {
           <div className="flex flex-col gap-2.5">
             {Object.entries(recipe.quick_adjustments).map(([key, value]) => (
               <div key={key}>
-                <p className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-0.5">
+                <p className="ui-overline mb-0.5">
                   {key.replace(/_/g, ' ')}
                 </p>
-                <p className="text-sm text-[var(--foreground)] leading-relaxed">{value}</p>
+                <p className="ui-body leading-relaxed">{value}</p>
               </div>
             ))}
           </div>
@@ -651,12 +648,12 @@ export default function RecipePage() {
               ['Starting Point', recipe.range_logic.starting_point],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3">
-                <p className="text-[10px] text-[var(--muted-foreground)] shrink-0">{label}</p>
-                <p className="text-[10px] text-[var(--foreground)] text-right">{value}</p>
+                <p className="ui-meta shrink-0">{label}</p>
+                <p className="ui-meta text-[var(--foreground)] text-right">{value}</p>
               </div>
             ))}
             {recipe.range_logic.compressed && (
-              <p className="text-[10px] text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg mt-1">
+              <p className="ui-meta text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg mt-1">
                 Range was compressed to stay within the 10-click accumulation cap.
               </p>
             )}
@@ -669,8 +666,8 @@ export default function RecipePage() {
           /* Method switch nudge after 3 rounds */
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3">
             <div>
-              <p className="text-sm font-semibold text-[var(--foreground)]">This bean might work better with a different method</p>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              <p className="ui-card-title">This bean might work better with a different method</p>
+              <p className="ui-body-muted mt-1 leading-relaxed">
                 You&apos;ve reached the 3-round adjustment limit. Sometimes the bean profile is better served by a different brewing approach.
               </p>
             </div>
@@ -679,16 +676,16 @@ export default function RecipePage() {
                 // Navigate back to methods with the same bean data already in sessionStorage
                 router.push('/methods')
               }}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[12px] py-3 active:opacity-80"
+              className="w-full ui-button-primary font-semibold rounded-[12px]"
             >
               Try a Different Method
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg className="size-3.5" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7H11M7.5 3.5L11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="text-xs text-[var(--muted-foreground)] underline text-center"
+              className="ui-meta underline text-center"
             >
               Reset recipe to original
             </button>
@@ -698,9 +695,9 @@ export default function RecipePage() {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setShowFeedback(true)}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 active:opacity-80 transition-opacity"
+              className="w-full ui-button-secondary"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                 <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M8 5V8M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
@@ -709,7 +706,7 @@ export default function RecipePage() {
             {feedbackRound > 0 && (
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="text-xs text-[var(--muted-foreground)] underline text-center"
+                className="ui-meta underline text-center"
               >
                 Reset to original
               </button>
@@ -719,8 +716,8 @@ export default function RecipePage() {
           /* Symptom selector */
           <div className="bg-[var(--card)] rounded-2xl p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--foreground)]">What was off?</p>
-              <p className="text-[10px] text-[var(--muted-foreground)]">
+              <p className="ui-card-title">What was off?</p>
+              <p className="ui-meta">
                 Round {feedbackRound + 1} of 3
               </p>
             </div>
@@ -743,20 +740,20 @@ export default function RecipePage() {
             </div>
 
             {adjustError && (
-              <p className="text-sm text-red-500">{adjustError}</p>
+              <p className="ui-body-muted text-red-500">{adjustError}</p>
             )}
 
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowFeedback(false); setSelectedSymptom(null); setAdjustError(null) }}
-                className="flex-1 py-3 rounded-[12px] text-base font-medium text-[var(--muted-foreground)] bg-[var(--background)] active:opacity-80"
+                className="flex-1 ui-button-secondary bg-[var(--background)] border-transparent text-[var(--muted-foreground)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdjust}
                 disabled={!selectedSymptom || adjusting}
-                className="flex-1 py-3 rounded-[12px] text-base font-semibold text-[var(--background)] bg-[var(--foreground)] disabled:opacity-40 active:opacity-80 flex items-center justify-center gap-2"
+                className="flex-1 ui-button-primary font-semibold disabled:opacity-40"
               >
                 {adjusting ? (
                   <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />

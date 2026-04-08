@@ -91,29 +91,29 @@ function AuthForm() {
       <div className="h-16" />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">
+        <h1 className="ui-page-title-hero">
           {mode === 'signin' ? 'Welcome back' : 'Create account'}
         </h1>
-        <p className="text-[var(--muted-foreground)] text-sm mt-1">
+        <p className="ui-body-muted mt-1">
           {mode === 'signin' ? 'Sign in to access your saved recipes.' : 'Save and revisit your brew recipes.'}
         </p>
       </div>
 
       {message && (
-        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800 mb-4">
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
           {message}
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-4">
+        <div className="ui-alert-danger text-sm text-red-700 mb-4">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Email
           </label>
           <input
@@ -123,12 +123,12 @@ function AuthForm() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="ui-input"
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Password
           </label>
           <input
@@ -138,14 +138,14 @@ function AuthForm() {
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="••••••••"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="ui-input"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 mt-1 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+          className="w-full ui-button-primary mt-1 font-semibold"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -155,14 +155,14 @@ function AuthForm() {
 
       <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-px bg-[var(--border)]" />
-        <span className="text-xs text-[var(--muted-foreground)]">or</span>
+        <span className="ui-meta">or</span>
         <div className="flex-1 h-px bg-[var(--border)]" />
       </div>
 
       <button
         onClick={handleGoogleOAuth}
         disabled={loading}
-        className="w-full bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 active:opacity-80 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2.5"
+        className="w-full ui-button-secondary gap-2.5"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -175,7 +175,7 @@ function AuthForm() {
 
       <button
         onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError(null) }}
-        className="mt-6 text-sm text-[var(--muted-foreground)] text-center"
+        className="mt-6 ui-body-muted text-center"
       >
         {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
         <span className="text-[var(--foreground)] font-medium underline">

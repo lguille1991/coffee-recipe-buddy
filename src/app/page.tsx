@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useState, memo } from 'react'
+import { useEffect, useState, memo, startTransition } from 'react'
 import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
@@ -30,12 +30,11 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[var(--foreground)] truncate">{beanName}</p>
-        <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{displayName}</p>
+        <p className="ui-card-title truncate">{beanName}</p>
+        <p className="ui-body-muted mt-0.5">{displayName}</p>
       </div>
 
-      {/* Date */}
-      <p className="text-[10px] text-[var(--muted-foreground)] shrink-0">{date}</p>
+      <p className="ui-meta shrink-0">{date}</p>
     </Link>
   )
 })
@@ -47,7 +46,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) return
-    setRecipesLoading(true)
+    startTransition(() => {
+      setRecipesLoading(true)
+    })
     fetch('/api/recipes?limit=20')
       .then(r => r.json())
       .then(data => setRecipes(data.recipes ?? []))
@@ -60,10 +61,9 @@ export default function HomePage() {
       {/* Status bar spacer */}
       <div className="h-12" />
 
-      {/* Header */}
       <div className="px-4 sm:px-6 pb-4">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[var(--foreground)]">Coffee Recipe Buddy</h1>
-        <p className="text-[var(--muted-foreground)] text-sm sm:text-base mt-0.5">
+        <h1 className="ui-page-title-hero">Coffee Recipe Buddy</h1>
+        <p className="ui-body-muted mt-1">
           Hey there, what coffee beans do you need a recipe for today?
         </p>
       </div>
@@ -81,39 +81,37 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* CTA */}
       <div className="px-4 sm:px-6 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <Link
           href="/scan"
-          className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-4 active:opacity-80 transition-opacity"
+          className="ui-button-primary flex-1"
         >
-          <Camera size={20} />
+          <Camera className="ui-icon-action" />
           Scan Your Coffee Bag
         </Link>
         <Link
           href="/manual"
-          className="flex-1 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+          className="ui-button-secondary flex-1"
         >
-          <PenLine size={16} />
+          <PenLine className="ui-icon-inline" />
           Enter Manually
         </Link>
         {!loading && !user && (
           <Link
             href="/auth"
-            className="flex-1 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 border border-[var(--border)] active:opacity-80 transition-opacity"
+            className="ui-button-secondary flex-1"
           >
-            <LogIn size={16} />
+            <LogIn className="ui-icon-inline" />
             Sign In
           </Link>
         )}
       </div>
 
-      {/* My Recipes section */}
       {!loading && user && (
         <div className="px-4 sm:px-6 mt-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[var(--foreground)]">My Recipes</h2>
-            <Link href="/recipes" className="text-xs text-[var(--muted-foreground)] underline">See all</Link>
+            <h2 className="ui-card-title">My Recipes</h2>
+            <Link href="/recipes" className="ui-meta underline">See all</Link>
           </div>
 
           {recipesLoading ? (
@@ -122,10 +120,10 @@ export default function HomePage() {
             </div>
           ) : recipes.length === 0 ? (
             <div className="bg-[var(--card)] rounded-2xl p-6 text-center">
-              <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+              <p className="ui-body-muted leading-relaxed">
                 No saved recipes yet.
               </p>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">Scan your first bag to get started!</p>
+              <p className="ui-body-muted mt-1">Scan your first bag to get started!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3">
