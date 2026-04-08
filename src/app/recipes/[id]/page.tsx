@@ -695,7 +695,8 @@ export default function SavedRecipeDetailPage() {
                     max={tempUnit === 'F' ? 212 : 100}
                     step={1}
                     value={editDraft.temperature_display}
-                    onChange={e => setEditDraft(d => d ? { ...d, temperature_display: parseInt(e.target.value) || d.temperature_display } : d)}
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+                    onChange={e => setEditDraft(d => d ? { ...d, temperature_display: Math.max(0, parseInt(e.target.value) || d.temperature_display) } : d)}
                     className="w-full rounded-xl px-3 py-2.5 text-base font-semibold text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
                   />
                 </label>
@@ -753,7 +754,8 @@ export default function SavedRecipeDetailPage() {
                           type="number"
                           min={1} max={50} step={0.1}
                           value={editDraft.coffee_g}
-                          onChange={e => setEditDraft(d => d ? { ...d, coffee_g: parseFloat(e.target.value) || d.coffee_g } : d)}
+                          onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+                          onChange={e => setEditDraft(d => d ? { ...d, coffee_g: Math.max(0, parseFloat(e.target.value) || d.coffee_g) } : d)}
                           onBlur={() => {
                             if (!recipe) return
                             setEditDraft(d => {
@@ -790,7 +792,8 @@ export default function SavedRecipeDetailPage() {
                           type="number"
                           min={1} max={50} step={0.1}
                           value={parseFloat(editDraft.ratio_multiplier.toFixed(1))}
-                          onChange={e => setEditDraft(d => d ? { ...d, ratio_multiplier: parseFloat(e.target.value) || d.ratio_multiplier } : d)}
+                          onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+                          onChange={e => setEditDraft(d => d ? { ...d, ratio_multiplier: Math.max(0, parseFloat(e.target.value) || d.ratio_multiplier) } : d)}
                           onBlur={() => {
                             if (!recipe) return
                             setEditDraft(d => {
@@ -861,7 +864,8 @@ export default function SavedRecipeDetailPage() {
                       type="number"
                       min={1} max={150} step={1}
                       value={editDraft.grind_preferred_value}
-                      onChange={e => setEditDraft(d => d ? { ...d, grind_preferred_value: parseInt(e.target.value) || d.grind_preferred_value } : d)}
+                      onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+                      onChange={e => setEditDraft(d => d ? { ...d, grind_preferred_value: Math.max(0, parseInt(e.target.value) || d.grind_preferred_value) } : d)}
                       className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
                     />
                     {grindRange && (

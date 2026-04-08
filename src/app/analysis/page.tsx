@@ -204,7 +204,16 @@ export default function AnalysisPage() {
             <input
               type="date"
               value={roastDate}
-              onChange={e => setRoastDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={e => {
+                const selected = e.target.value
+                const today = new Date().toISOString().split('T')[0]
+                if (selected > today) {
+                  setRoastDate(today)
+                } else {
+                  setRoastDate(selected)
+                }
+              }}
               className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="Optional — leave blank for optimal window"
             />
@@ -221,7 +230,16 @@ export default function AnalysisPage() {
             <input
               type="number"
               value={targetVolume}
-              onChange={e => setTargetVolume(e.target.value)}
+              onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+              onChange={e => {
+                const val = e.target.value
+                if (val === '') {
+                  setTargetVolume('')
+                } else {
+                  const num = Math.max(0, parseInt(val) || 0)
+                  setTargetVolume(String(num))
+                }
+              }}
               min={50}
               max={2000}
               className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
