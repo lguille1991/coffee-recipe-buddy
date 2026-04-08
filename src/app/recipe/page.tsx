@@ -42,13 +42,13 @@ function ParamCard({
 }) {
   return (
     <div className={`rounded-xl p-3 flex flex-col items-start gap-1.5 relative ${
-      changed ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-[var(--background)]'
+      changed ? 'bg-[var(--warning-bg)] ring-1 ring-[var(--warning-border)]' : 'bg-[var(--background)]'
     }`}>
       <div className="text-[var(--muted-foreground)]">{icon}</div>
       <p className="ui-card-title">{value}</p>
       <p className="ui-overline">{label}</p>
       {changed && annotation && (
-        <p className="ui-meta text-amber-600 font-medium leading-tight">{annotation}</p>
+        <p className="ui-meta ui-text-warning font-medium leading-tight">{annotation}</p>
       )}
     </div>
   )
@@ -64,10 +64,10 @@ function Collapsible({ title, children }: { title: string; children: React.React
       >
         <span className="ui-card-title">{title}</span>
         <svg
-          className={`ui-icon-inline transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`ui-icon-inline transition-transform text-[var(--muted-foreground)] ${open ? 'rotate-180' : ''}`}
           viewBox="0 0 16 16" fill="none"
         >
-          <path d="M4 6L8 10L12 6" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {open && <div className="px-4 pb-4">{children}</div>}
@@ -422,12 +422,12 @@ export default function RecipePage() {
 
         {/* Save feedback */}
         {savedMessage && (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+          <div className="ui-alert-success text-sm font-medium">
             {savedMessage}
           </div>
         )}
         {saveError && (
-          <div className="ui-alert-danger text-sm text-red-700">
+          <div className="ui-alert-danger text-sm">
             {saveError}
           </div>
         )}
@@ -436,7 +436,7 @@ export default function RecipePage() {
         {adj && (
           <div className="ui-alert-warning flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="ui-card-title text-amber-700">Adjustment {feedbackRound} of 3</p>
+              <p className="ui-card-title ui-text-warning">Adjustment {feedbackRound} of 3</p>
               <button
                 onClick={() => setShowResetConfirm(true)}
                 className="ui-meta underline"
@@ -444,13 +444,13 @@ export default function RecipePage() {
                 Reset to original
               </button>
             </div>
-            <p className="ui-body-muted text-amber-800">
+            <p className="ui-body-muted ui-text-warning">
               {adj.variable_changed === 'technique'
                 ? adj.note
                 : `${adj.variable_changed.charAt(0).toUpperCase() + adj.variable_changed.slice(1)}: ${adj.previous_value} → ${adj.new_value} (${adj.direction})`}
             </p>
             {adj.note && adj.variable_changed !== 'technique' && (
-              <p className="ui-meta text-amber-600 italic">{adj.note}</p>
+              <p className="ui-meta ui-text-warning italic">{adj.note}</p>
             )}
           </div>
         )}
@@ -504,25 +504,25 @@ export default function RecipePage() {
           const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(g => g !== preferredGrinder)
           const primaryData = recipe.grind[preferredGrinder]
           return (
-            <div className={`bg-[var(--card)] rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-amber-200' : ''}`}>
+            <div className={`bg-[var(--card)] rounded-2xl p-4 ${grindChanged() ? 'ring-1 ring-[var(--warning-border)]' : ''}`}>
               <h3 className="ui-overline mb-3">Grind Settings</h3>
 
               {/* Primary grinder */}
               <div className={`rounded-xl p-3 mb-3 text-[var(--background)] ${grindChanged() ? 'bg-amber-700' : 'bg-[var(--foreground)]'}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                  <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
+                  <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                  <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                 </div>
                 <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-                <p className="ui-body-muted text-[var(--background)]/70 mt-0.5">Range: {primaryData.range}</p>
+                <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
-                  <p className="ui-body-muted text-[var(--background)]/85 mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
+                  <p className="ui-body-muted text-[var(--background)] mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
                 )}
                 {primaryData.description && (
-                  <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.description}</p>
+                  <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
                 )}
                 {primaryData.note && (
-                  <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.note}</p>
+                  <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.note}</p>
                 )}
               </div>
 
@@ -571,7 +571,7 @@ export default function RecipePage() {
             <h3 className="ui-overline">Brew Steps</h3>
             <div className="flex items-center gap-2">
               {(timerRunning || elapsedSeconds > 0) && (
-                <span className={`text-sm font-mono font-semibold tabular-nums ${timerOverrun ? 'text-red-500' : 'text-[var(--foreground)]'}`}>
+                <span className={`text-sm font-mono font-semibold tabular-nums ${timerOverrun ? 'ui-text-danger' : 'text-[var(--foreground)]'}`}>
                   {formatElapsed(elapsedSeconds)}
                 </span>
               )}
@@ -595,7 +595,7 @@ export default function RecipePage() {
                 <div
                   key={step.step}
                   className={`relative overflow-hidden rounded-2xl p-4 md:p-6 flex gap-3 transition-all duration-300 ${
-                    ratioChanged() ? 'bg-amber-50' : 'bg-[var(--card)]'
+                    ratioChanged() ? 'bg-[var(--warning-bg)]' : 'bg-[var(--card)]'
                   } ${isActive ? 'ring-2 ring-[var(--foreground)] scale-[1.01]' : ''} ${isPast ? 'opacity-50' : ''}`}
                 >
                   {/* Progress fill */}
@@ -653,7 +653,7 @@ export default function RecipePage() {
               </div>
             ))}
             {recipe.range_logic.compressed && (
-              <p className="ui-meta text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg mt-1">
+              <p className="ui-meta ui-text-warning bg-[var(--warning-bg)] px-2 py-1 rounded-lg mt-1">
                 Range was compressed to stay within the 10-click accumulation cap.
               </p>
             )}
@@ -740,7 +740,7 @@ export default function RecipePage() {
             </div>
 
             {adjustError && (
-              <p className="ui-body-muted text-red-500">{adjustError}</p>
+              <p className="ui-body-muted ui-text-danger">{adjustError}</p>
             )}
 
             <div className="flex gap-2">

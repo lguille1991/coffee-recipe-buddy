@@ -47,10 +47,10 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
           {badge && (
             <span className={`ui-meta font-medium px-2 py-1 rounded-full ${
               badge === 'edited'
-                ? 'bg-blue-100 text-blue-600'
+                ? 'ui-badge-info'
                 : badge === 'scaled'
-                  ? 'bg-purple-100 text-purple-600'
-                  : 'bg-amber-100 text-amber-600'
+                  ? 'ui-badge-neutral'
+                  : 'ui-badge-warning'
             }`}>
               {badge}
             </span>
@@ -59,8 +59,8 @@ const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem
       </div>
       <div className="text-right shrink-0">
         <p className="ui-meta">{date}</p>
-        <svg className="ui-icon-inline mt-1.5 ml-auto" viewBox="0 0 14 14" fill="none">
-          <path d="M5 3L9 7L5 11" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)]" viewBox="0 0 14 14" fill="none">
+          <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     </Link>

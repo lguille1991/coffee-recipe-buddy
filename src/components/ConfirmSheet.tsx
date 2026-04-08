@@ -34,7 +34,7 @@ export default function ConfirmSheet({
             disabled={loading}
             className={`w-full ui-button-primary font-semibold ${
               destructive
-                ? 'bg-red-500 text-white'
+                ? 'ui-button-danger-solid'
                 : 'bg-[var(--foreground)] text-[var(--background)]'
             }`}
           >

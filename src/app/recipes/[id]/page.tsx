@@ -553,12 +553,13 @@ export default function SavedRecipeDetailPage() {
               }
             }}
             className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center"
+            aria-label="Go back"
           >
             <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
               <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <h2 className="ui-section-title">{isEditing ? 'Edit Recipe' : 'Saved Recipe'}</h2>
+          <p className="ui-section-title">{isEditing ? 'Edit Recipe' : 'Saved Recipe'}</p>
         </div>
         {!isEditing && (
           <div className="flex items-center gap-1">
@@ -578,7 +579,7 @@ export default function SavedRecipeDetailPage() {
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="min-h-10 min-w-10 p-2 flex items-center justify-center text-red-400"
+              className="min-h-10 min-w-10 p-2 flex items-center justify-center ui-text-danger"
               aria-label="Delete recipe"
             >
               <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
@@ -611,13 +612,13 @@ export default function SavedRecipeDetailPage() {
             {hasManualEdits && (
               <button
                 onClick={() => setShowEditHistorySheet(true)}
-                className="ui-badge bg-blue-100 text-blue-700 active:opacity-70"
+                className="ui-badge ui-badge-info active:opacity-70"
               >
                 v{versionN} edited
               </button>
             )}
             {hasFeedbackAdjustments && (
-              <span className="ui-badge bg-amber-100 text-amber-700">
+              <span className="ui-badge ui-badge-warning">
                 auto-adjusted
               </span>
             )}
@@ -656,19 +657,19 @@ export default function SavedRecipeDetailPage() {
         {/* Freshness notice */}
         {freshnessAdj && !freshnessIgnored && !isEditing && (
           <div className="ui-alert-warning flex flex-col gap-2">
-            <p className="ui-card-title text-amber-700">Freshness updated</p>
-            <p className="ui-body-muted text-amber-800">
+            <p className="ui-card-title ui-text-warning">Freshness updated</p>
+            <p className="ui-body-muted ui-text-warning">
               This coffee is now {freshnessAdj.daysPostRoast} days post-roast ({freshnessAdj.freshnessLabel}).
               Recipe adjusted for freshness.
             </p>
             {freshnessAdj.changedFields.map(cf => (
-              <p key={cf.field} className="ui-meta text-amber-600">
+              <p key={cf.field} className="ui-meta ui-text-warning">
                 {cf.field}: {cf.previous} → {cf.next}
               </p>
             ))}
             <button
               onClick={() => setFreshnessIgnored(true)}
-              className="ui-meta text-amber-700 underline self-start"
+              className="ui-meta ui-text-warning underline self-start"
             >
               Keep original recipe
             </button>
@@ -677,14 +678,14 @@ export default function SavedRecipeDetailPage() {
 
         {/* Edit error */}
         {editError && (
-          <div className="ui-alert-danger text-sm text-red-700">
+          <div className="ui-alert-danger text-sm">
             {editError}
           </div>
         )}
 
         {/* Parameters */}
         <div>
-          <h3 className="ui-overline mb-2">Parameters</h3>
+          <h2 className="ui-overline mb-2">Parameters</h2>
 
           {isEditing && editDraft ? (
             <div className="flex flex-col gap-3">
@@ -820,7 +821,7 @@ export default function SavedRecipeDetailPage() {
                       </div>
                     </label>
                     {showWarning && (
-                      <p className="ui-body-muted text-amber-600 font-medium">
+                      <p className="ui-body-muted ui-text-warning font-medium">
                         Step amounts were scaled proportionally.{grindSentence ? ` ${grindSentence}` : ''}
                       </p>
                     )}
@@ -853,15 +854,15 @@ export default function SavedRecipeDetailPage() {
           const primaryData = activeGrind[preferredGrinder]
           return (
             <div className="bg-[var(--card)] rounded-2xl p-4">
-              <h3 className="ui-overline mb-3">Grind Settings</h3>
+              <h2 className="ui-overline mb-3">Grind Settings</h2>
 
               {/* Primary grinder */}
               {isEditing && editDraft ? (
                 <div className="mb-3">
                   <div className="rounded-xl p-3 mb-2 bg-[var(--foreground)] text-[var(--background)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                      <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
+                      <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                      <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                     </div>
                     <input
                       type="number"
@@ -872,28 +873,28 @@ export default function SavedRecipeDetailPage() {
                       className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
                     />
                     {grindRange && (
-                      <p className="ui-body-muted text-[var(--background)]/70 mt-1.5">
+                      <p className="ui-body-muted text-[var(--background)] mt-1.5">
                         Recommended: {grindRange.low}–{grindRange.high} clicks
                       </p>
                     )}
                     {isGrindOutOfRange && (
-                      <p className="ui-meta text-amber-200 font-medium mt-1">Outside recommended range</p>
+                      <p className="ui-meta text-[var(--background)] font-medium mt-1">Outside recommended range</p>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="rounded-xl p-3 mb-3 bg-[var(--foreground)] text-[var(--background)]">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
-                    <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
+                    <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+                    <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                   </div>
                   <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-                  <p className="ui-body-muted text-[var(--background)]/70 mt-0.5">Range: {primaryData.range}</p>
+                  <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
                   {primaryData.description && (
-                    <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.description}</p>
+                    <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
                   )}
                   {primaryData.note && (
-                    <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.note}</p>
+                    <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.note}</p>
                   )}
                 </div>
               )}
@@ -939,7 +940,7 @@ export default function SavedRecipeDetailPage() {
 
         {/* Brew Steps — view mode or editor */}
         <div>
-          <h3 className="ui-overline mb-2">Brew Steps</h3>
+          <h2 className="ui-overline mb-2">Brew Steps</h2>
           {isEditing && editDraft ? (
             <SortableStepList
               steps={editDraft.steps}
@@ -972,7 +973,7 @@ export default function SavedRecipeDetailPage() {
         {/* Feedback history (only FeedbackRound entries, only when not editing) */}
         {!isEditing && feedbackRounds.length > 0 && (
           <div>
-            <h3 className="ui-overline mb-2">Adjustment History</h3>
+            <h2 className="ui-overline mb-2">Adjustment History</h2>
             <div className="flex flex-col gap-2">
               {feedbackRounds.map((fh, i) => (
                 <div key={i} className="bg-[var(--card)] rounded-xl px-4 py-3 ui-body-muted">
@@ -989,7 +990,7 @@ export default function SavedRecipeDetailPage() {
         {!isEditing && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="ui-overline">Notes</h3>
+              <h2 className="ui-overline">Notes</h2>
               {notesSaving && (
                 <span className="ui-meta">Saving…</span>
               )}
@@ -1039,7 +1040,7 @@ export default function SavedRecipeDetailPage() {
               <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                 <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4.5 10C4.5 12 5.5 13 8 13C10.5 13 11.5 12 11.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                <path d="M11 3C11 3 13 3.5 13 5.5C13 7.5 11 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M11 3C12.1 3 13 4.1 13 5.5C13 6.9 12.1 8 11 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
               </svg>
               Brew
             </button>
@@ -1153,7 +1154,7 @@ export default function SavedRecipeDetailPage() {
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="w-full ui-button-primary bg-red-500 text-white font-semibold"
+                className="w-full ui-button-danger-solid font-semibold"
               >
                 {deleting ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

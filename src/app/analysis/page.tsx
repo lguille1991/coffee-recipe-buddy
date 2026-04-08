@@ -26,7 +26,7 @@ const ROAST_LABELS: Record<string, string> = {
 function ConfidenceBadge({ score }: { score?: number }) {
   if (!score || score >= 0.6) return null
   return (
-    <span className="ml-1 inline-block ui-badge bg-yellow-100 text-yellow-700">
+    <span className="ml-1 inline-block ui-badge ui-badge-warning">
       low confidence
     </span>
   )
@@ -126,7 +126,7 @@ export default function AnalysisPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <ArrowLeft className="ui-icon-action" />
         </button>
         <h2 className="ui-section-title">Coffee Analysis</h2>

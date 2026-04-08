@@ -1,21 +1,49 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #F5F4F2;
   --foreground: #333333;
   --card: #FFFFFF;
   --border: #E1E2E5;
-  --muted-foreground: #6B6B6B;
+  --muted-foreground: #505050;
   --muted: #5B5F66;
+  --surface-subtle: #E5E3DF;
+  --danger-fg: #7F1D1D;
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
+  --warning-fg: #713F12;
+  --warning-bg: #FFF8E6;
+  --warning-border: #D6B35E;
+  --success-fg: #14532D;
+  --success-bg: #ECFDF5;
+  --success-border: #86EFAC;
+  --info-fg: #1E40AF;
+  --info-bg: #EFF6FF;
+  --info-border: #93C5FD;
 }
 
 .dark {
+  color-scheme: dark;
   --background: #1A1A1A;
   --foreground: #F5F4F2;
   --card: #242424;
   --border: #3A3A3A;
-  --muted-foreground: #9CA3AF;
+  --muted-foreground: #D1D5DB;
   --muted: #8B8E94;
+  --surface-subtle: #2E2E2E;
+  --danger-fg: #FECACA;
+  --danger-bg: #451A1A;
+  --danger-border: #7F1D1D;
+  --warning-fg: #FDE68A;
+  --warning-bg: #452B12;
+  --warning-border: #92400E;
+  --success-fg: #D1FAE5;
+  --success-bg: #163022;
+  --success-border: #14532D;
+  --info-fg: #DBEAFE;
+  --info-bg: #1E3A8A;
+  --info-border: #1D4ED8;
 }
 
 @theme inline {
@@ -88,7 +116,11 @@ body {
 }
 
 @utility ui-button-danger {
-  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-red-500 border border-red-200;
+  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--danger-fg)] border border-[var(--danger-border)];
+}
+
+@utility ui-button-danger-solid {
+  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--danger-fg)] text-white;
 }
 
 @utility ui-button-ghost {
@@ -132,11 +164,35 @@ body {
 }
 
 @utility ui-alert-warning {
-  @apply rounded-xl border border-amber-200 bg-amber-50 px-4 py-3;
+  @apply rounded-xl border px-4 py-3 bg-[var(--warning-bg)] border-[var(--warning-border)] text-[var(--warning-fg)];
 }
 
 @utility ui-alert-danger {
-  @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3;
+  @apply rounded-xl border px-4 py-3 bg-[var(--danger-bg)] border-[var(--danger-border)] text-[var(--danger-fg)];
+}
+
+@utility ui-alert-success {
+  @apply rounded-xl border px-4 py-3 bg-[var(--success-bg)] border-[var(--success-border)] text-[var(--success-fg)];
+}
+
+@utility ui-badge-info {
+  @apply bg-[var(--info-bg)] text-[var(--info-fg)];
+}
+
+@utility ui-badge-warning {
+  @apply bg-[var(--warning-bg)] text-[var(--warning-fg)];
+}
+
+@utility ui-badge-neutral {
+  @apply bg-[var(--surface-subtle)] text-[var(--foreground)];
+}
+
+@utility ui-text-danger {
+  @apply text-[var(--danger-fg)];
+}
+
+@utility ui-text-warning {
+  @apply text-[var(--warning-fg)];
 }
 
 @utility text-responsive-h1 {

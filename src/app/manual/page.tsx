@@ -45,7 +45,7 @@ function PickerField<T extends string>({
   return (
     <div>
       <label className="ui-overline block mb-1.5">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="ui-text-danger ml-0.5">*</span>}
       </label>
       <div className="flex flex-wrap gap-2">
         {options.map(opt => (
@@ -63,7 +63,7 @@ function PickerField<T extends string>({
           </button>
         ))}
       </div>
-      {error && <p className="ui-meta text-red-500 mt-1">{error}</p>}
+      {error && <p className="ui-meta ui-text-danger mt-1">{error}</p>}
     </div>
   )
 }
@@ -91,7 +91,7 @@ function TextField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+        className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
       />
     </div>
   )
@@ -187,7 +187,7 @@ export default function ManualPage() {
       <div className="h-12" />
 
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -277,7 +277,7 @@ export default function ManualPage() {
             placeholder="e.g. 1800"
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
-          {errors.altitude && <p className="ui-meta text-red-500 mt-1">{errors.altitude}</p>}
+          {errors.altitude && <p className="ui-meta ui-text-danger mt-1">{errors.altitude}</p>}
           {!altitude && !errors.altitude && (
             <p className="ui-meta mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
@@ -369,7 +369,7 @@ export default function ManualPage() {
             }}
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
-          {errors.roastDate && <p className="ui-meta text-red-500 mt-1">{errors.roastDate}</p>}
+          {errors.roastDate && <p className="ui-meta ui-text-danger mt-1">{errors.roastDate}</p>}
           {!roastDate && !errors.roastDate && (
             <p className="ui-meta mt-1">Assuming optimal window (8–21 days)</p>
           )}

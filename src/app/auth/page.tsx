@@ -100,13 +100,13 @@ function AuthForm() {
       </div>
 
       {message && (
-        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
+        <div className="ui-alert-success text-sm mb-4">
           {message}
         </div>
       )}
 
       {error && (
-        <div className="ui-alert-danger text-sm text-red-700 mb-4">
+        <div className="ui-alert-danger text-sm mb-4">
           {error}
         </div>
       )}

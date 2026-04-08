@@ -19,7 +19,7 @@ const METHOD_ICONS: Record<string, string> = {
 const ALL_METHODS = Object.keys(METHOD_DISPLAY_NAMES) as MethodId[]
 
 const RANK_LABELS = ['Best Match', 'Great Choice', 'Also Try']
-const RANK_COLORS = ['bg-[var(--foreground)] text-[var(--background)]', 'bg-[#E5E3DF] text-[#333333]', 'bg-[#E5E3DF] text-[#333333]']
+const RANK_COLORS = ['bg-[var(--foreground)] text-[var(--background)]', 'bg-[var(--surface-subtle)] text-[var(--foreground)]', 'bg-[var(--surface-subtle)] text-[var(--foreground)]']
 
 export default function MethodsPage() {
   const router = useRouter()
@@ -95,7 +95,7 @@ export default function MethodsPage() {
       <div className="h-12" />
 
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -131,8 +131,8 @@ export default function MethodsPage() {
                   <span className="text-xl">{METHOD_ICONS[rec.method] || '☕'}</span>
                   <span className="ui-card-title">{rec.displayName}</span>
                 </div>
-                <svg className="ui-icon-inline shrink-0" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg className="ui-icon-inline shrink-0 text-[var(--muted-foreground)]" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
 
@@ -151,15 +151,15 @@ export default function MethodsPage() {
             className={`ui-icon-inline transition-transform ${showOthers ? 'rotate-90' : ''}`}
             viewBox="0 0 16 16" fill="none"
           >
-            <path d="M6 4L10 8L6 12" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
         {showOthers && (
           <>
-            <div className="ui-alert-warning flex items-start gap-2 border-[#F0C060] bg-[#FFF8E6]">
+            <div className="ui-alert-warning flex items-start gap-2">
               <span className="text-base leading-none mt-0.5">⚠️</span>
-              <p className="ui-body-muted text-[#7A5C00] leading-relaxed">
+              <p className="ui-body-muted ui-text-warning leading-relaxed">
                 These methods are not recommended for this bean. Results may be unexpected.
               </p>
             </div>
@@ -180,8 +180,8 @@ export default function MethodsPage() {
                 <span className="text-xl">{METHOD_ICONS[methodId] || '☕'}</span>
                 <span className="flex-1 ui-card-title">{METHOD_DISPLAY_NAMES[methodId]}</span>
 
-                <svg className="ui-icon-inline shrink-0" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg className="ui-icon-inline shrink-0 text-[var(--muted-foreground)]" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             ))}

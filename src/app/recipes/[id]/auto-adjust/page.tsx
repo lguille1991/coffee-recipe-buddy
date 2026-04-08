@@ -185,7 +185,7 @@ export default function AutoAdjustPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -276,7 +276,7 @@ export default function AutoAdjustPage() {
 
         {/* Generation error */}
         {genError && (
-          <div className="ui-alert-danger text-sm text-red-700">
+          <div className="ui-alert-danger text-sm">
             {genError}
           </div>
         )}
@@ -327,7 +327,7 @@ export default function AutoAdjustPage() {
 
             {/* Save error */}
             {saveError && (
-              <div className="ui-alert-danger text-sm text-red-700">
+              <div className="ui-alert-danger text-sm">
                 {saveError}
               </div>
             )}
