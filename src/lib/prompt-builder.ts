@@ -46,6 +46,9 @@ Return ONLY a valid JSON object with this exact structure:
 
 Rules:
 - Confidence score reflects how certain you are about each field (1.0 = explicit text on bag, 0.5 = inferred, 0.3 = guessed).
+- The photo may be rotated or sideways. Read text in any orientation before deciding a field is missing.
+- If a prominent bag title combines variety and process, split them correctly. Example: "Geisha Natural" => variety: "Geisha", process: "natural".
+- If a well-known coffee variety name is explicitly printed anywhere on the bag, extract it as variety even when it is also used as the product name.
 - For process: if not stated, infer from roast level and origin clues. If truly unknown, use "unknown".
 - For roast_level: if not stated, infer from color descriptions (e.g., "bright", "fruity" → light; "dark chocolate", "bold" → dark).
 - Tasting notes: extract as an array of individual descriptors (e.g., ["blueberry", "jasmine", "citrus"]).

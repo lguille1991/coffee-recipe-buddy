@@ -88,7 +88,7 @@ export default function RecipesPage() {
       const params = new URLSearchParams({ page: String(nextPage), limit: '20' })
       if (methodFilter) params.set('method', methodFilter)
       if (search) params.set('q', search)
-      const res = await fetch(`/api/recipes?${params}`, { signal: controller.signal })
+      const res = await fetch(`/api/recipes?${params}`, { signal: controller.signal, cache: 'no-store' })
       const data = await res.json()
       const items: RecipeListItem[] = data.recipes ?? []
       setRecipes(prev => replace ? items : [...prev, ...items])

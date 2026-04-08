@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: Params) {
   }
 
   return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'private, max-age=60' },
+    headers: { 'Cache-Control': 'private, no-store' },
   })
 }
 

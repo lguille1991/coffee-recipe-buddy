@@ -120,6 +120,6 @@ export async function GET(request: Request) {
   })
 
   return NextResponse.json({ recipes, page, limit }, {
-    headers: { 'Cache-Control': 'private, max-age=60' },
+    headers: { 'Cache-Control': 'private, no-store' },
   })
 }
