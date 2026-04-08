@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Recipe, SavedRecipe, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
@@ -16,10 +17,6 @@ const SCALE_OPTIONS: { value: number; label: string }[] = [
   { value: 1.5, label: '1½×' },
   { value: 2.0, label: '2×' },
 ]
-
-function normalizeClickSetting(value: string): string {
-  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
-}
 
 export default function AutoAdjustPage() {
   const router = useRouter()
@@ -298,7 +295,7 @@ export default function AutoAdjustPage() {
                 { value: `${result.parameters.coffee_g}g`, label: 'Coffee' },
                 { value: tempUnit === 'F' ? `${Math.round(result.parameters.temperature_c * 9 / 5 + 32)}°F` : `${result.parameters.temperature_c}°C`, label: 'Temp' },
                 { value: result.parameters.total_time, label: 'Time' },
-                { value: preferredGrind ? normalizeClickSetting(preferredGrind.starting_point) : 'N/A', label: `Grind (${GRINDER_DISPLAY_NAMES[preferredGrinder]})` },
+                { value: preferredGrind ? formatGrinderSettingForDisplay(preferredGrinder, preferredGrind.starting_point) : 'N/A', label: `Grind (${GRINDER_DISPLAY_NAMES[preferredGrinder]})` },
                 { value: result.parameters.ratio, label: 'Ratio' },
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--card)]">

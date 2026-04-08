@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Bookmark, Save, Droplets, Scale, Thermometer, Timer, CircleDot, Ratio, Play, Square } from 'lucide-react'
 import { Recipe, RecipeWithAdjustment, Symptom, AdjustmentMetadata, GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import ConfirmSheet from '@/components/ConfirmSheet'
@@ -20,10 +21,6 @@ type NavigatorWithWakeLock = Navigator & {
   wakeLock?: {
     request: (type: 'screen') => Promise<WakeLockSentinelLike>
   }
-}
-
-function normalizeClickSetting(value: string): string {
-  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
 
 function parseTimeToSeconds(t: string): number {
@@ -573,7 +570,7 @@ export default function RecipePage() {
             />
             <ParamCard
               icon={<CircleDot size={16} />}
-              value={normalizeClickSetting(recipe.grind[preferredGrinder].starting_point)}
+              value={formatGrinderSettingForDisplay(preferredGrinder, recipe.grind[preferredGrinder].starting_point)}
               label="Grind"
               changed={grindChanged()}
               annotation={annotation('grind')}
@@ -601,7 +598,7 @@ export default function RecipePage() {
                   <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
                   <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                 </div>
-                <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
+                <p className="text-lg font-bold">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
                 <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
                 {grindChanged() && adj && (
                   <p className="ui-body-muted text-[var(--background)] mt-1 font-medium">{adj.previous_value} → {adj.new_value}</p>
@@ -643,7 +640,7 @@ export default function RecipePage() {
                             <p className="ui-meta mt-0.5 italic">{data.note}</p>
                           )}
                         </div>
-                        <p className="ui-card-title shrink-0">{normalizeClickSetting(data.starting_point)}</p>
+                        <p className="ui-card-title shrink-0">{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
                       </div>
                     )
                   })}

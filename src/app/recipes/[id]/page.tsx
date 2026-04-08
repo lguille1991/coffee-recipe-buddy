@@ -14,7 +14,8 @@ import { useProfile } from '@/hooks/useProfile'
 import {
   kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2,
   parseKUltraRange, parseGrinderValueForEdit, grinderValueToKUltraClicks,
-  kUltraClicksToGrinderValue, parseGrinderRange,
+  kUltraClicksToGrinderValue, formatGrinderRangeForEdit,
+  formatGrinderSettingForDisplay, isValidQAirSetting, type GrinderEditValue,
 } from '@/lib/grinder-converter'
 import { computeGrindScalingDelta } from '@/lib/grind-scaling-engine'
 import ConfirmSheet from '@/components/ConfirmSheet'
@@ -24,10 +25,6 @@ import type { DraftStep } from './SortableStepList'
 const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: false })
 
 
-function normalizeClickSetting(value: string): string {
-  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
-}
-
 type EditDraft = {
   coffee_g: number
   water_g: number
@@ -36,7 +33,7 @@ type EditDraft = {
   scaledFromRatio: boolean
   temperature_display: number
   total_time: string
-  grind_preferred_value: number
+  grind_preferred_value: GrinderEditValue
   steps: DraftStep[]
 }
 
@@ -286,6 +283,11 @@ export default function SavedRecipeDetailPage() {
       : editDraft.temperature_display
 
     // 3. Back-convert grind to K-Ultra clicks
+    if (preferredGrinder === 'q_air' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidQAirSetting(editDraft.grind_preferred_value))) {
+      setEditError('Q-Air grind must use R.C.M format, for example 2.5.0.')
+      return
+    }
+
     const newKUltraClicks = grinderValueToKUltraClicks(preferredGrinder, editDraft.grind_preferred_value)
 
     const r = recipe.current_recipe_json
@@ -325,8 +327,9 @@ export default function SavedRecipeDetailPage() {
       changes.push({ field: 'total_time', previous_value: r.parameters.total_time, new_value: editDraft.total_time })
     const oldGrindValue = parseGrinderValueForEdit(preferredGrinder, r.grind[preferredGrinder].starting_point)
     if (editDraft.grind_preferred_value !== oldGrindValue)
-      changes.push({ field: 'grind', previous_value: String(oldGrindValue), new_value: String(editDraft.grind_preferred_value) })
-    const stepsChanged = JSON.stringify(newSteps.map(({ _dndId, ...cleanStep }) => cleanStep)) !== JSON.stringify(r.steps)
+      changes.push({ field: 'grind', previous_value: `${oldGrindValue}`, new_value: `${editDraft.grind_preferred_value}` })
+    const sanitizedSteps = newSteps.map(({ _dndId, ...step }) => step)
+    const stepsChanged = JSON.stringify(sanitizedSteps) !== JSON.stringify(r.steps)
     if (stepsChanged)
       changes.push({ field: 'steps', previous_value: `${r.steps.length} steps`, new_value: `${newSteps.length} steps` })
 
@@ -345,8 +348,8 @@ export default function SavedRecipeDetailPage() {
       changes,
     }
 
-    const cleanedSteps = newSteps
-      .map(({ _dndId, ...cleanStep }) => ({ ...cleanStep, step: 0 }))
+    const cleanedSteps = sanitizedSteps
+      .map(cleanStep => ({ ...cleanStep, step: 0 }))
       .map((s, i) => ({ ...s, step: i + 1 }))
 
     const updatedRecipeJson: RecipeWithAdjustment = {
@@ -529,10 +532,17 @@ export default function SavedRecipeDetailPage() {
 
   // Grind range hint for edit mode
   const grindRange = editDraft
-    ? parseGrinderRange(preferredGrinder, r.range_logic.final_operating_range)
+    ? formatGrinderRangeForEdit(preferredGrinder, r.range_logic.final_operating_range)
     : null
-  const isGrindOutOfRange = editDraft && grindRange
-    ? editDraft.grind_preferred_value < grindRange.low || editDraft.grind_preferred_value > grindRange.high
+  const kUltraRange = parseKUltraRange(r.range_logic.final_operating_range)
+  const isGrindOutOfRange = editDraft && kUltraRange
+    ? (() => {
+        if (preferredGrinder === 'q_air' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidQAirSetting(editDraft.grind_preferred_value))) {
+          return false
+        }
+        const currentKUltraClicks = grinderValueToKUltraClicks(preferredGrinder, editDraft.grind_preferred_value)
+        return currentKUltraClicks < kUltraRange.low || currentKUltraClicks > kUltraRange.high
+      })()
     : false
 
   const activeGrind = (isEditing && liveGrindSettings) ? liveGrindSettings : r.grind
@@ -840,7 +850,7 @@ export default function SavedRecipeDetailPage() {
                 { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
                 { value: tempUnit === 'F' ? `${Math.round(r.parameters.temperature_c * 9 / 5 + 32)}°F` : `${r.parameters.temperature_c}°C`, label: 'Temp' },
                 { value: r.parameters.total_time, label: 'Time' },
-                { value: normalizeClickSetting(r.grind[preferredGrinder].starting_point), label: 'Grind' },
+                { value: formatGrinderSettingForDisplay(preferredGrinder, r.grind[preferredGrinder].starting_point), label: 'Grind' },
                 { value: r.parameters.ratio, label: 'Ratio' },
               ].map(p => (
                 <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
@@ -868,19 +878,37 @@ export default function SavedRecipeDetailPage() {
                       <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
                       <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                     </div>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      min={1} max={150} step={1}
-                      value={editDraft.grind_preferred_value}
-                      onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
-                      onChange={e => setEditDraft(d => d ? { ...d, grind_preferred_value: Math.max(0, parseInt(e.target.value) || d.grind_preferred_value) } : d)}
-                      className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
-                    />
+                    {preferredGrinder === 'q_air' ? (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="2.5.0"
+                        value={editDraft.grind_preferred_value}
+                        onChange={e => {
+                          const nextValue = e.target.value.replace(/[^\d.]/g, '')
+                          setEditDraft(d => d ? { ...d, grind_preferred_value: nextValue } : d)
+                        }}
+                        className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={1} max={150} step={1}
+                        value={editDraft.grind_preferred_value}
+                        onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
+                        onChange={e => setEditDraft(d => d ? { ...d, grind_preferred_value: Math.max(0, parseInt(e.target.value) || Number(d.grind_preferred_value)) } : d)}
+                        className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
+                      />
+                    )}
                     {grindRange && (
                       <p className="ui-body-muted text-[var(--background)] mt-1.5">
-                        Recommended: {grindRange.low}–{grindRange.high} clicks
+                        Recommended: {grindRange}
+                      </p>
+                    )}
+                    {preferredGrinder === 'q_air' && (
+                      <p className="ui-body-muted text-[var(--background)] mt-1.5">
+                        Use rotations.major.minor format, for example 2.5.0.
                       </p>
                     )}
                     {isGrindOutOfRange && (
@@ -894,7 +922,7 @@ export default function SavedRecipeDetailPage() {
                     <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
                     <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
                   </div>
-                  <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
+                  <p className="text-lg font-bold">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
                   <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
                   {primaryData.description && (
                     <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
@@ -934,7 +962,7 @@ export default function SavedRecipeDetailPage() {
                             <p className="ui-meta mt-0.5 italic">{data.note}</p>
                           )}
                         </div>
-                        <p className="ui-card-title shrink-0">{normalizeClickSetting(data.starting_point)}</p>
+                        <p className="ui-card-title shrink-0">{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
                       </div>
                     )
                   })}
