@@ -32,10 +32,10 @@ export default function ConfirmSheet({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`w-full ui-button-primary font-semibold ${
+            className={`w-full font-semibold ${
               destructive
                 ? 'ui-button-danger-solid'
-                : 'bg-[var(--foreground)] text-[var(--background)]'
+                : 'ui-button-primary'
             }`}
           >
             {loading ? (
