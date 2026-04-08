@@ -47,10 +47,10 @@ export default function ScanPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-6">
-        <button onClick={() => router.back()} className="p-2 -ml-2 text-[var(--foreground)]">
-          <ArrowLeft size={20} />
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 text-[var(--foreground)] flex items-center justify-center">
+          <ArrowLeft className="ui-icon-action" />
         </button>
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">Scan Coffee</h2>
+        <h2 className="ui-section-title">Scan Coffee</h2>
       </div>
 
       {/* Upload zone */}
@@ -62,18 +62,18 @@ export default function ScanPage() {
           {loading ? (
             <>
               <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[var(--muted-foreground)]">Analyzing your coffee bag…</p>
+              <p className="ui-body-muted">Analyzing your coffee bag…</p>
             </>
           ) : (
             <>
               <Camera size={48} color="#9DA4B3" strokeWidth={1.5} />
-              <p className="text-sm text-[var(--muted-foreground)]">Take a photo of your coffee bag</p>
+              <p className="ui-body-muted">Take a photo of your coffee bag</p>
             </>
           )}
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-[14px]">
+          <div className="ui-alert-danger text-red-700 text-sm">
             {error}
           </div>
         )}
@@ -83,22 +83,22 @@ export default function ScanPage() {
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="ui-button-primary flex-1 disabled:opacity-50"
           >
-            <Camera size={18} />
+            <Camera className="ui-icon-inline" />
             Take Photo
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 border border-[var(--foreground)] text-[var(--foreground)] text-base font-medium rounded-[14px] py-3.5 disabled:opacity-50"
+            className="ui-button-secondary flex-1 disabled:opacity-50"
           >
-            <Upload size={18} />
+            <Upload className="ui-icon-inline" />
             Upload
           </button>
         </div>
 
-        <p className="text-center text-xs text-[var(--muted-foreground)] pb-24">
+        <p className="ui-meta text-center pb-24">
           We&apos;ll analyze your coffee beans and create a personalized recipe
         </p>
       </div>

@@ -91,18 +91,16 @@ export default function SettingsPage() {
     <div className="flex flex-col min-h-screen relative">
       <div className="h-12" />
 
-      {/* Header */}
       <div className="px-4 sm:px-6 pb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--foreground)]">Settings</h1>
+        <h1 className="ui-page-title">Settings</h1>
         {user?.email && (
-          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{user.email}</p>
+          <p className="ui-body-muted mt-0.5">{user.email}</p>
         )}
       </div>
 
       <form onSubmit={handleSave} className="flex-1 px-4 sm:px-6 flex flex-col gap-5 pb-8">
-        {/* Display name */}
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Display Name
           </label>
           <input
@@ -110,13 +108,12 @@ export default function SettingsPage() {
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
             placeholder="Optional"
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="ui-input"
           />
         </div>
 
-        {/* Temperature unit */}
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Temperature Unit
           </label>
           <div className="flex gap-2">
@@ -125,7 +122,7 @@ export default function SettingsPage() {
                 key={unit}
                 type="button"
                 onClick={() => setTempUnit(unit)}
-                className={`flex-1 py-3 rounded-[12px] text-base font-medium transition-colors ${
+                className={`flex-1 min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors ${
                   tempUnit === unit
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -137,9 +134,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Preferred grinder */}
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Preferred Grinder
           </label>
           <div className="flex flex-col gap-2">
@@ -148,7 +144,7 @@ export default function SettingsPage() {
                 key={grinder}
                 type="button"
                 onClick={() => setPreferredGrinder(grinder)}
-                className={`w-full py-3 rounded-[12px] text-base font-medium transition-colors text-left px-4 ${
+                className={`w-full min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors text-left ${
                   preferredGrinder === grinder
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -160,9 +156,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Appearance */}
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Appearance
           </label>
           <div className="flex gap-2">
@@ -171,7 +166,7 @@ export default function SettingsPage() {
                 key={t}
                 type="button"
                 onClick={() => setTheme(t)}
-                className={`flex-1 py-3 rounded-[12px] text-base font-medium transition-colors ${
+                className={`flex-1 min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors ${
                   theme === t
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
                     : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]'
@@ -183,9 +178,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Default volume */}
         <div>
-          <label className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+          <label className="ui-overline block mb-1.5">
             Default Volume (ml)
           </label>
           <input
@@ -195,28 +189,26 @@ export default function SettingsPage() {
             min={100}
             max={1000}
             step={10}
-            className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] outline-none focus:border-[var(--foreground)] transition-colors"
+            className="ui-input"
           />
         </div>
 
-        {/* Feedback */}
         {saved && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm font-medium text-green-800">
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm font-medium text-green-800">
             Settings saved.
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {/* Save and Sign out - horizontal on desktop */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="ui-button-primary flex-1 font-semibold"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
@@ -226,14 +218,14 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex-1 py-3.5 text-base font-medium text-red-500 border border-red-200 rounded-[14px] bg-[var(--card)] active:opacity-80"
+            className="ui-button-danger flex-1"
           >
             Sign Out
           </button>
         </div>
       </form>
 
-      <p className="text-center text-xs text-[var(--muted-foreground)] pb-4">
+      <p className="ui-meta text-center pb-4">
         v{process.env.NEXT_PUBLIC_APP_VERSION}
       </p>
 

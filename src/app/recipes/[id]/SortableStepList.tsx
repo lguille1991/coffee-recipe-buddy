@@ -43,7 +43,7 @@ const SortableStepRow = memo(function SortableStepRow({
   return (
     <div ref={setNodeRef} style={style} className="bg-[var(--card)] rounded-2xl p-3 flex gap-2 items-start">
       <div className="flex flex-col items-center gap-1 mt-1">
-        <span className="w-5 h-5 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-[10px] font-bold shrink-0">
+        <span className="w-5 h-5 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0">
           {stepIndex + 1}
         </span>
         <button
@@ -82,10 +82,10 @@ const SortableStepRow = memo(function SortableStepRow({
               onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
               className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-sm font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--muted-foreground)] pointer-events-none">g</span>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 ui-meta pointer-events-none">g</span>
           </div>
           {step.water_poured_g > 0 && (
-            <span className="text-[10px] font-mono text-[var(--muted-foreground)] whitespace-nowrap">
+            <span className="ui-meta font-mono whitespace-nowrap">
               = {step.water_accumulated_g} g
             </span>
           )}
@@ -146,7 +146,7 @@ export default function SortableStepList({
   return (
     <div className="flex flex-col gap-2">
       {stepError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-sm text-red-700">
+        <div className="ui-alert-danger px-3 text-sm text-red-700">
           {stepError}
         </div>
       )}
@@ -166,7 +166,7 @@ export default function SortableStepList({
       </DndContext>
       <button
         onClick={onAdd}
-        className="w-full py-2.5 rounded-2xl border border-dashed border-[var(--border)] text-sm font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
+        className="w-full min-h-10 rounded-2xl border border-dashed border-[var(--border)] text-sm font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

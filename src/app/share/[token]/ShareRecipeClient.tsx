@@ -108,12 +108,12 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.push('/')} className="p-2 -ml-2">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <button onClick={() => router.push('/')} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+          <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h2 className="text-lg font-semibold">Shared Recipe</h2>
+        <h2 className="ui-section-title">Shared Recipe</h2>
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-4 pb-28 overflow-y-auto">
@@ -130,12 +130,12 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
         {/* Title + sharer info */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{displayName}</h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{beanName}</p>
+          <h1 className="ui-page-title">{displayName}</h1>
+          <p className="ui-body-muted mt-0.5">{beanName}</p>
           {snapshot.bean_info.roaster && (
-            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{snapshot.bean_info.roaster}</p>
+            <p className="ui-body-muted mt-0.5">{snapshot.bean_info.roaster}</p>
           )}
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
+          <p className="ui-body-muted mt-1">
             Shared by{' '}
             <span className="font-medium text-[var(--muted-foreground)]">
               {snapshot.owner_display_name ?? 'a Brygg user'}
@@ -147,7 +147,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
         {/* Parameters */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Parameters</h3>
+          <h3 className="ui-overline mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             {[
               { value: `${r.parameters.water_g}ml`, label: 'Water' },
@@ -158,8 +158,8 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
-                <p className="text-sm font-semibold text-[var(--foreground)]">{p.value}</p>
-                <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">{p.label}</p>
+                <p className="ui-card-title">{p.value}</p>
+                <p className="ui-overline">{p.label}</p>
               </div>
             ))}
           </div>
@@ -167,21 +167,21 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
         {/* Grinder Settings */}
         <div className="bg-[var(--card)] rounded-2xl p-4">
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">Grind Settings</h3>
+          <h3 className="ui-overline mb-3">Grind Settings</h3>
 
           {/* Primary grinder (K-Ultra) */}
           <div className="rounded-xl p-3 mb-3 bg-[var(--foreground)] text-[var(--background)]">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium opacity-70">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
-              <span className="text-[10px] opacity-50 bg-[var(--background)]/10 px-2 py-0.5 rounded-full">Primary</span>
+              <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
+              <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
             </div>
             <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-            <p className="text-sm opacity-60 mt-0.5">Range: {primaryData.range}</p>
+            <p className="ui-body-muted text-[var(--background)]/70 mt-0.5">Range: {primaryData.range}</p>
             {primaryData.description && (
-              <p className="text-sm opacity-50 mt-1 italic">{primaryData.description}</p>
+              <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.description}</p>
             )}
             {primaryData.note && (
-              <p className="text-sm opacity-50 mt-1 italic">{primaryData.note}</p>
+              <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.note}</p>
             )}
           </div>
 
@@ -192,13 +192,13 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
             return (
               <div key={grinder} className={`flex items-start justify-between py-2.5 gap-3 ${isLast ? '' : 'border-b border-[var(--border)]'}`}>
                 <div>
-                  <p className="text-sm font-medium text-[var(--muted-foreground)]">{GRINDER_DISPLAY_NAMES[grinder]}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">Range: {gdata.range}</p>
+                  <p className="ui-body-muted font-medium">{GRINDER_DISPLAY_NAMES[grinder]}</p>
+                  <p className="ui-body-muted">Range: {gdata.range}</p>
                   {gdata.note && (
-                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 italic">{gdata.note}</p>
+                    <p className="ui-meta mt-0.5 italic">{gdata.note}</p>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-[var(--foreground)] shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
+                <p className="ui-card-title shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
               </div>
             )
           })}
@@ -206,7 +206,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
         {/* Brew steps */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Brew Steps</h3>
+          <h3 className="ui-overline mb-2">Brew Steps</h3>
           <div className="flex flex-col gap-2">
             {r.steps.map(step => (
               <div key={step.step} className="rounded-2xl p-4 flex gap-3 bg-[var(--card)]">
@@ -215,10 +215,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-sm font-semibold text-[var(--foreground)]">{step.time}</p>
-                    <p className="text-sm text-[var(--muted-foreground)]">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                    <p className="ui-card-title">{step.time}</p>
+                    <p className="ui-body-muted">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                   </div>
-                  <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.action}</p>
+                  <p className="ui-body-muted leading-relaxed">{step.action}</p>
                 </div>
               </div>
             ))}
@@ -228,14 +228,14 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         {/* Sharer's notes */}
         {snapshot.notes && (
           <div className="bg-[var(--card)] rounded-2xl px-4 py-3">
-            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Sharer&apos;s Notes</h3>
-            <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
+            <h3 className="ui-overline mb-2">Sharer&apos;s Notes</h3>
+            <p className="ui-body leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
           </div>
         )}
 
         {/* Comments */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3">
+          <h3 className="ui-overline mb-3">
             Comments {!commentsLoading && comments.length > 0 && `· ${comments.length}`}
           </h3>
 
@@ -245,7 +245,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-sm text-[var(--muted-foreground)] py-2">No comments yet. Be the first!</p>
+            <p className="ui-body-muted py-2">No comments yet. Be the first!</p>
           ) : (
             <div className="flex flex-col gap-3 mb-4">
               {comments.map(comment => (
@@ -253,14 +253,14 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-[var(--foreground)] truncate">
+                        <span className="ui-card-title truncate">
                           {comment.author_display_name ?? 'Brygg user'}
                         </span>
-                        <span className="text-[10px] text-[var(--muted-foreground)] shrink-0">
+                        <span className="ui-meta shrink-0">
                           {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
-                      <p className="text-sm text-[var(--muted-foreground)] leading-relaxed whitespace-pre-wrap">{comment.body}</p>
+                      <p className="ui-body-muted leading-relaxed whitespace-pre-wrap">{comment.body}</p>
                     </div>
                     {user && comment.author_id === user.id && (
                       <button
@@ -294,26 +294,26 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 maxLength={500}
                 placeholder="Add a comment…"
                 rows={2}
-                className="w-full rounded-xl px-3 py-2.5 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] placeholder:text-[var(--muted-foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+                className="ui-textarea"
               />
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-[var(--muted-foreground)]">{commentBody.length}/500</p>
+                <p className="ui-meta">{commentBody.length}/500</p>
                 <button
                   onClick={handlePostComment}
                   disabled={posting || !commentBody.trim()}
-                  className="px-4 py-1.5 bg-[var(--foreground)] text-[var(--background)] text-sm font-semibold rounded-[10px] active:opacity-80 disabled:opacity-40 flex items-center gap-1.5"
+                  className="ui-button-primary min-h-9 rounded-[10px] px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
                 >
                   {posting ? (
                     <div className="w-3 h-3 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
                   ) : 'Post'}
                 </button>
               </div>
-              {postError && <p className="text-sm text-red-500">{postError}</p>}
+              {postError && <p className="ui-body-muted text-red-500">{postError}</p>}
             </div>
           ) : (
             <button
               onClick={() => router.push(`/auth?returnTo=/share/${data.shareToken}`)}
-              className="w-full py-3 rounded-xl border border-[var(--border)] text-sm text-[var(--muted-foreground)] active:opacity-60"
+              className="w-full ui-button-secondary text-[var(--muted-foreground)]"
             >
               Sign in to comment
             </button>
@@ -325,12 +325,12 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
       {/* Sticky Clone CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 pb-8 pt-3 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/90 to-transparent">
         {cloneError && (
-          <p className="text-xs text-red-500 text-center mb-2">{cloneError}</p>
+          <p className="ui-meta text-red-500 text-center mb-2">{cloneError}</p>
         )}
         <button
           onClick={handleClone}
           disabled={cloning || cloned}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
+          className="w-full ui-button-primary font-semibold disabled:opacity-60"
         >
           {cloning ? (
             <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />

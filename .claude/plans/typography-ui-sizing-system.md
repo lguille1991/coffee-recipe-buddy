@@ -17,10 +17,10 @@
 
 ## Token System
 
-- [ ] Add semantic typography tokens or utilities in `src/app/globals.css`
-- [ ] Define a constrained text scale for app UI roles
-- [ ] Define a constrained control-size scale for interactive elements
-- [ ] Define icon-size guidance for inline, action, and navigation icons
+- [x] Add semantic typography tokens or utilities in `src/app/globals.css`
+- [x] Define a constrained text scale for app UI roles
+- [x] Define a constrained control-size scale for interactive elements
+- [x] Define icon-size guidance for inline, action, and navigation icons
 - [ ] Map semantic roles to text sizes
   - [ ] Page title
   - [ ] Section label
@@ -51,21 +51,21 @@
 
 ## Implementation Sequence
 
-- [ ] Step 1: Add global typography and control-size primitives in `src/app/globals.css`
-- [ ] Step 2: Refactor shared navigation components
-  - [ ] Update `src/components/BottomNav.tsx`
-  - [ ] Update `src/components/SideNav.tsx`
-- [ ] Step 3: Refactor high-traffic page headers and top-level actions
-  - [ ] Update `src/app/page.tsx`
-  - [ ] Update `src/app/recipes/page.tsx`
-  - [ ] Update `src/app/settings/page.tsx`
-  - [ ] Update `src/app/manual/page.tsx`
-- [ ] Step 4: Refactor recipe detail and sheet UI patterns
-  - [ ] Update `src/app/recipes/[id]/page.tsx`
-  - [ ] Update `src/components/ConfirmSheet.tsx`
-  - [ ] Normalize warning, success, and destructive states
-- [ ] Step 5: Sweep remaining routes for lingering one-off sizes
-- [ ] Step 6: Bump `package.json` patch version when implementation begins
+- [x] Step 1: Add global typography and control-size primitives in `src/app/globals.css`
+- [x] Step 2: Refactor shared navigation components
+  - [x] Update `src/components/BottomNav.tsx`
+  - [x] Update `src/components/SideNav.tsx`
+- [x] Step 3: Refactor high-traffic page headers and top-level actions
+  - [x] Update `src/app/page.tsx`
+  - [x] Update `src/app/recipes/page.tsx`
+  - [x] Update `src/app/settings/page.tsx`
+  - [x] Update `src/app/manual/page.tsx`
+- [x] Step 4: Refactor recipe detail and sheet UI patterns
+  - [x] Update `src/app/recipes/[id]/page.tsx`
+  - [x] Update `src/components/ConfirmSheet.tsx`
+  - [x] Normalize warning, success, and destructive states
+- [x] Step 5: Sweep remaining routes for lingering one-off sizes
+- [x] Step 6: Bump `package.json` patch version when implementation begins
 
 ## Concrete Rules To Enforce
 
@@ -89,3 +89,11 @@
 - [ ] Preserve the current visual language and layout structure while tightening the sizing system
 - [ ] Favor semantic utilities and reusable patterns over repeated inline Tailwind classes
 - [ ] Keep the system small enough that future screens naturally reuse it instead of bypassing it
+
+## Progress Notes
+
+- [x] Added shared `ui-*` text, input, button, chip, and icon utilities in `src/app/globals.css`
+- [x] Normalized mobile and desktop navigation labels to the same semantic sizing role
+- [x] Replaced top-level page header/action sizing in the primary app screens with shared utilities
+- [x] Normalized recipe detail sheets, alerts, badges, and action bars to the shared sizing system
+- [x] Swept remaining primary routes including auth, scan, methods, analysis, share, auto-adjust, and pre-save recipe flows

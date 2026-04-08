@@ -43,7 +43,7 @@ function PickerField<T extends string>({
 }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider block mb-1.5">
+      <label className="ui-overline block mb-1.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       <div className="flex flex-wrap gap-2">
@@ -52,17 +52,17 @@ function PickerField<T extends string>({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`ui-chip ${
               value === opt.value
-                ? 'bg-[var(--foreground)] text-[var(--background)]'
-                : 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)]'
+                ? 'ui-chip-selected'
+                : 'ui-chip-unselected'
             }`}
           >
             {opt.label}
           </button>
         ))}
       </div>
-      {error && <p className="text-[10px] text-red-500 mt-1">{error}</p>}
+      {error && <p className="ui-meta text-red-500 mt-1">{error}</p>}
     </div>
   )
 }
@@ -82,7 +82,7 @@ function TextField({
 }) {
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
-      <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
+      <label className="ui-overline block mb-1">
         {label}
       </label>
       <input
@@ -168,16 +168,15 @@ export default function ManualPage() {
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="p-2 -ml-2">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+          <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <div>
-          <h2 className="text-lg font-semibold">Enter Manually</h2>
-          <p className="text-[11px] text-[var(--muted-foreground)]">Process & roast level required</p>
+          <h1 className="ui-section-title">Enter Manually</h1>
+          <p className="ui-meta">Process & roast level required</p>
         </div>
       </div>
 
@@ -203,27 +202,25 @@ export default function ManualPage() {
           error={errors.roastLevel}
         />
 
-        {/* Optional text fields */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Bean Details (optional)</h3>
+          <h2 className="ui-overline">Bean Details (optional)</h2>
           <TextField label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
           <TextField label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
           <TextField label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
         </div>
 
-        {/* Variety — picker + freeform */}
         <div>
-          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-1.5">Variety (optional)</h3>
+          <h2 className="ui-overline mb-1.5">Variety (optional)</h2>
           <div className="flex flex-wrap gap-2 mb-2">
             {VARIETY_SUGGESTIONS.map(v => (
               <button
                 key={v}
                 type="button"
                 onClick={() => setVariety(variety === v ? '' : v)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`ui-chip ${
                   variety === v
-                    ? 'bg-[var(--foreground)] text-[var(--background)]'
-                    : 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)]'
+                    ? 'ui-chip-selected'
+                    : 'ui-chip-unselected'
                 }`}
               >
                 {v}
@@ -231,7 +228,7 @@ export default function ManualPage() {
             ))}
           </div>
           <div className="bg-[var(--card)] rounded-xl p-3">
-            <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
+            <label className="ui-overline block mb-1">
               Or type a variety
             </label>
             <input
@@ -244,9 +241,8 @@ export default function ManualPage() {
           </div>
         </div>
 
-        {/* Altitude */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
+          <label className="ui-overline block mb-1">
             Altitude (masl, optional)
           </label>
           <input
@@ -263,15 +259,14 @@ export default function ManualPage() {
             placeholder="e.g. 1800"
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
           />
-          {errors.altitude && <p className="text-[10px] text-red-500 mt-1">{errors.altitude}</p>}
+          {errors.altitude && <p className="ui-meta text-red-500 mt-1">{errors.altitude}</p>}
           {!altitude && !errors.altitude && (
-            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Block 5 density fine-tune will be skipped if left blank</p>
+            <p className="ui-meta mt-1">Block 5 density fine-tune will be skipped if left blank</p>
           )}
         </div>
 
-        {/* Tasting notes */}
         <div>
-          <h3 className="text-[10px] font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-1.5">Tasting Notes (optional)</h3>
+          <h2 className="ui-overline mb-1.5">Tasting Notes (optional)</h2>
           {tastingNotes.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
               {tastingNotes.map(note => (
@@ -279,10 +274,10 @@ export default function ManualPage() {
                   key={note}
                   type="button"
                   onClick={() => removeNote(note)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--foreground)] text-[var(--background)]"
+                  className="ui-chip ui-chip-selected flex items-center gap-1"
                 >
                   {note}
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <svg className="size-2.5" viewBox="0 0 10 10" fill="none">
                     <path d="M3 3L7 7M7 3L3 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
                 </button>
@@ -302,7 +297,7 @@ export default function ManualPage() {
               <button
                 type="button"
                 onClick={() => addNote(noteInput)}
-                className="text-xs font-semibold text-[var(--foreground)] shrink-0"
+                className="ui-meta font-semibold text-[var(--foreground)] shrink-0"
               >
                 Add
               </button>
@@ -310,9 +305,8 @@ export default function ManualPage() {
           </div>
         </div>
 
-        {/* Roast date */}
         <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider block mb-1">
+          <label className="ui-overline block mb-1">
             Roast Date (optional)
           </label>
           <input
@@ -332,32 +326,30 @@ export default function ManualPage() {
             }}
             className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
           />
-          {errors.roastDate && <p className="text-[10px] text-red-500 mt-1">{errors.roastDate}</p>}
+          {errors.roastDate && <p className="ui-meta text-red-500 mt-1">{errors.roastDate}</p>}
           {!roastDate && !errors.roastDate && (
-            <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
+            <p className="ui-meta mt-1">Assuming optimal window (8–21 days)</p>
           )}
         </div>
 
-        {/* Sparse data notice */}
         {!origin && !altitude && tastingNotes.length === 0 && (
-          <p className="text-[11px] text-[var(--muted-foreground)] text-center leading-relaxed px-2">
+          <p className="ui-body-muted text-center leading-relaxed px-2">
             With just process and roast level, the app will recommend versatile methods and note assumptions in the recipe.
           </p>
         )}
       </div>
 
-      {/* Submit — fixed bottom */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
         <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
           <button
             onClick={handleSubmit}
-            className={`w-full flex items-center justify-center gap-2 text-base font-semibold rounded-[14px] py-4 transition-colors ${
+            className={`w-full ui-button-primary font-semibold transition-colors ${
               hasRequiredFields
                 ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
                 : 'bg-[var(--border)] text-[var(--muted-foreground)]'
             }`}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
               <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Get Recommendations

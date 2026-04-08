@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { BeanProfile, ExtractionResponse } from '@/types/recipe'
@@ -26,7 +26,7 @@ const ROAST_LABELS: Record<string, string> = {
 function ConfidenceBadge({ score }: { score?: number }) {
   if (!score || score >= 0.6) return null
   return (
-    <span className="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-medium bg-yellow-100 text-yellow-700 rounded-full">
+    <span className="ml-1 inline-block ui-badge bg-yellow-100 text-yellow-700">
       low confidence
     </span>
   )
@@ -48,7 +48,7 @@ function EditableField({
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
       <div className="flex items-center justify-between mb-1">
-        <label className="text-[10px] text-[var(--muted-foreground)] font-medium uppercase tracking-wider">{label}</label>
+        <label className="ui-overline">{label}</label>
         <ConfidenceBadge score={confidence} />
       </div>
       <input
@@ -68,11 +68,13 @@ export default function AnalysisPage() {
   const [bean, setBean] = useState<BeanProfile | null>(null)
   const [roastDate, setRoastDate] = useState('')
   const [targetVolume, setTargetVolume] = useState('')
-  const [generating, setGenerating] = useState(false)
+  const [generating] = useState(false)
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
-      setTargetVolume(String(profile.default_volume_ml))
+      startTransition(() => {
+        setTargetVolume(String(profile.default_volume_ml))
+      })
     }
   }, [profile])
 
@@ -80,10 +82,12 @@ export default function AnalysisPage() {
     const raw = sessionStorage.getItem('extractionResult')
     if (!raw) { router.replace('/scan'); return }
     const data: ExtractionResponse = JSON.parse(raw)
-    setExtraction(data)
     const b = data.bean
     const parts = [b.variety, b.finca, b.producer].filter(Boolean)
-    setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
+    startTransition(() => {
+      setExtraction(data)
+      setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
+    })
   }, [router])
 
   function updateField<K extends keyof BeanProfile>(key: K, value: BeanProfile[K]) {
@@ -122,10 +126,10 @@ export default function AnalysisPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-4">
-        <button onClick={() => router.back()} className="p-2 -ml-2">
-          <ArrowLeft size={20} />
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center">
+          <ArrowLeft className="ui-icon-action" />
         </button>
-        <h2 className="text-lg font-semibold">Coffee Analysis</h2>
+        <h2 className="ui-section-title">Coffee Analysis</h2>
       </div>
 
       <div className="flex-1 px-4 sm:px-6 flex flex-col gap-5 overflow-y-auto pb-48">
@@ -145,8 +149,8 @@ export default function AnalysisPage() {
               placeholder="Unknown Bean"
               className="w-full font-semibold text-[var(--foreground)] text-base bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
             />
-            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
-            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
+            <p className="ui-body-muted mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
+            <p className="ui-body-muted mt-0.5">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
             </p>
           </div>
@@ -154,7 +158,7 @@ export default function AnalysisPage() {
 
         {/* Bean profile grid */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Bean Profile</h3>
+          <h3 className="ui-overline px-1 mb-2">Bean Profile</h3>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
             <EditableField
               label="Origin"
@@ -186,10 +190,10 @@ export default function AnalysisPage() {
         {/* Flavor notes */}
         {(bean.tasting_notes?.length ?? 0) > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Flavor Notes</h3>
+            <h3 className="ui-overline px-1 mb-2">Flavor Notes</h3>
             <div className="flex flex-wrap gap-2">
               {bean.tasting_notes!.map(note => (
-                <span key={note} className="px-3 py-1.5 bg-[var(--card)] rounded-full text-xs font-medium text-[var(--foreground)] capitalize">
+                <span key={note} className="ui-chip ui-chip-unselected capitalize">
                   {note}
                 </span>
               ))}
@@ -199,7 +203,7 @@ export default function AnalysisPage() {
 
         {/* Roast date */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Roast Date</h3>
+          <h3 className="ui-overline px-1 mb-2">Roast Date</h3>
           <div className="bg-[var(--card)] rounded-xl p-3">
             <input
               type="date"
@@ -218,14 +222,14 @@ export default function AnalysisPage() {
               placeholder="Optional — leave blank for optimal window"
             />
             {!roastDate && (
-              <p className="text-[10px] text-[var(--muted-foreground)] mt-1">Assuming optimal window (8–21 days)</p>
+              <p className="ui-meta mt-1">Assuming optimal window (8–21 days)</p>
             )}
           </div>
         </div>
 
         {/* Target volume */}
         <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-1 mb-2">Target Volume</h3>
+          <h3 className="ui-overline px-1 mb-2">Target Volume</h3>
           <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
             <input
               type="number"
@@ -245,7 +249,7 @@ export default function AnalysisPage() {
               className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
               placeholder="250"
             />
-            <span className="text-sm text-[var(--muted-foreground)]">ml</span>
+            <span className="ui-body-muted">ml</span>
           </div>
         </div>
       </div>
@@ -256,12 +260,12 @@ export default function AnalysisPage() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="w-full flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] text-base font-semibold rounded-[14px] py-4 disabled:opacity-50"
+            className="w-full ui-button-primary font-semibold disabled:opacity-50"
           >
             {generating ? (
               <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Sparkles size={20} />
+              <Sparkles className="ui-icon-action" />
             )}
             Generate Recipe
           </button>

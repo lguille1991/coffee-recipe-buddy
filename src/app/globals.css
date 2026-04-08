@@ -31,6 +31,114 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+@utility ui-page-title {
+  @apply text-2xl sm:text-3xl font-bold tracking-tight text-[var(--foreground)];
+}
+
+@utility ui-page-title-hero {
+  @apply text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[var(--foreground)];
+}
+
+@utility ui-section-title {
+  @apply text-lg font-semibold text-[var(--foreground)];
+}
+
+@utility ui-card-title {
+  @apply text-base font-semibold text-[var(--foreground)];
+}
+
+@utility ui-sheet-title {
+  @apply text-lg font-semibold text-[var(--foreground)];
+}
+
+@utility ui-sheet-body {
+  @apply text-sm text-[var(--muted-foreground)];
+}
+
+@utility ui-body {
+  @apply text-base text-[var(--foreground)];
+}
+
+@utility ui-body-muted {
+  @apply text-sm text-[var(--muted-foreground)];
+}
+
+@utility ui-meta {
+  @apply text-xs text-[var(--muted-foreground)];
+}
+
+@utility ui-overline {
+  @apply text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)];
+}
+
+@utility ui-badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium;
+}
+
+@utility ui-button-text {
+  @apply text-base font-medium;
+}
+
+@utility ui-button-primary {
+  @apply min-h-11 rounded-[14px] px-4 py-3 ui-button-text transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)];
+}
+
+@utility ui-button-secondary {
+  @apply min-h-11 rounded-[14px] px-4 py-3 ui-button-text transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)];
+}
+
+@utility ui-button-danger {
+  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-red-500 border border-red-200;
+}
+
+@utility ui-button-ghost {
+  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-60 disabled:opacity-50 flex items-center justify-center gap-2 text-[var(--muted-foreground)];
+}
+
+@utility ui-input {
+  @apply w-full min-h-11 rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)];
+}
+
+@utility ui-textarea {
+  @apply w-full rounded-xl px-3 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] resize-none outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)] focus:ring-1 focus:ring-[var(--foreground)]/20;
+}
+
+@utility ui-chip {
+  @apply min-h-8 rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
+}
+
+@utility ui-chip-selected {
+  @apply bg-[var(--foreground)] text-[var(--background)];
+}
+
+@utility ui-chip-unselected {
+  @apply bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)];
+}
+
+@utility ui-nav-label {
+  @apply text-xs font-semibold tracking-wider;
+}
+
+@utility ui-icon-inline {
+  @apply size-4;
+}
+
+@utility ui-icon-action {
+  @apply size-5;
+}
+
+@utility ui-icon-nav {
+  @apply size-5;
+}
+
+@utility ui-alert-warning {
+  @apply rounded-xl border border-amber-200 bg-amber-50 px-4 py-3;
+}
+
+@utility ui-alert-danger {
+  @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3;
+}
+
 @utility text-responsive-h1 {
   @apply text-3xl sm:text-4xl lg:text-5xl;
 }

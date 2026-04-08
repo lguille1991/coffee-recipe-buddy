@@ -28,7 +28,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${roboto.variable} h-full`} suppressHydrationWarning>
       <head>
-        {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
