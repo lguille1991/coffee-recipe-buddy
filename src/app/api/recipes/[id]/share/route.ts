@@ -20,7 +20,12 @@ export async function GET(request: Request, { params }: Params) {
     .single()
 
   if (error || !data) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({
+      shareToken: null,
+      url: null,
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=60' },
+    })
   }
 
   const url = new URL(request.url)

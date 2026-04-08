@@ -194,12 +194,12 @@ export default function SettingsPage() {
         </div>
 
         {saved && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm font-medium text-green-800">
+          <div className="ui-alert-success text-sm font-medium">
             Settings saved.
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <div className="ui-alert-danger text-sm">
             {error}
           </div>
         )}

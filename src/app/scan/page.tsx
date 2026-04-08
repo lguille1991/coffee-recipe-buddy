@@ -47,7 +47,7 @@ export default function ScanPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-6">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 text-[var(--foreground)] flex items-center justify-center">
+        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 text-[var(--foreground)] flex items-center justify-center" aria-label="Go back">
           <ArrowLeft className="ui-icon-action" />
         </button>
         <h2 className="ui-section-title">Scan Coffee</h2>
@@ -66,14 +66,14 @@ export default function ScanPage() {
             </>
           ) : (
             <>
-              <Camera size={48} color="#9DA4B3" strokeWidth={1.5} />
+              <Camera size={48} className="text-[var(--muted-foreground)]" strokeWidth={1.5} />
               <p className="ui-body-muted">Take a photo of your coffee bag</p>
             </>
           )}
         </div>
 
         {error && (
-          <div className="ui-alert-danger text-red-700 text-sm">
+          <div className="ui-alert-danger text-sm">
             {error}
           </div>
         )}

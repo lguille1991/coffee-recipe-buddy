@@ -102,7 +102,7 @@ const SortableStepRow = memo(function SortableStepRow({
       <button
         onClick={() => onDelete(step._dndId)}
         disabled={totalSteps <= 1}
-        className="mt-2 p-1 text-red-400 disabled:opacity-30 active:opacity-60"
+        className="mt-2 p-1 ui-text-danger disabled:opacity-30 active:opacity-60"
         aria-label="Delete step"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -146,7 +146,7 @@ export default function SortableStepList({
   return (
     <div className="flex flex-col gap-2">
       {stepError && (
-        <div className="ui-alert-danger px-3 text-sm text-red-700">
+        <div className="ui-alert-danger px-3 text-sm">
           {stepError}
         </div>
       )}

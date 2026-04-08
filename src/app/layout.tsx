@@ -34,11 +34,11 @@ export default function RootLayout({
         <ThemeProvider>
           <NavGuardProvider>
             <SideNav />
-            <div className="lg:ml-56 min-h-screen">
+            <main className="lg:ml-56 min-h-screen" id="main-content">
               <ResponsiveContainer>
                 {children}
               </ResponsiveContainer>
-            </div>
+            </main>
             <BottomNav />
           </NavGuardProvider>
         </ThemeProvider>

@@ -172,16 +172,16 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           {/* Primary grinder (K-Ultra) */}
           <div className="rounded-xl p-3 mb-3 bg-[var(--foreground)] text-[var(--background)]">
             <div className="flex items-center justify-between mb-1">
-              <span className="ui-meta text-[var(--background)]/70">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
-              <span className="ui-badge bg-[var(--background)]/10 text-[var(--background)]/60">Primary</span>
+              <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
+              <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
             </div>
             <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
-            <p className="ui-body-muted text-[var(--background)]/70 mt-0.5">Range: {primaryData.range}</p>
+            <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
             {primaryData.description && (
-              <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.description}</p>
+              <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
             )}
             {primaryData.note && (
-              <p className="ui-body-muted text-[var(--background)]/60 mt-1 italic">{primaryData.note}</p>
+              <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.note}</p>
             )}
           </div>
 
@@ -270,7 +270,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                         aria-label="Delete comment"
                       >
                         {deletingId === comment.id ? (
-                          <div className="w-3.5 h-3.5 border border-[#9CA3AF] border-t-transparent rounded-full animate-spin" />
+                          <div className="w-3.5 h-3.5 border border-[var(--muted-foreground)] border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M2 3.5H12M4.5 3.5V2.5C4.5 2.22 4.72 2 5 2H9C9.28 2 9.5 2.22 9.5 2.5V3.5M5.5 6.5V10.5M8.5 6.5V10.5M3.5 3.5L4 11.5H10L10.5 3.5H3.5Z" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
@@ -308,7 +308,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                   ) : 'Post'}
                 </button>
               </div>
-              {postError && <p className="ui-body-muted text-red-500">{postError}</p>}
+              {postError && <p className="ui-body-muted ui-text-danger">{postError}</p>}
             </div>
           ) : (
             <button
@@ -325,7 +325,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
       {/* Sticky Clone CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 pb-8 pt-3 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/90 to-transparent">
         {cloneError && (
-          <p className="ui-meta text-red-500 text-center mb-2">{cloneError}</p>
+          <p className="ui-meta ui-text-danger text-center mb-2">{cloneError}</p>
         )}
         <button
           onClick={handleClone}
