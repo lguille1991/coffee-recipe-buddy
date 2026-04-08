@@ -8,6 +8,8 @@ export interface GrinderSetting {
   note?: string
 }
 
+export type GrinderEditValue = number | string
+
 // ─── K-Ultra: clicks → microns ───────────────────────────────────────────────
 
 // Piecewise linear interpolation based on the grind table.
@@ -78,6 +80,26 @@ function formatQAirSetting(rotations: number): string {
   const c = Math.floor(remaining / 3)
   const m = remaining % 3
   return `${r}.${c}.${m}`
+}
+
+export function isValidQAirSetting(value: string): boolean {
+  return /^\d+\.\d\.\d$/.test(value.trim())
+}
+
+function parseQAirSetting(value: string): { rotations: number; totalMicros: number } | null {
+  const trimmed = value.trim()
+  if (!isValidQAirSetting(trimmed)) return null
+
+  const [rotationsStr, majorStr, minorStr] = trimmed.split('.')
+  const rotations = parseInt(rotationsStr, 10)
+  const major = parseInt(majorStr, 10)
+  const minor = parseInt(minorStr, 10)
+  const totalMicros = rotations * 30 + major * 3 + minor
+
+  return {
+    rotations: totalMicros / 30,
+    totalMicros,
+  }
 }
 
 export function micronsToQAir(microns: number): number {
@@ -325,15 +347,9 @@ function timemoreC2ClicksToMicrons(clicks: number): number {
  * - K-Ultra / Baratza / Timemore: extract the number from "81 clicks" or "clicks 81"
  * - Q-Air: parse R.C.M → total Q-Air clicks (R*10 + C), ignoring micro-adjustments
  */
-export function parseGrinderValueForEdit(grinder: string, startingPoint: string): number {
+export function parseGrinderValueForEdit(grinder: string, startingPoint: string): GrinderEditValue {
   if (grinder === 'q_air') {
-    const parts = startingPoint.split('.')
-    if (parts.length >= 2) {
-      const r = parseInt(parts[0], 10) || 0
-      const c = parseInt(parts[1], 10) || 0
-      return r * 10 + c
-    }
-    return 12
+    return isValidQAirSetting(startingPoint) ? startingPoint.trim() : '1.2.0'
   }
   const match = startingPoint.match(/(\d+)/)
   return match ? parseInt(match[1], 10) : 80
@@ -345,20 +361,20 @@ export function parseGrinderValueForEdit(grinder: string, startingPoint: string)
  * - Q-Air: total Q-Air clicks → rotations → microns → K-Ultra clicks
  * - Baratza / Timemore C2: clicks → microns → K-Ultra clicks
  */
-export function grinderValueToKUltraClicks(grinder: string, value: number): number {
-  if (grinder === 'k_ultra') return Math.round(value)
+export function grinderValueToKUltraClicks(grinder: string, value: GrinderEditValue): number {
+  if (grinder === 'k_ultra') return Math.round(Number(value))
   if (grinder === 'q_air') {
-    const rotations = value / 10
-    const microns = qAirRotationsToMicrons(rotations)
+    const parsed = typeof value === 'string' ? parseQAirSetting(value) : null
+    const microns = qAirRotationsToMicrons(parsed?.rotations ?? 1.2)
     return micronsToKUltraClicks(microns)
   }
   if (grinder === 'baratza_encore_esp') {
-    return micronsToKUltraClicks(baratzaClicksToMicrons(value))
+    return micronsToKUltraClicks(baratzaClicksToMicrons(Number(value)))
   }
   if (grinder === 'timemore_c2') {
-    return micronsToKUltraClicks(timemoreC2ClicksToMicrons(value))
+    return micronsToKUltraClicks(timemoreC2ClicksToMicrons(Number(value)))
   }
-  return Math.round(value)
+  return Math.round(Number(value))
 }
 
 /**
@@ -367,12 +383,12 @@ export function grinderValueToKUltraClicks(grinder: string, value: number): numb
  * - Q-Air: microns → rotations → total Q-Air clicks (integer)
  * - Baratza / Timemore C2: microns → clicks (integer)
  */
-export function kUltraClicksToGrinderValue(grinder: string, clicks: number): number {
+export function kUltraClicksToGrinderValue(grinder: string, clicks: number): GrinderEditValue {
   if (grinder === 'k_ultra') return clicks
   if (grinder === 'q_air') {
     const microns = kUltraClicksToMicrons(clicks)
     const rotations = micronsToQAirRaw(microns)
-    return Math.round(rotations * 10)
+    return formatQAirSetting(rotations)
   }
   if (grinder === 'baratza_encore_esp') {
     return micronsToBaratzaRaw(kUltraClicksToMicrons(clicks))
@@ -390,7 +406,27 @@ export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { lo
   const parsed = parseKUltraRange(kUltraRangeStr)
   if (!parsed) return null
   return {
-    low: kUltraClicksToGrinderValue(grinder, parsed.low),
-    high: kUltraClicksToGrinderValue(grinder, parsed.high),
+    low: Number(kUltraClicksToGrinderValue(grinder, parsed.low)),
+    high: Number(kUltraClicksToGrinderValue(grinder, parsed.high)),
   }
+}
+
+export function formatGrinderSettingForDisplay(grinder: string, value: string): string {
+  if (grinder === 'q_air') return value
+  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
+}
+
+export function formatGrinderRangeForEdit(grinder: string, kUltraRangeStr: string): string | null {
+  const parsed = parseKUltraRange(kUltraRangeStr)
+  if (!parsed) return null
+
+  if (grinder === 'q_air') {
+    const low = kUltraClicksToGrinderValue(grinder, parsed.low)
+    const high = kUltraClicksToGrinderValue(grinder, parsed.high)
+    return `${low}–${high}`
+  }
+
+  const numericRange = parseGrinderRange(grinder, kUltraRangeStr)
+  if (!numericRange) return null
+  return `${numericRange.low}–${numericRange.high} clicks`
 }

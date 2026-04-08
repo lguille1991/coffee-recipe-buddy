@@ -10,6 +10,9 @@ import {
   kUltraClicksToGrinderValue,
   parseGrinderRange,
   micronsToKUltraClicks,
+  isValidQAirSetting,
+  formatGrinderSettingForDisplay,
+  formatGrinderRangeForEdit,
 } from '../grinder-converter'
 
 // ─── kUltraClicksToMicrons ────────────────────────────────────────────────────
@@ -143,11 +146,9 @@ describe('parseGrinderValueForEdit', () => {
     expect(parseGrinderValueForEdit('k_ultra', 'click 95')).toBe(95)
   })
 
-  it('converts Q-Air R.C.M to total Q-Air clicks (R*10 + C)', () => {
-    // "2.5.0" → R=2, C=5 → 2*10+5 = 25
-    expect(parseGrinderValueForEdit('q_air', '2.5.0')).toBe(25)
-    // "3.2.1" → 32
-    expect(parseGrinderValueForEdit('q_air', '3.2.1')).toBe(32)
+  it('preserves Q-Air R.C.M strings for edit mode', () => {
+    expect(parseGrinderValueForEdit('q_air', '2.5.0')).toBe('2.5.0')
+    expect(parseGrinderValueForEdit('q_air', '3.2.1')).toBe('3.2.1')
   })
 
   it('extracts clicks for baratza and timemore', () => {
@@ -163,10 +164,10 @@ describe('kUltraClicksToGrinderValue', () => {
     expect(kUltraClicksToGrinderValue('k_ultra', 82)).toBe(82)
   })
 
-  it('returns an integer for all grinder types', () => {
+  it('returns Q-Air in R.C.M format', () => {
     const clicks = 82
     expect(Number.isInteger(kUltraClicksToGrinderValue('k_ultra', clicks))).toBe(true)
-    expect(Number.isInteger(kUltraClicksToGrinderValue('q_air', clicks))).toBe(true)
+    expect(kUltraClicksToGrinderValue('q_air', clicks)).toMatch(/^\d+\.\d\.\d$/)
     expect(Number.isInteger(kUltraClicksToGrinderValue('baratza_encore_esp', clicks))).toBe(true)
     expect(Number.isInteger(kUltraClicksToGrinderValue('timemore_c2', clicks))).toBe(true)
   })
@@ -177,6 +178,17 @@ describe('kUltraClicksToGrinderValue', () => {
 describe('grinderValueToKUltraClicks', () => {
   it('returns identity for k_ultra', () => {
     expect(grinderValueToKUltraClicks('k_ultra', 82)).toBe(82)
+  })
+
+  it('accepts Q-Air R.C.M strings', () => {
+    expect(grinderValueToKUltraClicks('q_air', '2.5.0')).toBeGreaterThan(0)
+  })
+
+  it('round-trips k_ultra → q_air → k_ultra within ±5 clicks', () => {
+    const originalClicks = 82
+    const qAirValue = kUltraClicksToGrinderValue('q_air', originalClicks)
+    const backToKUltra = grinderValueToKUltraClicks('q_air', qAirValue)
+    expect(Math.abs(backToKUltra - originalClicks)).toBeLessThanOrEqual(5)
   })
 
   it('round-trips k_ultra → baratza → k_ultra within ±5 clicks', () => {
@@ -221,5 +233,39 @@ describe('parseGrinderRange', () => {
     const result = parseGrinderRange('baratza_encore_esp', '81–84 clicks')
     expect(result).not.toBeNull()
     expect(result!.low).toBeLessThanOrEqual(result!.high)
+  })
+})
+
+describe('isValidQAirSetting', () => {
+  it('accepts valid R.C.M strings', () => {
+    expect(isValidQAirSetting('2.5.0')).toBe(true)
+    expect(isValidQAirSetting('12.0.2')).toBe(true)
+  })
+
+  it('rejects malformed strings', () => {
+    expect(isValidQAirSetting('2.5')).toBe(false)
+    expect(isValidQAirSetting('2.5.0.1')).toBe(false)
+    expect(isValidQAirSetting('2.a.0')).toBe(false)
+  })
+})
+
+describe('formatGrinderSettingForDisplay', () => {
+  it('keeps Q-Air notation untouched', () => {
+    expect(formatGrinderSettingForDisplay('q_air', '2.5.0')).toBe('2.5.0')
+  })
+
+  it('normalizes click-prefixed values for other grinders', () => {
+    expect(formatGrinderSettingForDisplay('k_ultra', 'clicks 82')).toBe('82 clicks')
+  })
+})
+
+describe('formatGrinderRangeForEdit', () => {
+  it('formats Q-Air ranges in R.C.M notation', () => {
+    const result = formatGrinderRangeForEdit('q_air', '81–84 clicks')
+    expect(result).toMatch(/^\d+\.\d\.\d+–\d+\.\d\.\d+$/)
+  })
+
+  it('formats click grinders as click ranges', () => {
+    expect(formatGrinderRangeForEdit('k_ultra', '81–84 clicks')).toBe('81–84 clicks')
   })
 })

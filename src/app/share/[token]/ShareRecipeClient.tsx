@@ -3,12 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
+import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { useAuth } from '@/hooks/useAuth'
 import ConfirmSheet from '@/components/ConfirmSheet'
-
-function normalizeClickSetting(value: string): string {
-  return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
-}
 
 export default function ShareRecipeClient({ data }: { data: PublicShareResponse }) {
   const router = useRouter()
@@ -154,7 +151,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
               { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
               { value: r.parameters.total_time, label: 'Time' },
-              { value: normalizeClickSetting(r.grind[primaryGrinder].starting_point), label: 'Grind' },
+              { value: formatGrinderSettingForDisplay(primaryGrinder, r.grind[primaryGrinder].starting_point), label: 'Grind' },
               { value: r.parameters.ratio, label: 'Ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
@@ -175,7 +172,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
               <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[primaryGrinder]}</span>
               <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
             </div>
-            <p className="text-lg font-bold">{normalizeClickSetting(primaryData.starting_point)}</p>
+            <p className="text-lg font-bold">{formatGrinderSettingForDisplay(primaryGrinder, primaryData.starting_point)}</p>
             <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
             {primaryData.description && (
               <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
@@ -198,7 +195,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                     <p className="ui-meta mt-0.5 italic">{gdata.note}</p>
                   )}
                 </div>
-                <p className="ui-card-title shrink-0">{normalizeClickSetting(gdata.starting_point)}</p>
+                <p className="ui-card-title shrink-0">{formatGrinderSettingForDisplay(grinder, gdata.starting_point)}</p>
               </div>
             )
           })}
