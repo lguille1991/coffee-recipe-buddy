@@ -443,7 +443,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
-      <div className="flex items-center justify-between px-4 sm:px-6 pb-4">
+      <div className="flex items-center justify-between px-4 sm:px-6 pb-4 ui-animate-enter">
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -453,7 +453,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                 router.back()
               }
             }}
-            className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center"
+            className="ui-icon-button -ml-2"
             aria-label="Go back"
           >
             <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
@@ -468,7 +468,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
             <button
               onClick={shareToken ? () => setShowShareSheet(true) : handleShare}
               disabled={sharing}
-              className="min-h-10 min-w-10 p-2 flex items-center justify-center text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
+              className="ui-icon-button text-[var(--muted-foreground)] disabled:opacity-40"
               aria-label="Share recipe"
             >
               {sharing ? (
@@ -481,7 +481,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="min-h-10 min-w-10 p-2 flex items-center justify-center ui-text-danger"
+              className="ui-icon-button ui-text-danger"
               aria-label="Delete recipe"
             >
               <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
@@ -492,7 +492,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
         )}
       </div>
 
-      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-52 overflow-y-auto">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-52 overflow-y-auto ui-animate-enter-soft">
         <RecipeTitleBlock
           commentCount={commentCount}
           hasFeedbackAdjustments={hasFeedbackAdjustments}
@@ -518,7 +518,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                 {field.field}: {field.previous} → {field.next}
               </p>
             ))}
-            <button onClick={() => setFreshnessIgnored(true)} className="ui-meta ui-text-warning underline self-start">
+            <button onClick={() => setFreshnessIgnored(true)} className="ui-focus-ring ui-pressable rounded-md ui-meta ui-text-warning underline self-start">
               Keep original recipe
             </button>
           </div>
@@ -562,7 +562,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                   </label>
                 </div>
 
-                <button onClick={() => setAdvancedOpen(value => !value)} className="flex items-center justify-between w-full py-2 text-left">
+                <button onClick={() => setAdvancedOpen(value => !value)} className="ui-focus-ring ui-pressable flex items-center justify-between w-full rounded-xl py-2 text-left">
                   <span className="ui-overline normal-case tracking-normal font-medium">Advanced (dose &amp; ratio)</span>
                   <svg className={`size-3.5 transition-transform text-[var(--muted-foreground)] ${advancedOpen ? 'rotate-180' : ''}`} viewBox="0 0 14 14" fill="none">
                     <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -742,7 +742,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 lg:left-56">
-        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-20 lg:pb-6 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
+        <div className="ui-sticky-footer w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-20 lg:pb-6 pt-3">
           {isEditing ? (
             <div className="flex flex-col gap-2">
               <button onClick={handleSaveEdit} disabled={isSavingEdit} className="w-full ui-button-primary font-semibold">
@@ -799,8 +799,8 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       />
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 pb-safe sm:pb-0 lg:pl-56">
-          <div className="bg-[var(--card)] rounded-t-3xl sm:rounded-3xl w-full max-w-sm px-6 pt-6 pb-10">
+        <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56">
+          <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm">
             <h3 className="ui-sheet-title mb-1">Delete this recipe?</h3>
             <p className="ui-sheet-body mb-6">This action cannot be undone.</p>
             <div className="flex flex-col gap-2">

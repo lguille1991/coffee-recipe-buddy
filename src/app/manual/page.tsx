@@ -75,24 +75,27 @@ function TextField({
   onChange,
   placeholder,
   type = 'text',
+  inputId,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   placeholder?: string
   type?: string
+  inputId: string
 }) {
   return (
-    <div className="bg-[var(--card)] rounded-xl p-3">
-      <label className="ui-overline block mb-1">
+    <div className="ui-surface-field p-3">
+      <label htmlFor={inputId} className="ui-overline block mb-1">
         {label}
       </label>
       <input
+        id={inputId}
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
+        className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
       />
     </div>
   )
@@ -187,8 +190,8 @@ export default function ManualPage() {
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
-      <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
+      <div className="flex items-center gap-3 px-4 pb-4 ui-animate-enter">
+        <button onClick={() => router.back()} className="ui-icon-button -ml-2" aria-label="Go back">
           <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -199,7 +202,7 @@ export default function ManualPage() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-32">
+      <div className="flex-1 px-4 flex flex-col gap-5 overflow-y-auto pb-32 ui-animate-enter-soft">
 
         {/* Required: Process */}
         <PickerField
@@ -223,9 +226,9 @@ export default function ManualPage() {
 
         <div className="flex flex-col gap-2">
           <h2 className="ui-overline">Bean Details (optional)</h2>
-          <TextField label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
-          <TextField label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
-          <TextField label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
+          <TextField inputId="manual-roaster" label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
+          <TextField inputId="manual-bean-name" label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
+          <TextField inputId="manual-origin" label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
         </div>
 
         <div>
@@ -246,25 +249,27 @@ export default function ManualPage() {
               </button>
             ))}
           </div>
-          <div className="bg-[var(--card)] rounded-xl p-3">
-            <label className="ui-overline block mb-1">
+          <div className="ui-surface-field p-3">
+            <label htmlFor="manual-variety" className="ui-overline block mb-1">
               Or type a variety
             </label>
             <input
+              id="manual-variety"
               type="text"
               value={variety}
               onChange={e => setVariety(e.target.value)}
               placeholder="e.g. Castillo, Pink Bourbon..."
-              className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
             />
           </div>
         </div>
 
-        <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="ui-overline block mb-1">
+        <div className="ui-surface-field p-3">
+          <label htmlFor="manual-altitude" className="ui-overline block mb-1">
             Altitude (masl, optional)
           </label>
           <input
+            id="manual-altitude"
             type="number"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -278,7 +283,7 @@ export default function ManualPage() {
             }}
             onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault() }}
             placeholder="e.g. 1800"
-            className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+            className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
           />
           {errors.altitude && <p className="ui-meta ui-text-danger mt-1">{errors.altitude}</p>}
           {!altitude && !errors.altitude && (
@@ -288,8 +293,9 @@ export default function ManualPage() {
 
         <div>
           <h2 className="ui-overline mb-1.5">Target Volume</h2>
-          <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
+          <div className="ui-surface-field p-3 flex items-center gap-2">
             <input
+              id="manual-target-volume"
               type="number"
               inputMode="numeric"
               pattern="[0-9]*"
@@ -306,7 +312,7 @@ export default function ManualPage() {
               }}
               min={50}
               max={2000}
-              className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+              className="ui-input min-h-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
               placeholder="250"
             />
             <span className="ui-body-muted">ml</span>
@@ -332,20 +338,21 @@ export default function ManualPage() {
               ))}
             </div>
           )}
-          <div className="bg-[var(--card)] rounded-xl p-3 flex items-center gap-2">
+          <div className="ui-surface-field p-3 flex items-center gap-2">
             <input
+              id="manual-note-input"
               type="text"
               value={noteInput}
               onChange={e => setNoteInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addNote(noteInput) } }}
               placeholder="e.g. blueberry, chocolate..."
-              className="flex-1 text-base font-medium text-[var(--foreground)] bg-transparent outline-none placeholder:text-[#D1D5DB]"
+              className="ui-input min-h-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
             />
             {noteInput.trim() && (
               <button
                 type="button"
                 onClick={() => addNote(noteInput)}
-                className="ui-meta font-semibold text-[var(--foreground)] shrink-0"
+                className="ui-focus-ring rounded-md px-2 py-1 text-[var(--foreground)] ui-meta font-semibold shrink-0 transition-colors duration-150 hover:bg-[var(--surface-strong)]"
               >
                 Add
               </button>
@@ -353,11 +360,12 @@ export default function ManualPage() {
           </div>
         </div>
 
-        <div className="bg-[var(--card)] rounded-xl p-3">
-          <label className="ui-overline block mb-1">
+        <div className="ui-surface-field p-3">
+          <label htmlFor="manual-roast-date" className="ui-overline block mb-1">
             Roast Date (optional)
           </label>
           <input
+            id="manual-roast-date"
             type="date"
             value={roastDate}
             max={new Date().toISOString().split('T')[0]}
@@ -372,7 +380,7 @@ export default function ManualPage() {
                 setErrors(prev => ({ ...prev, roastDate: undefined }))
               }
             }}
-            className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+            className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
           />
           {errors.roastDate && <p className="ui-meta ui-text-danger mt-1">{errors.roastDate}</p>}
           {!roastDate && !errors.roastDate && (
@@ -387,14 +395,14 @@ export default function ManualPage() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
+      <div className="ui-sticky-footer fixed bottom-0 left-0 right-0 lg:left-56 pt-4 pb-24 lg:pb-6">
         <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
           <button
             onClick={handleSubmit}
-            className={`w-full ui-button-primary font-semibold transition-colors ${
+            className={`w-full ui-button-primary font-semibold ${
               hasRequiredFields
-                ? 'bg-[var(--foreground)] text-[var(--background)] active:opacity-80'
-                : 'bg-[var(--border)] text-[var(--muted-foreground)]'
+                ? 'bg-[var(--foreground)] text-[var(--background)]'
+                : 'bg-[var(--border)] text-[var(--muted-foreground)] shadow-none hover:translate-y-0 hover:brightness-100 active:scale-100'
             }`}
           >
             <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">

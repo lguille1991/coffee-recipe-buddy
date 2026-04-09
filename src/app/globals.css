@@ -21,6 +21,16 @@
   --info-fg: #1E40AF;
   --info-bg: #EFF6FF;
   --info-border: #93C5FD;
+  --motion-fast: 140ms;
+  --motion-base: 180ms;
+  --motion-slow: 260ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --focus-ring: color-mix(in srgb, var(--foreground) 16%, transparent);
+  --card-shadow-rest: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --card-shadow-hover: 0 14px 32px rgba(15, 23, 42, 0.08);
+  --card-shadow-press: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --surface-strong: color-mix(in srgb, var(--foreground) 4%, var(--card));
+  --surface-overlay: color-mix(in srgb, var(--foreground) 8%, var(--background));
 }
 
 .dark {
@@ -44,6 +54,12 @@
   --info-fg: #DBEAFE;
   --info-bg: #1E3A8A;
   --info-border: #1D4ED8;
+  --focus-ring: color-mix(in srgb, #DBEAFE 20%, transparent);
+  --card-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --card-shadow-hover: 0 18px 36px rgba(0, 0, 0, 0.28);
+  --card-shadow-press: 0 8px 18px rgba(0, 0, 0, 0.24);
+  --surface-strong: color-mix(in srgb, var(--foreground) 6%, var(--card));
+  --surface-overlay: color-mix(in srgb, var(--foreground) 10%, var(--background));
 }
 
 @theme inline {
@@ -57,6 +73,76 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+@keyframes ui-enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility ui-focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)];
+}
+
+@utility ui-pressable {
+  @apply transition-[transform,opacity,background-color,border-color,box-shadow,color] duration-150 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.985];
+}
+
+@utility ui-icon-button {
+  @apply ui-focus-ring ui-pressable inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl text-[var(--foreground)] hover:bg-[var(--surface-strong)] active:bg-[var(--surface-overlay)];
+}
+
+@utility ui-card-interactive {
+  @apply ui-focus-ring ui-pressable rounded-2xl border border-transparent shadow-[var(--card-shadow-rest)] hover:shadow-[var(--card-shadow-hover)] active:shadow-[var(--card-shadow-press)];
+}
+
+@utility ui-surface-field {
+  @apply rounded-xl border border-transparent bg-[var(--card)] transition-[transform,background-color,border-color,box-shadow] duration-150 ease-out focus-within:-translate-y-px focus-within:border-[var(--border)] focus-within:shadow-[0_10px_24px_rgba(15,23,42,0.08)];
+}
+
+@utility ui-sheet-overlay {
+  @apply fixed inset-0 z-50 flex justify-center bg-black/45 backdrop-blur-[2px] motion-safe:animate-[ui-fade-in_var(--motion-base)_var(--ease-standard)];
+}
+
+@utility ui-sheet-panel {
+  @apply w-full bg-[var(--card)] shadow-[0_20px_60px_rgba(0,0,0,0.18)] motion-safe:animate-[ui-enter-rise_var(--motion-slow)_var(--ease-standard)];
+}
+
+@utility ui-sticky-footer {
+  @apply bg-[color:color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-xl border-t border-[color:color-mix(in_srgb,var(--border)_72%,transparent)] shadow-[0_-8px_24px_rgba(15,23,42,0.06)];
+}
+
+@utility ui-animate-enter {
+  @apply motion-safe:animate-[ui-enter-rise_var(--motion-slow)_var(--ease-standard)];
+}
+
+@utility ui-animate-enter-soft {
+  @apply motion-safe:animate-[ui-enter-rise_220ms_var(--ease-standard)];
 }
 
 @utility ui-page-title {
@@ -64,7 +150,7 @@ body {
 }
 
 @utility ui-page-title-hero {
-  @apply text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[var(--foreground)];
+  @apply text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[var(--foreground)] text-balance;
 }
 
 @utility ui-section-title {
@@ -108,43 +194,43 @@ body {
 }
 
 @utility ui-button-primary {
-  @apply min-h-11 rounded-[14px] px-4 py-3 ui-button-text transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)];
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-[14px] px-4 py-3 ui-button-text disabled:opacity-50 disabled:shadow-none disabled:transform-none flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] shadow-[0_10px_24px_rgba(15,23,42,0.14)] hover:brightness-[1.03] active:brightness-[0.98];
 }
 
 @utility ui-button-secondary {
-  @apply min-h-11 rounded-[14px] px-4 py-3 ui-button-text transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)];
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-[14px] px-4 py-3 ui-button-text disabled:opacity-50 disabled:shadow-none disabled:transform-none flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] shadow-[var(--card-shadow-rest)] hover:bg-[var(--surface-strong)] hover:border-[color:color-mix(in_srgb,var(--foreground)_10%,var(--border))];
 }
 
 @utility ui-button-danger {
-  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--danger-fg)] border border-[var(--danger-border)];
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-[14px] px-4 py-3 text-base font-medium disabled:opacity-50 disabled:shadow-none disabled:transform-none flex items-center justify-center gap-2 bg-[var(--card)] text-[var(--danger-fg)] border border-[var(--danger-border)] shadow-[var(--card-shadow-rest)] hover:bg-[color:color-mix(in_srgb,var(--danger-bg)_70%,var(--card))];
 }
 
 @utility ui-button-danger-solid {
-  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2 bg-[var(--danger-fg)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)];
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-[14px] px-4 py-3 text-base font-medium disabled:opacity-50 disabled:shadow-none disabled:transform-none flex items-center justify-center gap-2 bg-[var(--danger-fg)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_rgba(127,29,29,0.24)] hover:brightness-[1.04];
 }
 
 @utility ui-button-ghost {
-  @apply min-h-11 rounded-[14px] px-4 py-3 text-base font-medium transition-opacity active:opacity-60 disabled:opacity-50 flex items-center justify-center gap-2 text-[var(--muted-foreground)];
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-[14px] px-4 py-3 text-base font-medium disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-2 text-[var(--muted-foreground)] hover:bg-[var(--surface-strong)] hover:text-[var(--foreground)];
 }
 
 @utility ui-input {
-  @apply w-full min-h-11 rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)];
+  @apply ui-focus-ring w-full min-h-11 rounded-[12px] px-4 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-out placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)];
 }
 
 @utility ui-textarea {
-  @apply w-full rounded-xl px-3 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] resize-none outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)] focus:ring-1 focus:ring-[var(--foreground)]/20;
+  @apply ui-focus-ring w-full rounded-xl px-3 py-3 text-base text-[var(--foreground)] bg-[var(--card)] border border-[var(--border)] resize-none outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-out placeholder:text-[var(--muted-foreground)] focus:border-[var(--foreground)] focus:ring-1 focus:ring-[var(--foreground)]/20;
 }
 
 @utility ui-chip {
-  @apply min-h-8 rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
+  @apply ui-focus-ring ui-pressable min-h-8 rounded-full px-3 py-1.5 text-xs font-medium hover:-translate-y-0;
 }
 
 @utility ui-chip-selected {
-  @apply bg-[var(--foreground)] text-[var(--background)];
+  @apply bg-[var(--foreground)] text-[var(--background)] shadow-[0_10px_20px_rgba(15,23,42,0.16)] hover:brightness-[1.03];
 }
 
 @utility ui-chip-unselected {
-  @apply bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)];
+  @apply bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] shadow-[var(--card-shadow-rest)] hover:bg-[var(--surface-strong)] hover:border-[color:color-mix(in_srgb,var(--foreground)_10%,var(--border))];
 }
 
 @utility ui-nav-label {
@@ -205,4 +291,19 @@ body {
 
 @utility text-responsive-body {
   @apply text-sm sm:text-base lg:text-lg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -55,7 +55,7 @@ export function RecipeTitleBlock({
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="ui-page-title">{displayName}</h1>
           {hasManualEdits && (
-            <button onClick={onOpenEditHistory} className="ui-badge ui-badge-info active:opacity-70">
+            <button onClick={onOpenEditHistory} className="ui-focus-ring ui-pressable ui-badge ui-badge-info">
               v{versionN} edited
             </button>
           )}
@@ -67,7 +67,7 @@ export function RecipeTitleBlock({
           {shareToken && !isEditing && (
             <button
               onClick={onOpenShare}
-              className="ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)] active:opacity-70"
+              className="ui-focus-ring ui-pressable ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-[var(--foreground)]/14"
             >
               <svg className="size-2.5" viewBox="0 0 10 10" fill="none">
                 <path d="M7.2 6.9C6.87 6.9 6.59 7.03 6.37 7.24L3.68 5.72C3.7 5.61 3.71 5.49 3.71 5.37C3.71 5.25 3.7 5.13 3.68 5.02L6.34 3.52C6.56 3.74 6.86 3.87 7.2 3.87C7.91 3.87 8.48 3.3 8.48 2.59C8.48 1.88 7.91 1.31 7.2 1.31C6.49 1.31 5.92 1.88 5.92 2.59C5.92 2.71 5.93 2.83 5.95 2.94L3.29 4.44C3.07 4.22 2.77 4.09 2.43 4.09C1.72 4.09 1.15 4.66 1.15 5.37C1.15 6.08 1.72 6.65 2.43 6.65C2.77 6.65 3.07 6.52 3.29 6.3L5.98 7.82C5.96 7.93 5.95 8.05 5.95 8.17C5.95 8.86 6.51 9.42 7.2 9.42C7.89 9.42 8.45 8.86 8.45 8.17C8.45 7.48 7.89 6.9 7.2 6.9Z" fill="currentColor" />
@@ -84,7 +84,7 @@ export function RecipeTitleBlock({
           <p className="ui-body-muted mt-0.5">{recipe.bean_info.roaster}</p>
         )}
         {recipe.parent_recipe_id && !isEditing && (
-          <button onClick={onOpenParentRecipe} className="flex items-center gap-1 mt-1 ui-body-muted active:opacity-60">
+          <button onClick={onOpenParentRecipe} className="ui-focus-ring ui-pressable mt-1 flex items-center gap-1 rounded-md ui-body-muted hover:text-[var(--foreground)]">
             <svg className="size-3" viewBox="0 0 12 12" fill="none">
               <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -165,7 +165,7 @@ export function RecipeViewGrindSettings({
 
       <button
         onClick={() => setSecondaryGrindersOpen(!secondaryGrindersOpen)}
-        className="flex items-center justify-between w-full py-2 text-left mt-2"
+        className="ui-focus-ring ui-pressable mt-2 flex w-full items-center justify-between rounded-xl py-2 text-left"
       >
         <span className="ui-overline normal-case tracking-normal font-medium">See more grinders</span>
         <svg
@@ -301,14 +301,14 @@ export function ShareSheet({
   if (!open || !shareToken) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 pb-safe sm:pb-0 lg:pl-56" onClick={onClose}>
-      <div className="bg-[var(--card)] rounded-t-3xl sm:rounded-3xl w-full max-w-sm px-6 pt-6 pb-10" onClick={event => event.stopPropagation()}>
+    <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56" onClick={onClose}>
+      <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm" onClick={event => event.stopPropagation()}>
         <h3 className="ui-sheet-title mb-1">Share Recipe</h3>
         <p className="ui-sheet-body mb-4">Anyone with this link can view and clone your recipe.</p>
 
         <div className="flex items-center gap-2 bg-[var(--background)] rounded-xl px-3 py-2.5 mb-4">
           <p className="flex-1 ui-meta truncate">{shareUrl}</p>
-          <button onClick={onCopy} className="ui-meta font-semibold text-[var(--foreground)] shrink-0 active:opacity-60">
+          <button onClick={onCopy} className="ui-focus-ring ui-pressable rounded-md px-2 py-1 ui-meta font-semibold text-[var(--foreground)] shrink-0 hover:bg-[var(--card)]">
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
@@ -338,8 +338,8 @@ export function EditHistorySheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 pb-safe sm:pb-0 lg:pl-56" onClick={onClose}>
-      <div className="bg-[var(--card)] rounded-t-3xl sm:rounded-3xl w-full max-w-sm px-6 pt-6 pb-10 max-h-[70vh] overflow-y-auto" onClick={event => event.stopPropagation()}>
+    <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56" onClick={onClose}>
+      <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm max-h-[70vh] overflow-y-auto" onClick={event => event.stopPropagation()}>
         <h3 className="ui-sheet-title mb-4">Edit History</h3>
         <div className="flex flex-col gap-3">
           {manualEditRounds.map(edit => (
