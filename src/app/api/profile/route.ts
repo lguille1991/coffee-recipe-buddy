@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { syncProfileDisplayNameFromAuth } from '@/lib/auth-profile'
 import { createClient } from '@/lib/supabase/server'
 import { UpdateProfileRequestSchema } from '@/types/recipe'
 
@@ -8,6 +9,8 @@ export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await syncProfileDisplayNameFromAuth(supabase, user)
 
   const { data, error } = await supabase
     .from('profiles')

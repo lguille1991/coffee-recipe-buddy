@@ -19,7 +19,7 @@ Requires `OPENROUTER_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPA
 
 ## Architecture
 
-**Coffee Recipe Buddy** (package name: `brygg`) is a mobile-first Next.js 16 (App Router) coffee recipe app.
+**Coffee Recipe Buddy** (package name: `crp`) is a mobile-first Next.js 16 (App Router) coffee recipe app.
 
 ### User flows
 
@@ -48,6 +48,7 @@ State is passed between pages via `sessionStorage`. No global state manager.
 Auth, recipe storage, and sharing all use Supabase (Postgres + Auth + Storage).
 
 - **Auth**: email/password + Google OAuth via Supabase Auth; session via `@supabase/ssr` with httpOnly cookies
+- **Google profile sync**: Google OAuth names are copied from Supabase auth metadata into `profiles.display_name` when the profile row is blank
 - **`recipes` table**: stores full recipe JSON (`original_recipe_json`, `current_recipe_json`), bean info, feedback history, image URL, schema version, notes, archived flag
 - **`profiles` table**: display name, default volume, temperature unit preference
 - **`shared_recipes` table**: public share token → snapshot JSON + owner metadata
@@ -82,7 +83,8 @@ Supabase client setup:
 | `GET /api/profile` | Required | Get user preferences |
 | `PATCH /api/profile` | Required | Update preferences |
 
-LLM routes use OpenRouter (OpenAI-compatible SDK, `baseURL: https://openrouter.ai/api/v1`). `POST /api/recipes/[id]/auto-adjust` tries `google/gemma-4-31b-it:free` first and falls back to `google/gemini-2.0-flash-001`; the other LLM routes remain on `google/gemini-2.0-flash-001`.
+LLM routes use OpenRouter (OpenAI-compatible SDK, `baseURL: https://openrouter.ai/api/v1`). `POST /api/recipes/[id]/auto-adjust` tries `google/gemma-4-31b-it:free` first and falls back to `openai/gpt-5-nano`; the other LLM routes remain on `google/gemini-2.0-flash-001`.
+OpenRouter request attribution and analytics metadata are centralized in `src/lib/openrouter.ts`; use that helper instead of constructing ad hoc OpenRouter clients in route handlers.
 
 ### Key lib modules
 
@@ -94,6 +96,8 @@ LLM routes use OpenRouter (OpenAI-compatible SDK, `baseURL: https://openrouter.a
 - `src/lib/prompt-builder.ts` — builds system/user prompts for both LLM API routes.
 - `src/lib/recipe-validator.ts` — validates `Recipe` JSON and builds retry prompts.
 - `src/lib/image-compressor.ts` — client-side image compression before upload.
+- `src/lib/openrouter.ts` — shared OpenRouter client factory, referer/title headers, authenticated and guest analytics user IDs.
+- `src/lib/auth-profile.ts` — syncs `profiles.display_name` from Supabase auth metadata for Google/email auth users.
 
 ### Hooks
 

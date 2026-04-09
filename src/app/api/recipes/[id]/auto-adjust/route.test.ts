@@ -106,7 +106,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(body.recipe.grind.k_ultra.starting_point).toBe('84 clicks')
   })
 
-  it('falls back to Gemini after Gemma exhausts invalid JSON retries', async () => {
+  it('falls back to GPT-5 Nano after Gemma exhausts invalid JSON retries', async () => {
     createCompletionMock
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 2' } }] })
@@ -125,7 +125,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
       'google/gemma-4-31b-it:free',
       'google/gemma-4-31b-it:free',
       'google/gemma-4-31b-it:free',
-      'google/gemini-2.0-flash-001',
+      'openai/gpt-5-nano',
     ])
     expect(warnMock).toHaveBeenCalledTimes(1)
     expect(body.recipe.display_name).toBe(BASE_RECIPE.display_name)

@@ -135,7 +135,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           <p className="ui-body-muted mt-1">
             Shared by{' '}
             <span className="font-medium text-[var(--muted-foreground)]">
-              {snapshot.owner_display_name ?? 'a Brygg user'}
+              {snapshot.owner_display_name ?? 'a Coffee Recipe Buddy user'}
             </span>
             {' · '}
             {new Date(data.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -251,7 +251,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="ui-card-title truncate">
-                          {comment.author_display_name ?? 'Brygg user'}
+                          {comment.author_display_name ?? 'Coffee Recipe Buddy user'}
                         </span>
                         <span className="ui-meta shrink-0">
                           {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

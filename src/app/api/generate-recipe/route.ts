@@ -4,11 +4,13 @@ import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
 import { parseKUltraRange, kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2 } from '@/lib/grinder-converter'
-
-const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-})
+import { createClient } from '@/lib/supabase/server'
+import {
+  attachGuestOpenRouterCookie,
+  buildAuthenticatedOpenRouterUserId,
+  createOpenRouterClient,
+  getGuestOpenRouterUserId,
+} from '@/lib/openrouter'
 
 const MAX_RETRIES = 2
 const DEFAULT_MAX_TOKENS = 3000
@@ -29,6 +31,14 @@ function isCreditLimitError(error: unknown): boolean {
 
 export async function POST(req: NextRequest) {
   try {
+    const client = createOpenRouterClient(req)
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const guestTracking = user ? null : getGuestOpenRouterUserId(req)
+    const openRouterUser = user
+      ? buildAuthenticatedOpenRouterUserId(user)
+      : guestTracking!.userId
+
     const body = await req.json()
     const { method, bean, targetVolumeMl } = body
 
@@ -44,11 +54,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { system, user } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
+    const { system, user: userPrompt } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: system },
-      { role: 'user', content: user },
+      { role: 'user', content: userPrompt },
     ]
 
     let lastErrors: string[] = []
@@ -62,6 +72,7 @@ export async function POST(req: NextRequest) {
         const response = await client.chat.completions.create({
           model: 'google/gemini-2.0-flash-001',
           max_tokens: maxTokens,
+          user: openRouterUser,
           messages,
         })
 
@@ -115,7 +126,10 @@ export async function POST(req: NextRequest) {
           recipe.grind.baratza_encore_esp = { ...recipe.grind.baratza_encore_esp, ...baratza }
           recipe.grind.timemore_c2 = { ...recipe.grind.timemore_c2, ...c2 }
         }
-        return NextResponse.json(recipe)
+        return attachGuestOpenRouterCookie(
+          NextResponse.json(recipe),
+          guestTracking?.newGuestId ?? null,
+        )
       }
 
       lastErrors = validation.errors
