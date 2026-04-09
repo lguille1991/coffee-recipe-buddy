@@ -1,6 +1,6 @@
 {
   "name": "brygg",
-  "version": "1.4.20",
+  "version": "1.4.24",
   "private": true,
   "scripts": {
     "dev": "next dev",

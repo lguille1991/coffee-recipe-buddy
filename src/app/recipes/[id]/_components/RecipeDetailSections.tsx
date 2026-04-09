@@ -35,6 +35,7 @@ export function RecipeTitleBlock({
 }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
   const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
+  const beanProcess = recipe.bean_info.process?.trim()
 
   return (
     <>
@@ -76,6 +77,9 @@ export function RecipeTitleBlock({
           )}
         </div>
         <p className="ui-body-muted mt-0.5">{beanName}</p>
+        {beanProcess && (
+          <p className="ui-body-muted mt-0.5 capitalize">{beanProcess}</p>
+        )}
         {recipe.bean_info.roaster && (
           <p className="ui-body-muted mt-0.5">{recipe.bean_info.roaster}</p>
         )}
