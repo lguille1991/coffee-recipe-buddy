@@ -8,6 +8,17 @@ This project uses `@supabase/ssr`. Do **not** use `@supabase/auth-helpers-nextjs
 - `src/lib/supabase/client.ts` for browser components
 - `src/lib/supabase/server.ts` for API routes and Server Components
 
+Google OAuth names should be preserved through `src/lib/auth-profile.ts`. If you touch profile bootstrap or auth callback flows, keep `profiles.display_name` synced from Supabase auth metadata when it is blank.
+
+# OpenRouter
+
+OpenRouter request setup is centralized in `src/lib/openrouter.ts`. Do not instantiate ad hoc OpenRouter clients in route handlers.
+
+Use the shared helper so requests consistently include:
+- app attribution headers (`HTTP-Referer`, `X-Title`)
+- authenticated tracking IDs as `crp:<supabase-user-id>`
+- guest tracking IDs as `guest:<persistent-cookie-id>`
+
 Route handlers receive `params` as a `Promise` — always `await params` before destructuring.
 
 # Route handler params

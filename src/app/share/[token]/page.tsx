@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const beanName = snapshot.bean_info.bean_name ?? snapshot.bean_info.origin ?? 'a coffee'
   const sharer = snapshot.owner_display_name ? ` by ${snapshot.owner_display_name}` : ''
   const title = `${methodName} — ${beanName}`
-  const description = `Coffee recipe shared${sharer} on Brygg. ${snapshot.bean_info.process ?? ''} ${snapshot.bean_info.roast_level ?? ''} — ${snapshot.current_recipe_json.parameters.coffee_g}g at ${snapshot.current_recipe_json.parameters.temperature_c}°C.`.trim()
+  const description = `Coffee recipe shared${sharer} on Coffee Recipe Buddy. ${snapshot.bean_info.process ?? ''} ${snapshot.bean_info.roast_level ?? ''} — ${snapshot.current_recipe_json.parameters.coffee_g}g at ${snapshot.current_recipe_json.parameters.temperature_c}°C.`.trim()
 
   return {
     title,

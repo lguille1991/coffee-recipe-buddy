@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
 import { buildExtractionPrompt } from '@/lib/prompt-builder'
+import { createClient } from '@/lib/supabase/server'
+import {
+  attachGuestOpenRouterCookie,
+  buildAuthenticatedOpenRouterUserId,
+  createOpenRouterClient,
+  getGuestOpenRouterUserId,
+} from '@/lib/openrouter'
 import { ExtractionResponseSchema } from '@/types/recipe'
-
-const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-})
 
 const KNOWN_VARIETY_PATTERNS: Array<[RegExp, string]> = [
   [/\bgeisha\b/i, 'Geisha'],
@@ -35,6 +36,14 @@ function inferVarietyFromText(...values: Array<string | null | undefined>): stri
 
 export async function POST(req: NextRequest) {
   try {
+    const client = createOpenRouterClient(req)
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const guestTracking = user ? null : getGuestOpenRouterUserId(req)
+    const openRouterUser = user
+      ? buildAuthenticatedOpenRouterUserId(user)
+      : guestTracking!.userId
+
     const formData = await req.formData()
     const imageFile = formData.get('image') as File | null
 
@@ -52,6 +61,7 @@ export async function POST(req: NextRequest) {
     const response = await client.chat.completions.create({
       model: 'google/gemini-2.0-flash-001',
       max_tokens: 1024,
+      user: openRouterUser,
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -110,7 +120,10 @@ export async function POST(req: NextRequest) {
       data.bean.bean_name = data.bean.variety
     }
 
-    return NextResponse.json(data)
+    return attachGuestOpenRouterCookie(
+      NextResponse.json(data),
+      guestTracking?.newGuestId ?? null,
+    )
   } catch (err) {
     console.error('[extract-bean]', err)
     return NextResponse.json(

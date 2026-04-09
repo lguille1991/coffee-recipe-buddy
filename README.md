@@ -2,6 +2,8 @@
 
 Mobile-first coffee recipe generation and recipe tracking built with Next.js 16, React 19, Tailwind CSS v4, Supabase SSR auth/storage, and OpenRouter-backed LLM routes.
 
+Package/app identifier: `crp`
+
 ## What it does
 
 - Scan a coffee bag image and extract bean details
@@ -69,6 +71,7 @@ This repo uses `@supabase/ssr`, not `@supabase/auth-helpers-nextjs`.
 - Browser/client code: `src/lib/supabase/client.ts`
 - Server Components and route handlers: `src/lib/supabase/server.ts`
 - Session refresh middleware: `src/lib/supabase/middleware.ts`
+- Google OAuth names are preserved into `profiles.display_name` from Supabase auth metadata when available
 
 ## Key routes
 
@@ -84,6 +87,15 @@ This repo uses `@supabase/ssr`, not `@supabase/auth-helpers-nextjs`.
 - `DELETE /api/share/[token]/comments/[id]`
 - `POST /api/share/[token]/clone`
 - `GET|PATCH /api/profile`
+
+## OpenRouter tracking
+
+All OpenRouter-backed routes send app attribution headers and a stable `user` identifier for usage analytics.
+
+- Authenticated requests use `crp:<supabase-user-id>`
+- Guest requests use `guest:<persistent-cookie-id>`
+
+This is handled centrally in `src/lib/openrouter.ts`.
 
 ## Project structure
 

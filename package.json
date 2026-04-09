@@ -1,6 +1,6 @@
 {
-  "name": "brygg",
-  "version": "1.4.29",
+  "name": "crp",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
