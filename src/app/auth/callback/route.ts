@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       const redirectUrl = pendingRecipe === 'true'
-        ? `${origin}${returnTo}?pendingRecipe=true`
+        ? `${origin}/auth?returnTo=${encodeURIComponent(returnTo)}&pendingRecipe=true`
         : `${origin}${returnTo}`
       return NextResponse.redirect(redirectUrl)
     }

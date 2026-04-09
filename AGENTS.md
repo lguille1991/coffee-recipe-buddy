@@ -32,6 +32,10 @@ export async function GET(_req: Request, { params }: Params) {
 
 **Skip for**: Docs-only updates, test additions, dependency bumps with no API changes.
 
+# Commit Message Suggestion
+
+When an AI agent finishes implementing a plan, it MUST always include at least one concise suggested commit message in its final handoff.
+
 # Plan Mode Output
 
 When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.

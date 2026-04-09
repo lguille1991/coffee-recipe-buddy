@@ -10,13 +10,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start dev server (Turbopack)
 npm run build    # Production build
 npm run lint     # ESLint
+npm run test     # Vitest
 ```
 
 Requires `OPENROUTER_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` (see `.env.example`).
 
+`NEXT_PUBLIC_APP_VERSION` is optional but used by the settings page to display the in-app version label.
+
 ## Architecture
 
-**QAfe** is a mobile-first Next.js 16 (App Router) coffee recipe app.
+**Coffee Recipe Buddy** (package name: `brygg`) is a mobile-first Next.js 16 (App Router) coffee recipe app.
 
 ### User flows
 
@@ -133,6 +136,10 @@ The app version is stored in `package.json`. **Always bump the version before co
 **When to skip**: Documentation-only changes (README updates), test additions, dependency updates with no API changes.
 
 **How to bump**: Edit `package.json` directly and update the `"version"` field.
+
+## Commit Message Suggestion
+
+When an AI agent finishes implementing a plan, it must always include at least one concise suggested commit message in its final handoff.
 
 ## Plan Mode Output
 

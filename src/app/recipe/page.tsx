@@ -344,9 +344,8 @@ export default function RecipePage() {
       }
       const data = await res.json()
       setSavedRecipeId(data.id)
-      setSavedMessage('Recipe saved to your library.')
       setLastSavedRound(feedbackRound)
-      setTimeout(() => setSavedMessage(null), 2000)
+      router.push(`/recipes/${data.id}`)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed')
     } finally {
