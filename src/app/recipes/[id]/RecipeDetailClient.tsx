@@ -16,7 +16,6 @@ import {
   parseGrinderValueForEdit,
   parseKUltraRange,
 } from '@/lib/grinder-converter'
-import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
 import type { ManualEditRound, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import {
@@ -169,19 +168,8 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
     router.replace('/recipes')
   }
 
-  function handleBrewAgain() {
-    const finalRecipe = freshnessAdj && !freshnessIgnored ? freshnessAdj.adjustedRecipe : currentRecipe
-    const migratedOriginal = recipe.original_recipe_json as RecipeWithAdjustment
-
-    recipeSessionStorage.setRecipe(finalRecipe)
-    recipeSessionStorage.setRecipeOriginal(migratedOriginal)
-    recipeSessionStorage.setConfirmedBean(recipe.bean_info)
-    recipeSessionStorage.setFeedbackRound(0)
-    recipeSessionStorage.setAdjustmentHistory(feedbackRounds as never[])
-    recipeSessionStorage.setManualEditHistory(manualEditRounds)
-    recipeSessionStorage.setRebrewRecipeId(id)
-
-    router.push('/recipe')
+  function handleOpenBrewMode() {
+    router.push(`/recipes/${id}/brew`)
   }
 
   async function handleSaveEdit() {
@@ -751,7 +739,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <button onClick={handleBrewAgain} className="w-full ui-button-primary font-semibold">
+              <button onClick={handleOpenBrewMode} className="w-full ui-button-primary font-semibold">
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                   <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M4.5 10C4.5 12 5.5 13 8 13C10.5 13 11.5 12 11.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />

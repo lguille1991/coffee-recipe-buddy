@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Bookmark, Save } from 'lucide-react'
+import { ArrowLeft, Bookmark } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
@@ -20,9 +20,8 @@ import {
   RecipeFeedbackSection,
   RecipeGrindSettingsCard,
   RecipeParametersSection,
-  RecipeStepsSection,
+  StaticRecipeStepsSection,
 } from './_components/RecipeSessionSections'
-import { useWakeLockTimer } from './_hooks/useWakeLockTimer'
 
 export default function RecipeSessionClient() {
   const router = useRouter()
@@ -35,10 +34,7 @@ export default function RecipeSessionClient() {
   const [feedbackRound, setFeedbackRound] = useState(0)
   const [adjustmentHistory, setAdjustmentHistory] = useState<AdjustmentMetadata[]>([])
   const [saving, setSaving] = useState(false)
-  const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [rebrewId, setRebrewId] = useState<string | null>(null)
-  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null)
   const [lastSavedRound, setLastSavedRound] = useState(-1)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -47,20 +43,6 @@ export default function RecipeSessionClient() {
   const [selectedSymptom, setSelectedSymptom] = useState<Symptom | null>(null)
   const [adjusting, setAdjusting] = useState(false)
   const [adjustError, setAdjustError] = useState<string | null>(null)
-
-  const {
-    activeStepIndex,
-    elapsedSeconds,
-    getStepProgress,
-    resetTimer,
-    startTimer,
-    stopTimer,
-    timerOverrun,
-    timerRunning,
-  } = useWakeLockTimer(
-    recipe?.parameters.total_time ?? '0:00',
-    recipe?.steps.map(step => step.time) ?? [],
-  )
 
   function navigateWithoutGuard(href: string) {
     setGuard(null)
@@ -76,7 +58,6 @@ export default function RecipeSessionClient() {
       return
     }
 
-    resetTimer()
     setRecipe(storedRecipe)
 
     const storedOriginalRecipe = recipeSessionStorage.getRecipeOriginal()
@@ -89,13 +70,7 @@ export default function RecipeSessionClient() {
 
     setFeedbackRound(recipeSessionStorage.getFeedbackRound())
     setAdjustmentHistory(recipeSessionStorage.getAdjustmentHistory<AdjustmentMetadata>())
-
-    const storedRebrewId = recipeSessionStorage.getRebrewRecipeId()
-    if (storedRebrewId) {
-      setRebrewId(storedRebrewId)
-      setLastSavedRound(0)
-    }
-  }, [resetTimer, router])
+  }, [router])
 
   useEffect(() => {
     if (feedbackRound > lastSavedRound) {
@@ -114,7 +89,6 @@ export default function RecipeSessionClient() {
   async function handleSave() {
     if (!recipe || !originalRecipe || saving) return
 
-    const effectiveId = rebrewId ?? savedRecipeId
     const feedbackHistoryPayload = adjustmentHistory.map((adjustment, index) => ({
       type: 'feedback' as const,
       round: index + 1,
@@ -126,36 +100,6 @@ export default function RecipeSessionClient() {
 
     setSaving(true)
     setSaveError(null)
-
-    if (effectiveId) {
-      const manualEdits = recipeSessionStorage.getManualEditHistory<object>()
-
-      try {
-        const response = await fetch(`/api/recipes/${effectiveId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            current_recipe_json: recipe,
-            feedback_history: [...manualEdits, ...feedbackHistoryPayload],
-          }),
-        })
-
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error ?? 'Update failed')
-        }
-
-        setSavedMessage('Recipe updated.')
-        setLastSavedRound(feedbackRound)
-        setTimeout(() => setSavedMessage(null), 2000)
-      } catch (error) {
-        setSaveError(error instanceof Error ? error.message : 'Update failed')
-      } finally {
-        setSaving(false)
-      }
-
-      return
-    }
 
     const bean = recipeSessionStorage.getConfirmedBean()
     if (!bean) {
@@ -191,7 +135,6 @@ export default function RecipeSessionClient() {
       }
 
       const data = await response.json()
-      setSavedRecipeId(data.id)
       setLastSavedRound(feedbackRound)
       navigateWithoutGuard(`/recipes/${data.id}`)
     } catch (error) {
@@ -215,7 +158,6 @@ export default function RecipeSessionClient() {
     setShowFeedback(false)
     setSelectedSymptom(null)
     setLastSavedRound(-1)
-    resetTimer()
   }
 
   async function handleAdjust() {
@@ -273,7 +215,6 @@ export default function RecipeSessionClient() {
   const adjustment = recipe.adjustment_applied
   const maxRoundsReached = feedbackRound >= 3
   const hasUnsavedChanges = feedbackRound > lastSavedRound
-  const saveIcon = rebrewId ?? savedRecipeId ? <Save size={20} /> : <Bookmark size={20} />
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -306,7 +247,7 @@ export default function RecipeSessionClient() {
             {saving ? (
               <div className="w-5 h-5 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             ) : (
-              saveIcon
+              <Bookmark size={20} />
             )}
           </button>
         )}
@@ -321,12 +262,6 @@ export default function RecipeSessionClient() {
           </p>
           <p className="ui-body-muted mt-1.5 leading-relaxed">{recipe.objective}</p>
         </div>
-
-        {savedMessage && (
-          <div className="ui-alert-success text-sm font-medium">
-            {savedMessage}
-          </div>
-        )}
 
         {saveError && (
           <div className="ui-alert-danger text-sm">
@@ -365,15 +300,9 @@ export default function RecipeSessionClient() {
           recipe={recipe}
         />
 
-        <RecipeStepsSection
-          activeStepIndex={activeStepIndex}
+        <StaticRecipeStepsSection
           adjustment={adjustment}
-          elapsedSeconds={elapsedSeconds}
-          getStepProgress={getStepProgress}
-          onToggleTimer={timerRunning ? stopTimer : startTimer}
           recipe={recipe}
-          timerOverrun={timerOverrun}
-          timerRunning={timerRunning}
         />
 
         <RecipeDetailsPanels recipe={recipe} />

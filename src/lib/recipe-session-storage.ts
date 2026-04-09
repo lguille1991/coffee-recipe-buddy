@@ -15,7 +15,6 @@ const STORAGE_KEYS = {
   pendingSaveRecipe: 'pending_save_recipe',
   recipe: 'recipe',
   recipeOriginal: 'recipe_original',
-  rebrewRecipeId: 'rebrew_recipe_id',
   selectedMethod: 'selectedMethod',
   targetVolumeMl: 'targetVolumeMl',
 } as const
@@ -86,9 +85,6 @@ export const recipeSessionStorage = {
   clearRecipeOriginal() {
     remove(STORAGE_KEYS.recipeOriginal)
   },
-  clearRebrewRecipeId() {
-    remove(STORAGE_KEYS.rebrewRecipeId)
-  },
   clearTargetVolumeMl() {
     remove(STORAGE_KEYS.targetVolumeMl)
   },
@@ -121,9 +117,6 @@ export const recipeSessionStorage = {
   },
   getRecipeOriginal() {
     return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal)
-  },
-  getRebrewRecipeId() {
-    return readString(STORAGE_KEYS.rebrewRecipeId)
   },
   getSelectedMethod<T>() {
     return readJson<T>(STORAGE_KEYS.selectedMethod)
@@ -160,9 +153,6 @@ export const recipeSessionStorage = {
   },
   setRecipeOriginal(value: RecipeWithAdjustment) {
     writeJson(STORAGE_KEYS.recipeOriginal, value)
-  },
-  setRebrewRecipeId(value: string) {
-    writeString(STORAGE_KEYS.rebrewRecipeId, value)
   },
   setSelectedMethod<T>(value: T) {
     writeJson(STORAGE_KEYS.selectedMethod, value)

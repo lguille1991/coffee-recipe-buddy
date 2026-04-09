@@ -68,7 +68,6 @@ export default function MethodsPage() {
       recipeSessionStorage.clearRecipeOriginal()
       recipeSessionStorage.clearFeedbackRound()
       recipeSessionStorage.clearAdjustmentHistory()
-      recipeSessionStorage.clearRebrewRecipeId()
       recipeSessionStorage.setSelectedMethod(storedRec)
       router.push('/recipe')
     } catch (err) {
