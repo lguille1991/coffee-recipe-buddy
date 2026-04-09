@@ -24,8 +24,8 @@ export default function ConfirmSheet({
   if (!open) return null
 
   return (
-    <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56">
-      <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm">
+    <div className="ui-sheet-overlay items-end overflow-y-auto px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:items-center sm:px-4 sm:py-4 lg:pl-56">
+      <div className="ui-sheet-panel max-h-[calc(100dvh-1.5rem)] max-w-sm overflow-y-auto rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl">
         <h3 className="ui-sheet-title mb-1">{title}</h3>
         <p className="ui-sheet-body mb-6">{message}</p>
         <div className="flex flex-col gap-2">

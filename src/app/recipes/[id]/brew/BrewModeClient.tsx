@@ -204,7 +204,7 @@ export default function BrewModeClient({ id, recipe }: BrewModeClientProps) {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 lg:left-56">
-        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-20 lg:pb-6 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
+        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-[calc(env(safe-area-inset-bottom)+5.3125rem)] lg:pb-6 pt-3 bg-[var(--background)]/95 backdrop-blur-sm border-t border-[var(--border)]">
           <button
             onClick={handleOpenRecipeDetails}
             className="w-full ui-button-secondary"

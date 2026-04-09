@@ -32,6 +32,7 @@ import {
 import {
   buildLiveGrindSettings,
   createEditDraft,
+  hasEditDraftChanges,
   isFeedbackRound,
   isManualEditRound,
   recomputeAccumulated,
@@ -118,20 +119,6 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
   }, [shareToken])
 
   useEffect(() => {
-    if (isEditing) {
-      setGuard(href => {
-        setPendingNavHref(href)
-        setShowDiscardConfirm(true)
-        return true
-      })
-    } else {
-      setGuard(null)
-    }
-
-    return () => setGuard(null)
-  }, [isEditing, setGuard])
-
-  useEffect(() => {
     return () => {
       if (notesDebounceRef.current) {
         clearTimeout(notesDebounceRef.current)
@@ -151,6 +138,25 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
     if (!isEditing || !editDraft) return null
     return buildLiveGrindSettings(recipe, preferredGrinder, editDraft)
   }, [editDraft, isEditing, preferredGrinder, recipe])
+
+  const hasUnsavedEditChanges = useMemo(() => {
+    if (!isEditing || !editDraft) return false
+    return hasEditDraftChanges(recipe, editDraft, tempUnit, preferredGrinder)
+  }, [editDraft, isEditing, preferredGrinder, recipe, tempUnit])
+
+  useEffect(() => {
+    if (isEditing && hasUnsavedEditChanges) {
+      setGuard(href => {
+        setPendingNavHref(href)
+        setShowDiscardConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+
+    return () => setGuard(null)
+  }, [hasUnsavedEditChanges, isEditing, setGuard])
 
   function enterEditMode() {
     setEditDraft(createEditDraft(recipe, tempUnit, preferredGrinder))
@@ -448,7 +454,11 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
           <button
             onClick={() => {
               if (isEditing) {
-                setShowDiscardConfirm(true)
+                if (hasUnsavedEditChanges) {
+                  setShowDiscardConfirm(true)
+                } else {
+                  exitEditMode()
+                }
               } else {
                 router.back()
               }
@@ -492,7 +502,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
         )}
       </div>
 
-      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-52 overflow-y-auto ui-animate-enter-soft">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-[calc(env(safe-area-inset-bottom)+17rem)] lg:pb-52 overflow-y-auto ui-animate-enter-soft">
         <RecipeTitleBlock
           commentCount={commentCount}
           hasFeedbackAdjustments={hasFeedbackAdjustments}
@@ -742,7 +752,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 lg:left-56">
-        <div className="ui-sticky-footer w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-20 lg:pb-6 pt-3">
+        <div className="ui-sticky-footer w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-6 pt-3">
           {isEditing ? (
             <div className="flex flex-col gap-2">
               <button onClick={handleSaveEdit} disabled={isSavingEdit} className="w-full ui-button-primary font-semibold">
@@ -750,7 +760,17 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                   <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
                 ) : 'Save'}
               </button>
-              <button onClick={() => setShowDiscardConfirm(true)} disabled={isSavingEdit} className="w-full ui-button-secondary text-[var(--muted-foreground)]">
+              <button
+                onClick={() => {
+                  if (hasUnsavedEditChanges) {
+                    setShowDiscardConfirm(true)
+                    return
+                  }
+                  exitEditMode()
+                }}
+                disabled={isSavingEdit}
+                className="w-full ui-button-secondary text-[var(--muted-foreground)]"
+              >
                 Discard
               </button>
             </div>
@@ -771,7 +791,10 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                 </svg>
                 Edit Recipe
               </button>
-              <button onClick={() => router.push(`/recipes/${id}/auto-adjust`)} className="w-full ui-button-ghost">
+              <button
+                onClick={() => router.push(`/recipes/${id}/auto-adjust`)}
+                className="w-full ui-button-secondary"
+              >
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2L9.5 6H14L10.5 8.5L12 12.5L8 10L4 12.5L5.5 8.5L2 6H6.5L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

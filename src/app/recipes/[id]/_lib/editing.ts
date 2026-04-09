@@ -120,6 +120,34 @@ export function createEditDraft(recipe: SavedRecipe, tempUnit: 'C' | 'F', prefer
   }
 }
 
+function normalizeDraftForComparison(draft: EditDraft) {
+  return {
+    coffee_g: draft.coffee_g,
+    water_g: draft.water_g,
+    temperature_display: draft.temperature_display,
+    total_time: draft.total_time,
+    grind_preferred_value: draft.grind_preferred_value,
+    steps: draft.steps.map(step => ({
+      step: step.step,
+      time: step.time,
+      action: step.action,
+      water_poured_g: step.water_poured_g,
+      water_accumulated_g: step.water_accumulated_g,
+    })),
+  }
+}
+
+export function hasEditDraftChanges(
+  recipe: SavedRecipe,
+  draft: EditDraft,
+  tempUnit: 'C' | 'F',
+  preferredGrinder: GrinderId,
+) {
+  const originalDraft = createEditDraft(recipe, tempUnit, preferredGrinder)
+
+  return JSON.stringify(normalizeDraftForComparison(draft)) !== JSON.stringify(normalizeDraftForComparison(originalDraft))
+}
+
 export function buildLiveGrindSettings(recipe: SavedRecipe, preferredGrinder: GrinderId, draft: EditDraft) {
   const currentRecipe = recipe.current_recipe_json
   if (draft.grind_preferred_value === '') {
