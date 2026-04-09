@@ -4,6 +4,7 @@ import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BeanProfile } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
+import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_OPTIONS = [
@@ -165,17 +166,17 @@ export default function ManualPage() {
       // range_logic will note this assumption in recipe generation
     }
 
-    sessionStorage.setItem('confirmedBean', JSON.stringify(bean))
+    recipeSessionStorage.setConfirmedBean(bean)
 
     const vol = parseInt(targetVolume, 10)
     if (vol > 0) {
-      sessionStorage.setItem('targetVolumeMl', String(vol))
+      recipeSessionStorage.setTargetVolumeMl(vol)
     } else {
-      sessionStorage.removeItem('targetVolumeMl')
+      recipeSessionStorage.clearTargetVolumeMl()
     }
 
     const recs = recommendMethods(bean)
-    sessionStorage.setItem('methodRecommendations', JSON.stringify(recs))
+    recipeSessionStorage.setMethodRecommendations(recs)
 
     router.push('/methods')
   }

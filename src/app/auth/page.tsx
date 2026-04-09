@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 function AuthForm() {
   const router = useRouter()
@@ -22,10 +23,9 @@ function AuthForm() {
   async function savePendingRecipeIfNeeded() {
     if (pendingRecipe !== 'true') return null
 
-    const raw = sessionStorage.getItem('pending_save_recipe')
-    if (!raw) return null
+    const payload = recipeSessionStorage.getPendingSaveRecipe()
+    if (!payload) return null
 
-    const payload = JSON.parse(raw)
     const res = await fetch('/api/recipes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@ function AuthForm() {
     }
 
     const saved = await res.json()
-    sessionStorage.removeItem('pending_save_recipe')
+    recipeSessionStorage.clearPendingSaveRecipe()
     return saved.id as string
   }
 
