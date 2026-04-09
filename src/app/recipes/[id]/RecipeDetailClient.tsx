@@ -49,6 +49,12 @@ type RecipeDetailClientProps = {
   initialRecipe: SavedRecipe
 }
 
+function parseWholeNumberInput(value: string): number | '' {
+  if (value === '') return ''
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? '' : Math.max(0, parsed)
+}
+
 export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailClientProps) {
   const router = useRouter()
   const { setGuard } = useNavGuard()
@@ -177,6 +183,16 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
 
     setEditError(null)
     setStepError(null)
+
+    if (editDraft.temperature_display === '') {
+      setEditError('Temperature is required.')
+      return
+    }
+
+    if (editDraft.grind_preferred_value === '') {
+      setEditError('Grind setting is required.')
+      return
+    }
 
     if (!/^\d+:[0-5]\d(\s*[–-]\s*\d+:[0-5]\d)?$/.test(editDraft.total_time)) {
       setEditError('Brew time must be in m:ss format (e.g. 3:30) or a range (e.g. 3:30 – 4:00)')
@@ -415,6 +431,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
   const kUltraRange = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const isGrindOutOfRange = editDraft && kUltraRange
     ? (() => {
+        if (editDraft.grind_preferred_value === '') return false
         if (isQAirValueInvalid(preferredGrinder, editDraft.grind_preferred_value)) return false
         const currentClicks = grinderValueToKUltraClicks(preferredGrinder, editDraft.grind_preferred_value)
         return currentClicks < kUltraRange.low || currentClicks > kUltraRange.high
@@ -529,7 +546,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                       step={1}
                       value={editDraft.temperature_display}
                       onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
-                      onChange={event => setEditDraft(draft => draft ? { ...draft, temperature_display: Math.max(0, parseInt(event.target.value, 10) || draft.temperature_display) } : draft)}
+                      onChange={event => setEditDraft(draft => draft ? { ...draft, temperature_display: parseWholeNumberInput(event.target.value) } : draft)}
                       className="ui-input bg-[var(--background)] font-semibold px-3"
                     />
                   </label>
@@ -652,7 +669,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                   if (preferredGrinder === 'q_air') {
                     return { ...draft, grind_preferred_value: value }
                   }
-                  return { ...draft, grind_preferred_value: Math.max(0, parseInt(value, 10) || Number(draft.grind_preferred_value)) }
+                  return { ...draft, grind_preferred_value: parseWholeNumberInput(value) }
                 })}
                 preferredGrinder={preferredGrinder}
               />
