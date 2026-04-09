@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Camera, Upload } from 'lucide-react'
 import { compressImage } from '@/lib/image-compressor'
+import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 export default function ScanPage() {
   const router = useRouter()
@@ -28,7 +29,7 @@ export default function ScanPage() {
       }
 
       const data = await res.json()
-      sessionStorage.setItem('extractionResult', JSON.stringify(data))
+      recipeSessionStorage.setExtractionResult(data)
       router.push('/analysis')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')

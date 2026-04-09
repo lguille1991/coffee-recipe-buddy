@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MethodRecommendation, MethodId, METHOD_DISPLAY_NAMES } from '@/types/recipe'
+import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 const METHOD_ICONS: Record<string, string> = {
   v60: '▽',
@@ -28,21 +29,19 @@ export default function MethodsPage() {
   const [showOthers, setShowOthers] = useState(false)
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('methodRecommendations')
-    if (!raw) { router.replace('/scan'); return }
-    setRecommendations(JSON.parse(raw))
+    const storedRecommendations = recipeSessionStorage.getMethodRecommendations()
+    if (storedRecommendations.length === 0) { router.replace('/scan'); return }
+    setRecommendations(storedRecommendations)
   }, [router])
 
   async function selectMethod(method: string, displayName: string, rec?: MethodRecommendation) {
     if (selecting) return
     setSelecting(method)
 
-    const beanRaw = sessionStorage.getItem('confirmedBean')
-    if (!beanRaw) { router.replace('/analysis'); return }
+    const bean = recipeSessionStorage.getConfirmedBean()
+    if (!bean) { router.replace('/analysis'); return }
 
-    const bean = JSON.parse(beanRaw)
-    const volumeRaw = sessionStorage.getItem('targetVolumeMl')
-    const targetVolumeMl = volumeRaw ? parseInt(volumeRaw, 10) : undefined
+    const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined
 
     const storedRec: MethodRecommendation = rec ?? {
       method: method as MethodId,
@@ -65,12 +64,12 @@ export default function MethodsPage() {
       }
 
       const recipe = await res.json()
-      sessionStorage.setItem('recipe', JSON.stringify(recipe))
-      sessionStorage.removeItem('recipe_original')   // ensure fresh original is set on recipe page
-      sessionStorage.removeItem('feedback_round')    // clear stale feedback state
-      sessionStorage.removeItem('adjustment_history') // clear stale adjustment history
-      sessionStorage.removeItem('rebrew_recipe_id')  // not a rebrew
-      sessionStorage.setItem('selectedMethod', JSON.stringify(storedRec))
+      recipeSessionStorage.setRecipe(recipe)
+      recipeSessionStorage.clearRecipeOriginal()
+      recipeSessionStorage.clearFeedbackRound()
+      recipeSessionStorage.clearAdjustmentHistory()
+      recipeSessionStorage.clearRebrewRecipeId()
+      recipeSessionStorage.setSelectedMethod(storedRec)
       router.push('/recipe')
     } catch (err) {
       console.error(err)

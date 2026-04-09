@@ -1,0 +1,139 @@
+import {
+  kUltraRangeToBaratza,
+  kUltraRangeToQAir,
+  kUltraRangeToTimemoreC2,
+  parseGrinderValueForEdit,
+  parseKUltraRange,
+  grinderValueToKUltraClicks,
+  type GrinderEditValue,
+} from '@/lib/grinder-converter'
+import type {
+  FeedbackRound,
+  GrinderId,
+  ManualEditRound,
+  SavedRecipe,
+} from '@/types/recipe'
+import type { DraftStep } from '../SortableStepList'
+
+export type EditDraft = {
+  coffee_g: number
+  water_g: number
+  ratio_multiplier: number
+  scaledFromDose: boolean
+  scaledFromRatio: boolean
+  temperature_display: number
+  total_time: string
+  grind_preferred_value: GrinderEditValue
+  steps: DraftStep[]
+}
+
+export type AnyFeedbackRound = FeedbackRound | ManualEditRound
+
+export function isFeedbackRound(round: AnyFeedbackRound): round is FeedbackRound {
+  return !('type' in round) || round.type === 'feedback'
+}
+
+export function isManualEditRound(round: AnyFeedbackRound): round is ManualEditRound {
+  return 'type' in round && (round.type === 'manual_edit' || round.type === 'auto_adjust')
+}
+
+export function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
+  let accumulated = 0
+  return steps.map(step => {
+    accumulated = Math.round((accumulated + step.water_poured_g) * 10) / 10
+    return { ...step, water_accumulated_g: accumulated }
+  })
+}
+
+export function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater: number): DraftStep[] {
+  if (oldWater === 0 || oldWater === newWater) return steps
+
+  const scaled = steps.map(step => ({
+    ...step,
+    water_poured_g: step.water_poured_g === 0 ? 0 : Math.round(step.water_poured_g / oldWater * newWater * 10) / 10,
+  }))
+
+  const currentSum = Math.round(scaled.reduce((sum, step) => sum + step.water_poured_g, 0) * 10) / 10
+  const remainder = Math.round((newWater - currentSum) * 10) / 10
+
+  if (remainder !== 0) {
+    const lastNonZero = scaled.reduceRight((found, step, index) => (
+      found === -1 && step.water_poured_g > 0 ? index : found
+    ), -1)
+
+    if (lastNonZero !== -1) {
+      scaled[lastNonZero] = {
+        ...scaled[lastNonZero],
+        water_poured_g: Math.round((scaled[lastNonZero].water_poured_g + remainder) * 10) / 10,
+      }
+    }
+  }
+
+  return recomputeAccumulated(scaled)
+}
+
+export function validateSteps(steps: DraftStep[], targetWaterG: number): string | null {
+  if (steps.length > 20) return 'Recipes can have at most 20 steps.'
+
+  const timeRegex = /^\d+:[0-5]\d$/
+  let previousSeconds = -1
+
+  for (let index = 0; index < steps.length; index++) {
+    const step = steps[index]
+    const stepNumber = index + 1
+
+    if (!step.action.trim()) return `Step ${stepNumber} is missing a description.`
+    if (!timeRegex.test(step.time)) return `Step ${stepNumber} has an invalid time "${step.time}" — use m:ss format (e.g. 1:30).`
+    if (step.water_poured_g < 0) return `Step ${stepNumber} has a negative water amount.`
+
+    const [minutes, seconds] = step.time.split(':').map(Number)
+    const totalSeconds = minutes * 60 + seconds
+    if (totalSeconds < previousSeconds) {
+      return `Step ${stepNumber} time (${step.time}) is earlier than the previous step — steps must be in chronological order.`
+    }
+    previousSeconds = totalSeconds
+  }
+
+  const totalPoured = Math.round(steps.reduce((sum, step) => sum + step.water_poured_g, 0) * 10) / 10
+  if (Math.abs(totalPoured - targetWaterG) > 1) {
+    return `Step water amounts total ${totalPoured} g but the recipe targets ${targetWaterG} g. Adjust individual step amounts to match.`
+  }
+
+  return null
+}
+
+export function createEditDraft(recipe: SavedRecipe, tempUnit: 'C' | 'F', preferredGrinder: GrinderId): EditDraft {
+  const currentRecipe = recipe.current_recipe_json
+
+  return {
+    coffee_g: currentRecipe.parameters.coffee_g,
+    water_g: currentRecipe.parameters.water_g,
+    ratio_multiplier: currentRecipe.parameters.water_g / currentRecipe.parameters.coffee_g,
+    scaledFromDose: false,
+    scaledFromRatio: false,
+    temperature_display: tempUnit === 'F'
+      ? Math.round(currentRecipe.parameters.temperature_c * 9 / 5 + 32)
+      : currentRecipe.parameters.temperature_c,
+    total_time: currentRecipe.parameters.total_time,
+    grind_preferred_value: parseGrinderValueForEdit(preferredGrinder, currentRecipe.grind[preferredGrinder].starting_point),
+    steps: currentRecipe.steps.map((step, index) => ({ ...step, _dndId: `step-${index}-${step.step}` })),
+  }
+}
+
+export function buildLiveGrindSettings(recipe: SavedRecipe, preferredGrinder: GrinderId, draft: EditDraft) {
+  const currentRecipe = recipe.current_recipe_json
+  const newKUltraClicks = grinderValueToKUltraClicks(preferredGrinder, draft.grind_preferred_value)
+  const range = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
+  const low = range?.low ?? newKUltraClicks
+  const high = range?.high ?? newKUltraClicks
+  const qAir = kUltraRangeToQAir(low, high, newKUltraClicks)
+  const baratza = kUltraRangeToBaratza(low, high, newKUltraClicks, recipe.method)
+  const timemore = kUltraRangeToTimemoreC2(low, high, newKUltraClicks, recipe.method)
+
+  return {
+    k_ultra: { ...currentRecipe.grind.k_ultra, starting_point: `${newKUltraClicks} clicks` },
+    q_air: { ...currentRecipe.grind.q_air, starting_point: qAir.starting_point },
+    baratza_encore_esp: { ...currentRecipe.grind.baratza_encore_esp, starting_point: baratza.starting_point, note: baratza.note },
+    timemore_c2: { ...currentRecipe.grind.timemore_c2, starting_point: timemore.starting_point, note: timemore.note },
+  }
+}

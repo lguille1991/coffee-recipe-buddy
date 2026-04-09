@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { BeanProfile, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
+import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_LABELS: Record<string, string> = {
@@ -79,9 +80,8 @@ export default function AnalysisPage() {
   }, [profile])
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('extractionResult')
-    if (!raw) { router.replace('/scan'); return }
-    const data: ExtractionResponse = JSON.parse(raw)
+    const data = recipeSessionStorage.getExtractionResult<ExtractionResponse>()
+    if (!data) { router.replace('/scan'); return }
     const b = data.bean
     const parts = [b.variety, b.finca, b.producer].filter(Boolean)
     startTransition(() => {
@@ -97,18 +97,18 @@ export default function AnalysisPage() {
   function handleGenerate() {
     if (!bean) return
     const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
-    sessionStorage.setItem('confirmedBean', JSON.stringify(finalBean))
+    recipeSessionStorage.setConfirmedBean(finalBean)
 
     const vol = parseInt(targetVolume, 10)
     if (vol > 0) {
-      sessionStorage.setItem('targetVolumeMl', String(vol))
+      recipeSessionStorage.setTargetVolumeMl(vol)
     } else {
-      sessionStorage.removeItem('targetVolumeMl')
+      recipeSessionStorage.clearTargetVolumeMl()
     }
 
     // Run deterministic method recommendation client-side
     const recs = recommendMethods(finalBean)
-    sessionStorage.setItem('methodRecommendations', JSON.stringify(recs))
+    recipeSessionStorage.setMethodRecommendations(recs)
     router.push('/methods')
   }
 

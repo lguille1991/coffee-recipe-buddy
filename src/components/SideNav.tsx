@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useNavGuard } from './NavGuardContext'
 
 const NAV_ITEMS = [
   {
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
 
 export default function SideNav() {
   const pathname = usePathname()
+  const { requestNavigate } = useNavGuard()
 
   return (
     <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-56 bg-[var(--card)] border-r border-[var(--border)] z-40">
@@ -52,6 +54,10 @@ export default function SideNav() {
             <Link
               key={item.href}
               href={item.href}
+              onNavigate={(event) => {
+                event.preventDefault()
+                requestNavigate(item.href)
+              }}
               className={`min-h-11 flex items-center gap-3 px-3 py-3 rounded-[12px] ui-button-text transition-colors ${
                 active
                   ? 'bg-[var(--foreground)] text-[var(--background)]'
