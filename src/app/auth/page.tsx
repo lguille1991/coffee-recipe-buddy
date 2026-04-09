@@ -19,11 +19,48 @@ function AuthForm() {
 
   const supabase = createClient()
 
-  useEffect(() => {
-    // If already signed in, redirect immediately
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace(returnTo)
+  async function savePendingRecipeIfNeeded() {
+    if (pendingRecipe !== 'true') return null
+
+    const raw = sessionStorage.getItem('pending_save_recipe')
+    if (!raw) return null
+
+    const payload = JSON.parse(raw)
+    const res = await fetch('/api/recipes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error ?? 'Save failed')
+    }
+
+    const saved = await res.json()
+    sessionStorage.removeItem('pending_save_recipe')
+    return saved.id as string
+  }
+
+  useEffect(() => {
+    let active = true
+
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!active || !data.user) return
+
+      try {
+        const savedId = await savePendingRecipeIfNeeded()
+        if (!active) return
+        router.replace(savedId ? `/recipes/${savedId}` : returnTo)
+      } catch (err) {
+        if (!active) return
+        setError(err instanceof Error ? err.message : 'Save failed')
+      }
+    })
+
+    return () => {
+      active = false
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,25 +88,14 @@ function AuthForm() {
       return
     }
 
-    // Auto-save pending recipe if triggered from Save button as guest
-    if (pendingRecipe === 'true') {
-      try {
-        const raw = sessionStorage.getItem('pending_save_recipe')
-        if (raw) {
-          const payload = JSON.parse(raw)
-          await fetch('/api/recipes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          })
-          sessionStorage.removeItem('pending_save_recipe')
-        }
-      } catch {
-        // Non-fatal — user will see the Save button on recipe screen
-      }
+    try {
+      const savedId = await savePendingRecipeIfNeeded()
+      router.replace(savedId ? `/recipes/${savedId}` : returnTo)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed')
+      setLoading(false)
+      return
     }
-
-    router.replace(returnTo)
   }
 
   async function handleGoogleOAuth() {
