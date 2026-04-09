@@ -10,12 +10,12 @@ import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
 
 const SCALE_OPTIONS: { value: number; label: string }[] = [
-  { value: 0.5, label: '½×' },
-  { value: 0.75, label: '¾×' },
-  { value: 1.0, label: '1×' },
-  { value: 1.25, label: '1¼×' },
-  { value: 1.5, label: '1½×' },
-  { value: 2.0, label: '2×' },
+  { value: 0.5, label: '0.5x' },
+  { value: 0.75, label: '0.75x' },
+  { value: 1.0, label: '1x' },
+  { value: 1.25, label: '1.25x' },
+  { value: 1.5, label: '1.5x' },
+  { value: 2.0, label: '2x' },
 ]
 
 export default function AutoAdjustPage() {
