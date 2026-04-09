@@ -18,7 +18,7 @@ const client = new OpenAI({
 
 const MAX_RETRIES = 2
 const PRIMARY_MODEL = 'google/gemma-4-31b-it:free'
-const FALLBACK_MODEL = 'google/gemini-2.0-flash-001'
+const FALLBACK_MODEL = 'openai/gpt-5-nano'
 const MAX_INTENT_WORDS = 80
 
 const INTENT_META_PATTERNS = [
