@@ -1,17 +1,23 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Camera, Upload } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 import { compressImage } from '@/lib/image-compressor'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 export default function ScanPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/auth?returnTo=/scan')
+  }, [user, authLoading, router])
 
   async function handleFile(file: File) {
     setError(null)
@@ -40,6 +46,14 @@ export default function ScanPage() {
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) handleFile(file)
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   return (

@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BeanProfile } from '@/types/recipe'
+import { useAuth } from '@/hooks/useAuth'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
@@ -103,6 +104,7 @@ function TextField({
 
 export default function ManualPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const { profile } = useProfile()
 
   // Required fields
@@ -121,6 +123,10 @@ export default function ManualPage() {
   const [tastingNotes, setTastingNotes] = useState<string[]>([])
 
   const [errors, setErrors] = useState<{ process?: string; roastLevel?: string; altitude?: string; roastDate?: string }>({})
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/auth?returnTo=/manual')
+  }, [user, authLoading, router])
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -185,6 +191,14 @@ export default function ManualPage() {
   }
 
   const hasRequiredFields = process !== '' && roastLevel !== ''
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
