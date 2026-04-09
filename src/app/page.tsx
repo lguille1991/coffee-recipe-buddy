@@ -36,7 +36,7 @@ export default function HomePage() {
       {/* Status bar spacer */}
       <div className="h-12" />
 
-      <div className="px-4 sm:px-6 pb-4">
+      <div className="px-4 sm:px-6 pb-4 ui-animate-enter">
         <h1 className="ui-page-title-hero">Coffee Recipe Buddy</h1>
         <p className="ui-body-muted mt-1">
           {greeting}
@@ -44,20 +44,20 @@ export default function HomePage() {
       </div>
 
       {/* Hero image */}
-      <div className="px-4 sm:px-6">
-        <div className="w-full aspect-square sm:aspect-[4/3] xl:aspect-[3/2] rounded-[16px] overflow-hidden bg-[#D4C9B8] ring-1 ring-black/5 relative">
+      <div className="px-4 sm:px-6 ui-animate-enter-soft">
+        <div className="ui-card-interactive group w-full aspect-square sm:aspect-[4/3] xl:aspect-[3/2] rounded-[16px] overflow-hidden bg-[#D4C9B8] ring-1 ring-black/5 relative">
           <Image
             src="/CoffeeBrewing.PNG"
             alt="Illustrated baristas brewing pour-over coffee together"
             fill
-            className="object-cover object-top"
+            className="object-cover object-top transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.015]"
             sizes="(min-width: 1280px) 960px, (min-width: 640px) 768px, 100vw"
             priority
           />
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="px-4 sm:px-6 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 ui-animate-enter-soft">
         <Link
           href="/scan"
           className="ui-button-primary flex-1"
@@ -84,10 +84,10 @@ export default function HomePage() {
       </div>
 
       {!loading && user && (
-        <div className="px-4 sm:px-6 mt-8">
+        <div className="px-4 sm:px-6 mt-8 ui-animate-enter-soft">
           <div className="flex items-center justify-between mb-3">
             <h2 className="ui-card-title">My Recipes</h2>
-            <Link href="/recipes" className="ui-meta underline">See all</Link>
+            <Link href="/recipes" className="ui-focus-ring rounded-md ui-meta underline underline-offset-4 transition-colors duration-150 hover:text-[var(--foreground)]">See all</Link>
           </div>
 
           {recipesLoading ? (
@@ -95,7 +95,7 @@ export default function HomePage() {
               <div className="w-6 h-6 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : recipes.length === 0 ? (
-            <div className="bg-[var(--card)] rounded-2xl p-6 text-center">
+            <div className="ui-card-interactive bg-[var(--card)] rounded-2xl p-6 text-center">
               <p className="ui-body-muted leading-relaxed">
                 No saved recipes yet.
               </p>

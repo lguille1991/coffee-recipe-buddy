@@ -30,7 +30,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
+      <body className="min-h-full overflow-x-hidden bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
         <ThemeProvider>
           <NavGuardProvider>
             <SideNav />

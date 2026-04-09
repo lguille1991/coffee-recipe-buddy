@@ -27,10 +27,10 @@ export default function SideNav() {
                 event.preventDefault()
                 requestNavigate(item.href)
               }}
-              className={`min-h-11 flex items-center gap-3 px-3 py-3 rounded-[12px] ui-button-text transition-colors ${
+              className={`ui-focus-ring ui-pressable min-h-11 flex items-center gap-3 px-3 py-3 rounded-[12px] ui-button-text ${
                 active
-                  ? 'bg-[var(--foreground)] text-[var(--background)]'
-                  : 'text-[var(--foreground)] hover:bg-[var(--background)]'
+                  ? 'bg-[var(--foreground)] text-[var(--background)] shadow-[0_10px_24px_rgba(15,23,42,0.12)]'
+                  : 'text-[var(--foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)]'
               }`}
             >
               {item.icon}

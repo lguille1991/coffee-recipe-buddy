@@ -3,6 +3,7 @@ import { BASE_RECIPE, WASHED_LIGHT_BEAN } from './fixtures'
 import {
   buildLiveGrindSettings,
   createEditDraft,
+  hasEditDraftChanges,
   recomputeAccumulated,
   scaleStepsToWater,
   validateSteps,
@@ -71,5 +72,19 @@ describe('saved recipe editing helpers', () => {
     const liveGrind = buildLiveGrindSettings(BASE_SAVED_RECIPE, 'k_ultra', draft)
 
     expect(liveGrind).toEqual(BASE_SAVED_RECIPE.current_recipe_json.grind)
+  })
+
+  it('treats a fresh edit draft as clean', () => {
+    const draft = createEditDraft(BASE_SAVED_RECIPE, 'C', 'k_ultra')
+
+    expect(hasEditDraftChanges(BASE_SAVED_RECIPE, draft, 'C', 'k_ultra')).toBe(false)
+  })
+
+  it('detects edits to persisted fields only', () => {
+    const draft = createEditDraft(BASE_SAVED_RECIPE, 'C', 'k_ultra')
+    draft.scaledFromDose = true
+    draft.coffee_g = 16
+
+    expect(hasEditDraftChanges(BASE_SAVED_RECIPE, draft, 'C', 'k_ultra')).toBe(true)
   })
 })

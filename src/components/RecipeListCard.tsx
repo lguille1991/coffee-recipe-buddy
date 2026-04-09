@@ -24,11 +24,11 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3 active:opacity-80 transition-opacity"
+      className="ui-card-interactive group flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3"
     >
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center transition-transform duration-200 ease-out group-hover:scale-[1.03]">
         {recipe.image_url ? (
-          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
+          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" />
         ) : (
           <MethodIcon method={recipe.method} size={28} className="text-[var(--muted-foreground)]" />
         )}
@@ -54,7 +54,7 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
       </div>
       <div className="text-right shrink-0">
         <p className="ui-meta">{date}</p>
-        <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)]" viewBox="0 0 14 14" fill="none">
+        <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)] transition-transform duration-200 ease-out group-hover:translate-x-0.5" viewBox="0 0 14 14" fill="none">
           <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
