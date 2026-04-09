@@ -21,7 +21,7 @@ export type EditDraft = {
   ratio_multiplier: number
   scaledFromDose: boolean
   scaledFromRatio: boolean
-  temperature_display: number
+  temperature_display: number | ''
   total_time: string
   grind_preferred_value: GrinderEditValue
   steps: DraftStep[]
@@ -122,6 +122,9 @@ export function createEditDraft(recipe: SavedRecipe, tempUnit: 'C' | 'F', prefer
 
 export function buildLiveGrindSettings(recipe: SavedRecipe, preferredGrinder: GrinderId, draft: EditDraft) {
   const currentRecipe = recipe.current_recipe_json
+  if (draft.grind_preferred_value === '') {
+    return currentRecipe.grind
+  }
   const newKUltraClicks = grinderValueToKUltraClicks(preferredGrinder, draft.grind_preferred_value)
   const range = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const low = range?.low ?? newKUltraClicks

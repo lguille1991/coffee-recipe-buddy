@@ -1,0 +1,65 @@
+'use client'
+
+import { memo } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import MethodIcon from '@/components/MethodIcon'
+
+const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: RecipeListItem }) {
+  const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
+  const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
+  const beanProcess = recipe.bean_info.process?.trim()
+  const roaster = recipe.bean_info.roaster
+  const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+  const badge = recipe.has_manual_edits
+    ? 'edited'
+    : recipe.has_feedback_adjustments
+      ? 'auto-adjusted'
+      : recipe.is_scaled
+        ? 'scaled'
+        : null
+
+  return (
+    <Link
+      href={`/recipes/${recipe.id}`}
+      className="flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3 active:opacity-80 transition-opacity"
+    >
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
+        {recipe.image_url ? (
+          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
+        ) : (
+          <MethodIcon method={recipe.method} size={28} className="text-[var(--muted-foreground)]" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="ui-card-title truncate">{beanName}</p>
+        {beanProcess && <p className="ui-meta mt-0.5 truncate capitalize">{beanProcess}</p>}
+        {roaster && <p className="ui-meta truncate">{roaster}</p>}
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="ui-meta">{displayName}</p>
+          {badge && (
+            <span className={`ui-meta font-medium px-2 py-1 rounded-full ${
+              badge === 'edited'
+                ? 'ui-badge-info'
+                : badge === 'scaled'
+                  ? 'ui-badge-neutral'
+                  : 'ui-badge-warning'
+            }`}>
+              {badge}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="ui-meta">{date}</p>
+        <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)]" viewBox="0 0 14 14" fill="none">
+          <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </Link>
+  )
+})
+
+export default RecipeListCard

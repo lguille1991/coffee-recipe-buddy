@@ -11,6 +11,21 @@ const client = new OpenAI({
 })
 
 const MAX_RETRIES = 2
+const DEFAULT_MAX_TOKENS = 3000
+const MIN_MAX_TOKENS = 512
+
+function extractAffordableTokenLimit(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : ''
+  const match = message.match(/afford (\d+)/i)
+  if (!match) return null
+
+  const parsed = Number.parseInt(match[1], 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function isCreditLimitError(error: unknown): boolean {
+  return error instanceof Error && /requires more credits|fewer max_tokens/i.test(error.message)
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,15 +53,36 @@ export async function POST(req: NextRequest) {
 
     let lastErrors: string[] = []
     let attempt = 0
+    let maxTokens = DEFAULT_MAX_TOKENS
 
     while (attempt <= MAX_RETRIES) {
-      const response = await client.chat.completions.create({
-        model: 'google/gemini-2.0-flash-001',
-        max_tokens: 4096,
-        messages,
-      })
+      let rawText = ''
 
-      const rawText = response.choices[0].message.content ?? ''
+      try {
+        const response = await client.chat.completions.create({
+          model: 'google/gemini-2.0-flash-001',
+          max_tokens: maxTokens,
+          messages,
+        })
+
+        rawText = response.choices[0].message.content ?? ''
+      } catch (error) {
+        if (isCreditLimitError(error)) {
+          const affordableLimit = extractAffordableTokenLimit(error)
+          if (affordableLimit && affordableLimit < maxTokens) {
+            maxTokens = Math.max(MIN_MAX_TOKENS, affordableLimit - 128)
+            continue
+          }
+
+          return NextResponse.json(
+            { error: 'Recipe generation temporarily unavailable: model credit limit reached. Try again in a bit or reduce provider token usage.' },
+            { status: 503 },
+          )
+        }
+
+        throw error
+      }
+
       const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
 
       let parsed: unknown

@@ -1,43 +1,12 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useState, memo, startTransition } from 'react'
+import Link from 'next/link'
+import { useEffect, useState, startTransition } from 'react'
 import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { RecipeListItem } from '@/types/recipe'
-import { METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
-import MethodIcon from '@/components/MethodIcon'
-
-const RecipeCard = memo(function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
-  const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
-  const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
-  const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-  return (
-    <Link
-      href={`/recipes/${recipe.id}`}
-      className="flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3 active:opacity-80 transition-opacity"
-    >
-      {/* Thumbnail */}
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center">
-        {recipe.image_url ? (
-          <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover" />
-        ) : (
-          <MethodIcon method={recipe.method} size={28} className="text-[var(--muted-foreground)]" />
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="ui-card-title truncate">{beanName}</p>
-        <p className="ui-body-muted mt-0.5">{displayName}</p>
-      </div>
-
-      <p className="ui-meta shrink-0">{date}</p>
-    </Link>
-  )
-})
+import RecipeListCard from '@/components/RecipeListCard'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -128,7 +97,7 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3">
               {recipes.slice(0, 6).map(r => (
-                <RecipeCard key={r.id} recipe={r} />
+                <RecipeListCard key={r.id} recipe={r} />
               ))}
             </div>
           )}

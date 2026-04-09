@@ -15,7 +15,7 @@ const STORAGE_KEYS = {
   pendingSaveRecipe: 'pending_save_recipe',
   recipe: 'recipe',
   recipeOriginal: 'recipe_original',
-  rebrewRecipeId: 'rebrew_recipe_id',
+  restoreMethodSelection: 'restore_method_selection',
   selectedMethod: 'selectedMethod',
   targetVolumeMl: 'targetVolumeMl',
 } as const
@@ -86,8 +86,8 @@ export const recipeSessionStorage = {
   clearRecipeOriginal() {
     remove(STORAGE_KEYS.recipeOriginal)
   },
-  clearRebrewRecipeId() {
-    remove(STORAGE_KEYS.rebrewRecipeId)
+  clearRestoreMethodSelection() {
+    remove(STORAGE_KEYS.restoreMethodSelection)
   },
   clearTargetVolumeMl() {
     remove(STORAGE_KEYS.targetVolumeMl)
@@ -122,8 +122,8 @@ export const recipeSessionStorage = {
   getRecipeOriginal() {
     return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal)
   },
-  getRebrewRecipeId() {
-    return readString(STORAGE_KEYS.rebrewRecipeId)
+  shouldRestoreMethodSelection() {
+    return readString(STORAGE_KEYS.restoreMethodSelection) === 'true'
   },
   getSelectedMethod<T>() {
     return readJson<T>(STORAGE_KEYS.selectedMethod)
@@ -161,8 +161,12 @@ export const recipeSessionStorage = {
   setRecipeOriginal(value: RecipeWithAdjustment) {
     writeJson(STORAGE_KEYS.recipeOriginal, value)
   },
-  setRebrewRecipeId(value: string) {
-    writeString(STORAGE_KEYS.rebrewRecipeId, value)
+  setRestoreMethodSelection(value: boolean) {
+    if (value) {
+      writeString(STORAGE_KEYS.restoreMethodSelection, 'true')
+      return
+    }
+    remove(STORAGE_KEYS.restoreMethodSelection)
   },
   setSelectedMethod<T>(value: T) {
     writeJson(STORAGE_KEYS.selectedMethod, value)

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
-import { Recipe, RecipeSchema } from '@/types/recipe'
+import { BeanProfile, Recipe, RecipeSchema } from '@/types/recipe'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import {
   parseKUltraRange,
@@ -17,6 +17,8 @@ const client = new OpenAI({
 })
 
 const MAX_RETRIES = 2
+const PRIMARY_MODEL = 'google/gemma-4-31b-it:free'
+const FALLBACK_MODEL = 'google/gemini-2.0-flash-001'
 
 const AutoAdjustRequestSchema = z.object({
   scale_factor: z.number().refine(v => [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].includes(v), {
@@ -71,6 +73,77 @@ function recomputeAccumulated(steps: Recipe['steps']): Recipe['steps'] {
     acc = Math.round((acc + s.water_poured_g) * 10) / 10
     return { ...s, water_accumulated_g: acc }
   })
+}
+
+type ModelRunResult =
+  | { recipe: Recipe }
+  | { errors: string[], failedAtModel: string, cause: 'api' | 'parse' | 'validation' }
+
+async function runModelAdjustment(
+  model: string,
+  baseMessages: OpenAI.ChatCompletionMessageParam[],
+  beanInfo: BeanProfile,
+  method: string,
+): Promise<ModelRunResult> {
+  const messages = [...baseMessages]
+  let lastErrors: string[] = []
+  let attempt = 0
+
+  while (attempt <= MAX_RETRIES) {
+    let rawText = ''
+
+    try {
+      const response = await client.chat.completions.create({
+        model,
+        max_tokens: 4096,
+        messages,
+      })
+
+      rawText = response.choices[0].message.content ?? ''
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown OpenRouter error'
+      return {
+        errors: [`OpenRouter request failed for ${model}: ${message}`],
+        failedAtModel: model,
+        cause: 'api',
+      }
+    }
+
+    const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(jsonText)
+    } catch {
+      lastErrors = [`JSON parse error: ${rawText.slice(0, 200)}`]
+      messages.push({ role: 'assistant', content: rawText })
+      messages.push({ role: 'user', content: buildRetryPrompt(lastErrors) })
+      attempt++
+      continue
+    }
+
+    const validation = validateRecipe(parsed, beanInfo, method)
+    if (validation.valid) {
+      const schemaParsed = RecipeSchema.safeParse(parsed)
+      if (schemaParsed.success) {
+        return { recipe: schemaParsed.data }
+      }
+
+      lastErrors = schemaParsed.error.issues.map(issue => issue.message)
+    } else {
+      lastErrors = validation.errors
+    }
+
+    messages.push({ role: 'assistant', content: rawText })
+    messages.push({ role: 'user', content: buildRetryPrompt(lastErrors) })
+    attempt++
+  }
+
+  return {
+    errors: lastErrors,
+    failedAtModel: model,
+    cause: 'validation',
+  }
 }
 
 type Params = { params: Promise<{ id: string }> }
@@ -184,46 +257,34 @@ Keep parameters within their operating ranges. Ensure steps water_poured_g value
     { role: 'user', content: userPrompt },
   ]
 
-  let lastErrors: string[] = []
-  let attempt = 0
+  const primaryResult = await runModelAdjustment(
+    PRIMARY_MODEL,
+    messages,
+    sourceRow.bean_info,
+    sourceRow.method,
+  )
 
-  while (attempt <= MAX_RETRIES) {
-    const response = await client.chat.completions.create({
-      model: 'google/gemini-2.0-flash-001',
-      max_tokens: 4096,
-      messages,
-    })
+  if ('recipe' in primaryResult) {
+    return NextResponse.json({ recipe: primaryResult.recipe })
+  }
 
-    const rawText = response.choices[0].message.content ?? ''
-    const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+  console.warn(
+    `[auto-adjust] primary model ${PRIMARY_MODEL} failed (${primaryResult.cause}); falling back to ${FALLBACK_MODEL}`,
+  )
 
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(jsonText)
-    } catch {
-      lastErrors = [`JSON parse error: ${rawText.slice(0, 200)}`]
-      messages.push({ role: 'assistant', content: rawText })
-      messages.push({ role: 'user', content: buildRetryPrompt(lastErrors) })
-      attempt++
-      continue
-    }
+  const fallbackResult = await runModelAdjustment(
+    FALLBACK_MODEL,
+    messages,
+    sourceRow.bean_info,
+    sourceRow.method,
+  )
 
-    const validation = validateRecipe(parsed, sourceRow.bean_info, sourceRow.method)
-    if (validation.valid) {
-      const schemaParsed = RecipeSchema.safeParse(parsed)
-      if (schemaParsed.success) {
-        return NextResponse.json({ recipe: schemaParsed.data })
-      }
-    }
-
-    lastErrors = validation.errors
-    messages.push({ role: 'assistant', content: rawText })
-    messages.push({ role: 'user', content: buildRetryPrompt(lastErrors) })
-    attempt++
+  if ('recipe' in fallbackResult) {
+    return NextResponse.json({ recipe: fallbackResult.recipe })
   }
 
   return NextResponse.json(
-    { error: 'Auto-adjust failed after retries', validationErrors: lastErrors },
+    { error: 'Auto-adjust failed after retries', validationErrors: fallbackResult.errors },
     { status: 422 },
   )
 }

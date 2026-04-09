@@ -228,7 +228,83 @@ export function RecipeGrindSettingsCard({
   )
 }
 
-export function RecipeStepsSection({
+function RecipeStepCards({
+  activeStepIndex,
+  adjustment,
+  getStepProgress,
+  recipe,
+}: {
+  activeStepIndex: number
+  adjustment?: AdjustmentMetadata
+  getStepProgress?: (index: number) => number
+  recipe: RecipeWithAdjustment
+}) {
+  const ratioChanged = adjustment?.variable_changed === 'ratio'
+
+  return (
+    <div className="flex flex-col gap-2 md:gap-3">
+      {recipe.steps.map((step, index) => {
+        const isActive = activeStepIndex === index
+        const isPast = activeStepIndex > index
+        const progress = getStepProgress?.(index) ?? 0
+
+        return (
+          <div
+            key={step.step}
+            className={`relative overflow-hidden rounded-2xl p-4 md:p-6 flex gap-3 transition-all duration-300 ${
+              ratioChanged ? 'bg-[var(--warning-bg)]' : 'bg-[var(--card)]'
+            } ${isActive ? 'ring-2 ring-[var(--foreground)] scale-[1.01]' : ''} ${isPast ? 'opacity-50' : ''}`}
+          >
+            {isActive && (
+              <div
+                className="absolute inset-0 bg-[var(--foreground)]/[0.06] pointer-events-none transition-[width] duration-1000 ease-linear rounded-2xl"
+                style={{ width: `${progress * 100}%` }}
+              />
+            )}
+
+            <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0 relative">
+              {step.step}
+            </div>
+
+            <div className="flex-1 relative">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="ui-card-title">{step.time}</p>
+                <p className="ui-body-muted">
+                  +{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span>
+                </p>
+              </div>
+              <p className="ui-body-muted leading-relaxed">{step.action}</p>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function StaticRecipeStepsSection({
+  adjustment,
+  recipe,
+}: {
+  adjustment?: AdjustmentMetadata
+  recipe: RecipeWithAdjustment
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2 md:mb-4">
+        <h3 className="ui-overline">Brew Steps</h3>
+      </div>
+
+      <RecipeStepCards
+        activeStepIndex={-1}
+        adjustment={adjustment}
+        recipe={recipe}
+      />
+    </div>
+  )
+}
+
+export function BrewRecipeStepsSection({
   activeStepIndex,
   adjustment,
   elapsedSeconds,
@@ -247,8 +323,6 @@ export function RecipeStepsSection({
   timerOverrun: boolean
   timerRunning: boolean
 }) {
-  const ratioChanged = adjustment?.variable_changed === 'ratio'
-
   return (
     <div>
       <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -271,43 +345,12 @@ export function RecipeStepsSection({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 md:gap-3">
-        {recipe.steps.map((step, index) => {
-          const isActive = activeStepIndex === index
-          const isPast = activeStepIndex > index
-          const progress = getStepProgress(index)
-
-          return (
-            <div
-              key={step.step}
-              className={`relative overflow-hidden rounded-2xl p-4 md:p-6 flex gap-3 transition-all duration-300 ${
-                ratioChanged ? 'bg-[var(--warning-bg)]' : 'bg-[var(--card)]'
-              } ${isActive ? 'ring-2 ring-[var(--foreground)] scale-[1.01]' : ''} ${isPast ? 'opacity-50' : ''}`}
-            >
-              {isActive && (
-                <div
-                  className="absolute inset-0 bg-[var(--foreground)]/[0.06] pointer-events-none transition-[width] duration-1000 ease-linear rounded-2xl"
-                  style={{ width: `${progress * 100}%` }}
-                />
-              )}
-
-              <div className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center text-xs font-bold shrink-0 relative">
-                {step.step}
-              </div>
-
-              <div className="flex-1 relative">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="ui-card-title">{step.time}</p>
-                  <p className="ui-body-muted">
-                    +{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span>
-                  </p>
-                </div>
-                <p className="ui-body-muted leading-relaxed">{step.action}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <RecipeStepCards
+        activeStepIndex={activeStepIndex}
+        adjustment={adjustment}
+        getStepProgress={getStepProgress}
+        recipe={recipe}
+      />
     </div>
   )
 }

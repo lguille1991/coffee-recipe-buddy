@@ -82,7 +82,7 @@ Supabase client setup:
 | `GET /api/profile` | Required | Get user preferences |
 | `PATCH /api/profile` | Required | Update preferences |
 
-All LLM routes use `google/gemini-2.0-flash-001` via OpenRouter (OpenAI-compatible SDK, `baseURL: https://openrouter.ai/api/v1`).
+LLM routes use OpenRouter (OpenAI-compatible SDK, `baseURL: https://openrouter.ai/api/v1`). `POST /api/recipes/[id]/auto-adjust` tries `google/gemma-4-31b-it:free` first and falls back to `google/gemini-2.0-flash-001`; the other LLM routes remain on `google/gemini-2.0-flash-001`.
 
 ### Key lib modules
 

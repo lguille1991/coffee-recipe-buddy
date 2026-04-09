@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BASE_RECIPE, WASHED_LIGHT_BEAN } from './fixtures'
 import {
+  buildLiveGrindSettings,
   createEditDraft,
   recomputeAccumulated,
   scaleStepsToWater,
@@ -61,5 +62,14 @@ describe('saved recipe editing helpers', () => {
     expect(draft.temperature_display).toBe(199)
     expect(draft.grind_preferred_value).toBe('2.5.2')
     expect(draft.steps[0]._dndId).toBe('step-0-1')
+  })
+
+  it('keeps current grind settings while the numeric grinder field is temporarily empty', () => {
+    const draft = createEditDraft(BASE_SAVED_RECIPE, 'C', 'k_ultra')
+    draft.grind_preferred_value = ''
+
+    const liveGrind = buildLiveGrindSettings(BASE_SAVED_RECIPE, 'k_ultra', draft)
+
+    expect(liveGrind).toEqual(BASE_SAVED_RECIPE.current_recipe_json.grind)
   })
 })

@@ -16,7 +16,6 @@ import {
   parseGrinderValueForEdit,
   parseKUltraRange,
 } from '@/lib/grinder-converter'
-import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
 import type { ManualEditRound, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import {
@@ -48,6 +47,12 @@ const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: fals
 type RecipeDetailClientProps = {
   id: string
   initialRecipe: SavedRecipe
+}
+
+function parseWholeNumberInput(value: string): number | '' {
+  if (value === '') return ''
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? '' : Math.max(0, parsed)
 }
 
 export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailClientProps) {
@@ -169,19 +174,8 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
     router.replace('/recipes')
   }
 
-  function handleBrewAgain() {
-    const finalRecipe = freshnessAdj && !freshnessIgnored ? freshnessAdj.adjustedRecipe : currentRecipe
-    const migratedOriginal = recipe.original_recipe_json as RecipeWithAdjustment
-
-    recipeSessionStorage.setRecipe(finalRecipe)
-    recipeSessionStorage.setRecipeOriginal(migratedOriginal)
-    recipeSessionStorage.setConfirmedBean(recipe.bean_info)
-    recipeSessionStorage.setFeedbackRound(0)
-    recipeSessionStorage.setAdjustmentHistory(feedbackRounds as never[])
-    recipeSessionStorage.setManualEditHistory(manualEditRounds)
-    recipeSessionStorage.setRebrewRecipeId(id)
-
-    router.push('/recipe')
+  function handleOpenBrewMode() {
+    router.push(`/recipes/${id}/brew`)
   }
 
   async function handleSaveEdit() {
@@ -189,6 +183,16 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
 
     setEditError(null)
     setStepError(null)
+
+    if (editDraft.temperature_display === '') {
+      setEditError('Temperature is required.')
+      return
+    }
+
+    if (editDraft.grind_preferred_value === '') {
+      setEditError('Grind setting is required.')
+      return
+    }
 
     if (!/^\d+:[0-5]\d(\s*[–-]\s*\d+:[0-5]\d)?$/.test(editDraft.total_time)) {
       setEditError('Brew time must be in m:ss format (e.g. 3:30) or a range (e.g. 3:30 – 4:00)')
@@ -427,6 +431,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
   const kUltraRange = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const isGrindOutOfRange = editDraft && kUltraRange
     ? (() => {
+        if (editDraft.grind_preferred_value === '') return false
         if (isQAirValueInvalid(preferredGrinder, editDraft.grind_preferred_value)) return false
         const currentClicks = grinderValueToKUltraClicks(preferredGrinder, editDraft.grind_preferred_value)
         return currentClicks < kUltraRange.low || currentClicks > kUltraRange.high
@@ -541,7 +546,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                       step={1}
                       value={editDraft.temperature_display}
                       onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
-                      onChange={event => setEditDraft(draft => draft ? { ...draft, temperature_display: Math.max(0, parseInt(event.target.value, 10) || draft.temperature_display) } : draft)}
+                      onChange={event => setEditDraft(draft => draft ? { ...draft, temperature_display: parseWholeNumberInput(event.target.value) } : draft)}
                       className="ui-input bg-[var(--background)] font-semibold px-3"
                     />
                   </label>
@@ -664,7 +669,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
                   if (preferredGrinder === 'q_air') {
                     return { ...draft, grind_preferred_value: value }
                   }
-                  return { ...draft, grind_preferred_value: Math.max(0, parseInt(value, 10) || Number(draft.grind_preferred_value)) }
+                  return { ...draft, grind_preferred_value: parseWholeNumberInput(value) }
                 })}
                 preferredGrinder={preferredGrinder}
               />
@@ -751,7 +756,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <button onClick={handleBrewAgain} className="w-full ui-button-primary font-semibold">
+              <button onClick={handleOpenBrewMode} className="w-full ui-button-primary font-semibold">
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                   <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M4.5 10C4.5 12 5.5 13 8 13C10.5 13 11.5 12 11.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />

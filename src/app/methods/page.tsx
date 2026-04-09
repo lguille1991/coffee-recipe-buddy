@@ -25,6 +25,7 @@ const RANK_COLORS = ['bg-[var(--foreground)] text-[var(--background)]', 'bg-[var
 export default function MethodsPage() {
   const router = useRouter()
   const [recommendations, setRecommendations] = useState<MethodRecommendation[]>([])
+  const [selectedMethod, setSelectedMethod] = useState<MethodRecommendation | null>(null)
   const [selecting, setSelecting] = useState<string | null>(null)
   const [showOthers, setShowOthers] = useState(false)
 
@@ -32,30 +33,58 @@ export default function MethodsPage() {
     const storedRecommendations = recipeSessionStorage.getMethodRecommendations()
     if (storedRecommendations.length === 0) { router.replace('/scan'); return }
     setRecommendations(storedRecommendations)
+
+    const shouldRestoreSelection = recipeSessionStorage.shouldRestoreMethodSelection()
+    recipeSessionStorage.clearRestoreMethodSelection()
+
+    if (!shouldRestoreSelection) {
+      setSelectedMethod(null)
+      return
+    }
+
+    const storedSelection = recipeSessionStorage.getSelectedMethod<MethodRecommendation>()
+    if (storedSelection?.method) {
+      const matchedRecommendation = storedRecommendations.find(rec => rec.method === storedSelection.method)
+      setSelectedMethod(matchedRecommendation ?? storedSelection)
+    }
   }, [router])
 
-  async function selectMethod(method: string, displayName: string, rec?: MethodRecommendation) {
+  function buildManualSelection(method: MethodId, displayName: string): MethodRecommendation {
+    return {
+      method,
+      displayName,
+      rank: 0,
+      score: 0,
+      rationale: 'Manually selected — not in top recommendations for this bean.',
+    }
+  }
+
+  function toggleMethod(method: MethodId, displayName: string, rec?: MethodRecommendation) {
     if (selecting) return
-    setSelecting(method)
+
+    if (selectedMethod?.method === method) {
+      setSelectedMethod(null)
+      return
+    }
+
+    setSelectedMethod(rec ?? buildManualSelection(method, displayName))
+  }
+
+  async function continueWithSelectedMethod() {
+    if (!selectedMethod || selecting) return
+
+    setSelecting(selectedMethod.method)
 
     const bean = recipeSessionStorage.getConfirmedBean()
     if (!bean) { router.replace('/analysis'); return }
 
     const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined
 
-    const storedRec: MethodRecommendation = rec ?? {
-      method: method as MethodId,
-      displayName,
-      rank: 0,
-      score: 0,
-      rationale: 'Manually selected — not in top recommendations for this bean.',
-    }
-
     try {
       const res = await fetch('/api/generate-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method, bean, targetVolumeMl }),
+        body: JSON.stringify({ method: selectedMethod.method, bean, targetVolumeMl }),
       })
 
       if (!res.ok) {
@@ -68,8 +97,8 @@ export default function MethodsPage() {
       recipeSessionStorage.clearRecipeOriginal()
       recipeSessionStorage.clearFeedbackRound()
       recipeSessionStorage.clearAdjustmentHistory()
-      recipeSessionStorage.clearRebrewRecipeId()
-      recipeSessionStorage.setSelectedMethod(storedRec)
+      recipeSessionStorage.setSelectedMethod(selectedMethod)
+      recipeSessionStorage.setRestoreMethodSelection(true)
       router.push('/recipe')
     } catch (err) {
       console.error(err)
@@ -110,9 +139,15 @@ export default function MethodsPage() {
         {recommendations.map((rec, i) => (
           <button
             key={rec.method}
-            onClick={() => selectMethod(rec.method, rec.displayName, rec)}
+            type="button"
+            onClick={() => toggleMethod(rec.method, rec.displayName, rec)}
             disabled={selecting !== null}
-            className="w-full bg-[var(--card)] rounded-2xl p-4 text-left flex active:scale-[0.98] transition-transform disabled:opacity-60 relative overflow-hidden"
+            aria-pressed={selectedMethod?.method === rec.method}
+            className={`w-full rounded-2xl p-4 text-left flex active:scale-[0.98] transition-all disabled:opacity-60 relative overflow-hidden border ${
+              selectedMethod?.method === rec.method
+                ? 'bg-[var(--surface-subtle)] border-[var(--foreground)] shadow-[0_0_0_1px_var(--foreground)]'
+                : 'bg-[var(--card)] border-transparent'
+            }`}
           >
             {selecting === rec.method && (
               <div className="absolute inset-0 bg-[var(--card)]/80 flex items-center justify-center">
@@ -130,9 +165,18 @@ export default function MethodsPage() {
                   <span className="text-xl">{METHOD_ICONS[rec.method] || '☕'}</span>
                   <span className="ui-card-title">{rec.displayName}</span>
                 </div>
-                <svg className="ui-icon-inline shrink-0 text-[var(--muted-foreground)]" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span
+                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    selectedMethod?.method === rec.method
+                      ? 'border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]'
+                      : 'border-[var(--border)] text-transparent'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                    <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
               </div>
 
               <p className="ui-meta leading-relaxed">{rec.rationale}</p>
@@ -142,6 +186,7 @@ export default function MethodsPage() {
 
         {/* Other Methods */}
         <button
+          type="button"
           onClick={() => setShowOthers(v => !v)}
           className="w-full mt-1 flex items-center justify-between px-1 py-2 ui-body-muted active:opacity-60 transition-opacity"
         >
@@ -166,9 +211,15 @@ export default function MethodsPage() {
             {otherMethods.map(methodId => (
               <button
                 key={methodId}
-                onClick={() => selectMethod(methodId, METHOD_DISPLAY_NAMES[methodId])}
+                type="button"
+                onClick={() => toggleMethod(methodId, METHOD_DISPLAY_NAMES[methodId])}
                 disabled={selecting !== null}
-                className="w-full bg-[var(--card)] rounded-2xl p-4 text-left flex items-center gap-4 active:scale-[0.98] transition-transform disabled:opacity-60 relative overflow-hidden border border-[var(--border)]"
+                aria-pressed={selectedMethod?.method === methodId}
+                className={`w-full rounded-2xl p-4 text-left flex items-center gap-4 active:scale-[0.98] transition-all disabled:opacity-60 relative overflow-hidden border ${
+                  selectedMethod?.method === methodId
+                    ? 'bg-[var(--surface-subtle)] border-[var(--foreground)] shadow-[0_0_0_1px_var(--foreground)]'
+                    : 'bg-[var(--card)] border-[var(--border)]'
+                }`}
               >
                 {selecting === methodId && (
                   <div className="absolute inset-0 bg-[var(--card)]/80 flex items-center justify-center">
@@ -179,13 +230,48 @@ export default function MethodsPage() {
                 <span className="text-xl">{METHOD_ICONS[methodId] || '☕'}</span>
                 <span className="flex-1 ui-card-title">{METHOD_DISPLAY_NAMES[methodId]}</span>
 
-                <svg className="ui-icon-inline shrink-0 text-[var(--muted-foreground)]" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span
+                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    selectedMethod?.method === methodId
+                      ? 'border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]'
+                      : 'border-[var(--border)] text-transparent'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                    <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
               </button>
             ))}
           </>
         )}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
+        <div className="w-full px-4 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
+          <div className="mb-3 px-1 ui-meta">
+            {selectedMethod
+              ? `Selected: ${selectedMethod.displayName}`
+              : 'Select a brewing method before continuing.'}
+          </div>
+          <button
+            type="button"
+            onClick={continueWithSelectedMethod}
+            disabled={!selectedMethod || selecting !== null}
+            className="w-full ui-button-primary font-semibold disabled:opacity-50"
+          >
+            {selecting ? (
+              <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
+                <path d="M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M11 5L16 10L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            {selectedMethod ? `Continue with ${selectedMethod.displayName}` : 'Continue'}
+          </button>
+        </div>
       </div>
     </div>
   )
