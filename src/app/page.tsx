@@ -5,13 +5,19 @@ import Link from 'next/link'
 import { useEffect, useState, startTransition } from 'react'
 import { Camera, PenLine, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 import { RecipeListItem } from '@/types/recipe'
 import RecipeListCard from '@/components/RecipeListCard'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
+  const { profile } = useProfile()
   const [recipes, setRecipes] = useState<RecipeListItem[]>([])
   const [recipesLoading, setRecipesLoading] = useState(false)
+  const displayName = profile?.display_name?.trim()
+  const greeting = displayName
+    ? `Hey there ${displayName}, what coffee beans do you need a recipe for today?`
+    : 'Hey there, what coffee beans do you need a recipe for today?'
 
   useEffect(() => {
     if (!user) return
@@ -33,18 +39,19 @@ export default function HomePage() {
       <div className="px-4 sm:px-6 pb-4">
         <h1 className="ui-page-title-hero">Coffee Recipe Buddy</h1>
         <p className="ui-body-muted mt-1">
-          Hey there, what coffee beans do you need a recipe for today?
+          {greeting}
         </p>
       </div>
 
       {/* Hero image */}
       <div className="px-4 sm:px-6">
-        <div className="w-full aspect-[4/3] xl:aspect-[16/9] rounded-[16px] overflow-hidden bg-[#D4C9B8] relative">
+        <div className="w-full aspect-square sm:aspect-[4/3] xl:aspect-[3/2] rounded-[16px] overflow-hidden bg-[#D4C9B8] ring-1 ring-black/5 relative">
           <Image
-            src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
-            alt="Coffee brewing"
+            src="/CoffeeBrewing.PNG"
+            alt="Illustrated baristas brewing pour-over coffee together"
             fill
-            className="object-cover"
+            className="object-cover object-top"
+            sizes="(min-width: 1280px) 960px, (min-width: 640px) 768px, 100vw"
             priority
           />
         </div>
