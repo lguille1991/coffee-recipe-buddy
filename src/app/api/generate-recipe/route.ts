@@ -54,11 +54,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { system, user } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
+    const { system, user: userPrompt } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: system },
-      { role: 'user', content: user },
+      { role: 'user', content: userPrompt },
     ]
 
     let lastErrors: string[] = []
