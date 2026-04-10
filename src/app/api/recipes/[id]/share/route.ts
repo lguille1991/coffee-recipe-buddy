@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getRecipeShareInfo } from '@/lib/share'
 import { createClient } from '@/lib/supabase/server'
 
 type Params = { params: Promise<{ id: string }> }
@@ -12,17 +13,12 @@ export async function GET(request: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
-    .from('shared_recipes')
-    .select('share_token')
-    .eq('recipe_id', id)
-    .eq('owner_id', user.id)
-    .single()
-
-  if (error || !data) {
+  const shareInfo = await getRecipeShareInfo(supabase, id, user.id)
+  if (!shareInfo.shareToken) {
     return NextResponse.json({
       shareToken: null,
       url: null,
+      commentCount: null,
     }, {
       headers: { 'Cache-Control': 'private, max-age=60' },
     })
@@ -32,8 +28,9 @@ export async function GET(request: Request, { params }: Params) {
   const baseUrl = `${url.protocol}//${url.host}`
 
   return NextResponse.json({
-    shareToken: data.share_token,
-    url: `${baseUrl}/share/${data.share_token}`,
+    shareToken: shareInfo.shareToken,
+    url: `${baseUrl}/share/${shareInfo.shareToken}`,
+    commentCount: shareInfo.commentCount,
   }, {
     headers: { 'Cache-Control': 'private, max-age=300' },
   })

@@ -4,8 +4,7 @@ import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import ResponsiveContainer from '@/components/ResponsiveContainer'
 import SideNav from '@/components/SideNav'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import { NavGuardProvider } from '@/components/NavGuardContext'
+import { AuthProvider } from '@/components/AuthContext'
 
 const roboto = Roboto({
   variable: '--font-roboto',
@@ -31,17 +30,15 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full overflow-x-hidden bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
-        <ThemeProvider>
-          <NavGuardProvider>
-            <SideNav />
-            <main className="lg:ml-56 min-h-screen" id="main-content">
-              <ResponsiveContainer>
-                {children}
-              </ResponsiveContainer>
-            </main>
-            <BottomNav />
-          </NavGuardProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <SideNav />
+          <main className="lg:ml-56 min-h-screen" id="main-content">
+            <ResponsiveContainer>
+              {children}
+            </ResponsiveContainer>
+          </main>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   )

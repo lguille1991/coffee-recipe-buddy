@@ -1,5 +1,7 @@
+import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { migrateRecipe } from '@/lib/recipe-migrations'
+import { getRecipeShareInfo } from '@/lib/share'
 import { createClient } from '@/lib/supabase/server'
 import type { RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import RecipeDetailClient from './RecipeDetailClient'
@@ -33,5 +35,19 @@ export default async function SavedRecipeDetailPage({ params }: Params) {
     original_recipe_json: migrateRecipe(data.original_recipe_json as RecipeWithAdjustment, data.schema_version),
   }
 
-  return <RecipeDetailClient id={id} initialRecipe={initialRecipe} />
+  const shareInfo = await getRecipeShareInfo(supabase, id, user.id)
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') ?? 'http'
+  const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
+  const baseUrl = host ? `${protocol}://${host}` : ''
+
+  return (
+    <RecipeDetailClient
+      id={id}
+      initialRecipe={initialRecipe}
+      initialShareToken={shareInfo.shareToken}
+      initialCommentCount={shareInfo.commentCount}
+      initialShareUrl={shareInfo.shareToken && baseUrl ? `${baseUrl}/share/${shareInfo.shareToken}` : ''}
+    />
+  )
 }

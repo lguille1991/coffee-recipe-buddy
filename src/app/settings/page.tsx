@@ -5,20 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
 import { useTheme, Theme } from '@/hooks/useTheme'
-
-interface Profile {
-  display_name: string | null
-  default_volume_ml: number
-  temp_unit: 'C' | 'F'
-  preferred_grinder: GrinderId
-}
+import { useProfile } from '@/hooks/useProfile'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
+  const { profile, loading: profileLoading, setProfile } = useProfile()
   const { theme, setTheme } = useTheme()
 
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [volumeMl, setVolumeMl] = useState('250')
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C')
@@ -32,19 +26,12 @@ export default function SettingsPage() {
   }, [user, loading, router])
 
   useEffect(() => {
-    if (!user) return
-    fetch('/api/profile')
-      .then(r => r.ok ? r.json() : null)
-      .then((data: Profile | null) => {
-        if (!data) return
-        setProfile(data)
-        setDisplayName(data.display_name ?? '')
-        setVolumeMl(String(data.default_volume_ml))
-        setTempUnit(data.temp_unit)
-        setPreferredGrinder(data.preferred_grinder ?? 'k_ultra')
-      })
-      .catch(() => {})
-  }, [user])
+    if (!profile) return
+    setDisplayName(profile.display_name ?? '')
+    setVolumeMl(String(profile.default_volume_ml))
+    setTempUnit(profile.temp_unit)
+    setPreferredGrinder(profile.preferred_grinder ?? 'k_ultra')
+  }, [profile])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -66,6 +53,8 @@ export default function SettingsPage() {
         const data = await res.json()
         throw new Error(data.error ?? 'Save failed')
       }
+      const savedProfile = await res.json()
+      setProfile(savedProfile)
       setSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
@@ -79,7 +68,7 @@ export default function SettingsPage() {
     router.replace('/')
   }
 
-  if (loading || !profile) {
+  if (loading || profileLoading || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
