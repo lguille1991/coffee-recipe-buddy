@@ -7,6 +7,8 @@ const {
   migrateRecipeMock,
   notFoundMock,
   redirectMock,
+  getRecipeShareInfoMock,
+  headersMock,
 } = vi.hoisted(() => ({
   redirectMock: vi.fn((href: string) => {
     throw new Error(`redirect:${href}`)
@@ -16,11 +18,22 @@ const {
   }),
   createClientMock: vi.fn(),
   migrateRecipeMock: vi.fn(recipe => recipe),
+  getRecipeShareInfoMock: vi.fn().mockResolvedValue({
+    shareToken: null,
+    commentCount: null,
+  }),
+  headersMock: vi.fn().mockResolvedValue(new Headers({
+    host: 'localhost:3000',
+  })),
 }))
 
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
   redirect: redirectMock,
+}))
+
+vi.mock('next/headers', () => ({
+  headers: headersMock,
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -31,8 +44,13 @@ vi.mock('@/lib/recipe-migrations', () => ({
   migrateRecipe: migrateRecipeMock,
 }))
 
+vi.mock('@/lib/share', () => ({
+  getRecipeShareInfo: getRecipeShareInfoMock,
+}))
+
 import SavedRecipeDetailPage from './page'
 import BrewModePage from './brew/page'
+import AutoAdjustPage from './auto-adjust/page'
 
 const BASE_SAVED_RECIPE: SavedRecipe = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -80,6 +98,8 @@ describe('recipe route pages', () => {
     notFoundMock.mockClear()
     createClientMock.mockReset()
     migrateRecipeMock.mockClear()
+    getRecipeShareInfoMock.mockClear()
+    headersMock.mockClear()
   })
 
   it('redirects unauthenticated users away from saved recipe detail', async () => {
@@ -119,6 +139,26 @@ describe('recipe route pages', () => {
 
     expect(result.props.id).toBe(BASE_SAVED_RECIPE.id)
     expect(result.props.recipe.id).toBe(BASE_SAVED_RECIPE.id)
+    expect(migrateRecipeMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('redirects unauthenticated users away from auto adjust', async () => {
+    createClientMock.mockResolvedValue(createSupabaseClient(null))
+
+    await expect(
+      AutoAdjustPage({ params: Promise.resolve({ id: 'recipe-123' }) }),
+    ).rejects.toThrow('redirect:/auth?returnTo=/recipes/recipe-123/auto-adjust')
+  })
+
+  it('loads auto adjust by id for authenticated users', async () => {
+    createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+
+    const result = await AutoAdjustPage({
+      params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
+    })
+
+    expect(result.props.id).toBe(BASE_SAVED_RECIPE.id)
+    expect(result.props.sourceRecipe.id).toBe(BASE_SAVED_RECIPE.id)
     expect(migrateRecipeMock).toHaveBeenCalledTimes(2)
   })
 })

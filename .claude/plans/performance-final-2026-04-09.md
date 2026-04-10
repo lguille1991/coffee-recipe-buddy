@@ -60,7 +60,7 @@ Validated against: source, current build output, and the five prior audit files
 
 ## Priority 2
 
-- [ ] Narrow middleware session refresh so public routes do not always pay for `supabase.auth.getUser()`.
+- [x] Narrow middleware session refresh so public routes do not always pay for `supabase.auth.getUser()`.
   - Evidence:
     - `middleware.ts` matches almost every non-static request
     - `src/lib/supabase/middleware.ts` always calls `supabase.auth.getUser()`
@@ -70,7 +70,7 @@ Validated against: source, current build output, and the five prior audit files
   - Guardrail:
     - Validate the final matcher against `@supabase/ssr` session-refresh requirements before narrowing it.
 
-- [ ] Stop bootstrapping saved-recipe subflows with client fetches when the server already has the route param and auth context.
+- [x] Stop bootstrapping saved-recipe subflows with client fetches when the server already has the route param and auth context.
   - Evidence:
     - `/recipes/[id]/auto-adjust` is a client page that fetches `/api/recipes/:id` after mount (`src/app/recipes/[id]/auto-adjust/page.tsx`)
     - The recipe detail route already demonstrates the server-side ownership check pattern (`src/app/recipes/[id]/page.tsx`)
@@ -134,8 +134,8 @@ Validated against: source, current build output, and the five prior audit files
 1. [x] Refactor auth/profile loading and serverize `/` plus `/recipes`.
 2. [x] Shrink the global layout hydration surface.
 3. [x] Fix the recipe detail share/comment waterfall.
-4. [ ] Narrow middleware auth refresh safely.
-5. [ ] Serverize `/recipes/[id]/auto-adjust`.
+4. [x] Narrow middleware auth refresh safely.
+5. [x] Serverize `/recipes/[id]/auto-adjust`.
 6. [ ] Add public share endpoint caching.
 7. [ ] Cache prompt docs and add OpenRouter timeouts.
 8. [ ] Narrow broad recipe row selections.
