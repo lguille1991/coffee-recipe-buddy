@@ -30,7 +30,7 @@ export default async function HomePage() {
       {/* Status bar spacer */}
       <div className="h-12" />
 
-      <div className="px-4 sm:px-6 pb-4 ui-animate-enter">
+      <div className="px-4 sm:px-6 pb-4">
         <h1 className="ui-page-title-hero">Coffee Recipe Buddy</h1>
         <p className="ui-body-muted mt-1">
           {greeting}
@@ -38,15 +38,15 @@ export default async function HomePage() {
       </div>
 
       {/* Hero image */}
-      <div className="px-4 sm:px-6 ui-animate-enter-soft">
+      <div className="px-4 sm:px-6">
         <div className="ui-card-interactive group w-full aspect-square sm:aspect-[4/3] xl:aspect-[3/2] rounded-[16px] overflow-hidden bg-[#D4C9B8] ring-1 ring-black/5 relative">
           <Image
-            src="/CoffeeBrewing.PNG"
+            src="/CoffeeBrewing.jpg"
             alt="Illustrated baristas brewing pour-over coffee together"
             fill
             className="object-cover object-top transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.015]"
             sizes="(min-width: 1280px) 960px, (min-width: 640px) 768px, 100vw"
-            priority
+            preload
           />
         </div>
       </div>
