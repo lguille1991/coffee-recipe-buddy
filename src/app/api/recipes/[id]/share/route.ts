@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import { SHARE_SNAPSHOT_SELECT } from '@/lib/recipe-select'
 import { getRecipeShareInfo } from '@/lib/share'
 import { createClient } from '@/lib/supabase/server'
+import type { SavedRecipe } from '@/types/recipe'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -46,16 +48,21 @@ export async function POST(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Fetch recipe — RLS ensures ownership
-  const { data: recipe, error: recipeError } = await supabase
+  const { data: recipeRow, error: recipeError } = await supabase
     .from('recipes')
-    .select('*')
+    .select(SHARE_SNAPSHOT_SELECT)
     .eq('id', id)
     .eq('archived', false)
     .single()
 
-  if (recipeError || !recipe) {
+  if (recipeError || !recipeRow) {
     return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
   }
+
+  const recipe = recipeRow as unknown as Pick<
+    SavedRecipe,
+    'bean_info' | 'current_recipe_json' | 'image_url' | 'notes'
+  >
 
   const url = new URL(request.url)
   const baseUrl = `${url.protocol}//${url.host}`

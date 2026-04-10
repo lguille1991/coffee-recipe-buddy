@@ -5,6 +5,7 @@ import { CreateCommentRequestSchema } from '@/types/recipe'
 type Params = { params: Promise<{ token: string }> }
 
 const PAGE_SIZE = 50
+const SHARE_COMMENTS_CACHE_CONTROL = 'public, max-age=0, s-maxage=30, stale-while-revalidate=120'
 
 // ─── GET /api/share/:token/comments ──────────────────────────────────────────
 // Public endpoint — no auth required.
@@ -51,7 +52,14 @@ export async function GET(request: Request, { params }: Params) {
     author_display_name: (c.author as unknown as { display_name: string | null } | null)?.display_name ?? null,
   }))
 
-  return NextResponse.json({ comments, total: count ?? 0, page, pageSize: PAGE_SIZE })
+  return NextResponse.json(
+    { comments, total: count ?? 0, page, pageSize: PAGE_SIZE },
+    {
+      headers: {
+        'Cache-Control': SHARE_COMMENTS_CACHE_CONTROL,
+      },
+    },
+  )
 }
 
 // ─── POST /api/share/:token/comments ─────────────────────────────────────────

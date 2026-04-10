@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { migrateRecipe } from '@/lib/recipe-migrations'
+import { SAVED_RECIPE_DETAIL_SELECT } from '@/lib/recipe-select'
 import { createClient } from '@/lib/supabase/server'
 import type { RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import AutoAdjustClient from './AutoAdjustClient'
@@ -15,22 +16,29 @@ export default async function AutoAdjustPage({ params }: Params) {
     redirect(`/auth?returnTo=/recipes/${id}/auto-adjust`)
   }
 
-  const { data, error } = await supabase
+  const { data: recipeRow, error } = await supabase
     .from('recipes')
-    .select('*')
+    .select(SAVED_RECIPE_DETAIL_SELECT)
     .eq('id', id)
     .eq('user_id', user.id)
     .eq('archived', false)
     .single()
 
-  if (error || !data) {
+  if (error || !recipeRow) {
     notFound()
   }
 
+  const savedRecipeRow = recipeRow as unknown as SavedRecipe
   const sourceRecipe: SavedRecipe = {
-    ...data,
-    current_recipe_json: migrateRecipe(data.current_recipe_json, data.schema_version),
-    original_recipe_json: migrateRecipe(data.original_recipe_json as RecipeWithAdjustment, data.schema_version),
+    ...savedRecipeRow,
+    current_recipe_json: migrateRecipe(
+      savedRecipeRow.current_recipe_json,
+      savedRecipeRow.schema_version,
+    ),
+    original_recipe_json: migrateRecipe(
+      savedRecipeRow.original_recipe_json as RecipeWithAdjustment,
+      savedRecipeRow.schema_version,
+    ),
   }
 
   return <AutoAdjustClient id={id} sourceRecipe={sourceRecipe} />

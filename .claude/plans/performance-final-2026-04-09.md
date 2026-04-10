@@ -77,7 +77,7 @@ Validated against: source, current build output, and the five prior audit files
   - Why this stays in the final plan:
     - This is the same avoidable client bootstrap pattern as the home and recipes pages, just on a smaller route.
 
-- [ ] Add caching headers to the public share GET endpoints.
+- [x] Add caching headers to the public share GET endpoints.
   - Evidence:
     - `GET /api/share/[token]` returns JSON without a `Cache-Control` header (`src/app/api/share/[token]/route.ts`)
     - `GET /api/share/[token]/comments` returns JSON without a `Cache-Control` header (`src/app/api/share/[token]/comments/route.ts`)
@@ -85,14 +85,14 @@ Validated against: source, current build output, and the five prior audit files
   - Why this stays in the final plan:
     - These are public read endpoints and are the clearest place to cut repeat DB work safely.
 
-- [ ] Cache prompt-builder docs at module scope instead of rereading them on every recipe generation call.
+- [x] Cache prompt-builder docs at module scope instead of rereading them on every recipe generation call.
   - Evidence:
     - `buildRecipePrompt()` reads seven markdown files through `fs.readFileSync()` every time it runs (`src/lib/prompt-builder.ts`)
     - `generate-recipe` calls `buildRecipePrompt()` on every request (`src/app/api/generate-recipe/route.ts`)
   - Why this stays in the final plan:
     - This is a straightforward server-side hot path optimization with low product risk.
 
-- [ ] Add an explicit timeout in the shared OpenRouter client helper.
+- [x] Add an explicit timeout in the shared OpenRouter client helper.
   - Evidence:
     - `createOpenRouterClient()` sets headers and base URL but no timeout or abort behavior (`src/lib/openrouter.ts`)
     - The shared helper is used by `extract-bean`, `generate-recipe`, and `auto-adjust`
@@ -103,7 +103,7 @@ Validated against: source, current build output, and the five prior audit files
 
 ## Priority 3
 
-- [ ] Replace broad `select('*')` reads on the recipe detail path with explicit columns.
+- [x] Replace broad `select('*')` reads on the recipe detail path with explicit columns.
   - Evidence:
     - The server detail page selects `*` from `recipes` (`src/app/recipes/[id]/page.tsx`)
     - `GET /api/recipes/:id` also selects `*` (`src/app/api/recipes/[id]/route.ts`)
@@ -111,7 +111,7 @@ Validated against: source, current build output, and the five prior audit files
   - Why this stays in the final plan:
     - The recipe rows contain large JSON fields; narrowing the projection is a credible low-risk reduction in payload and serialization work.
 
-- [ ] Decide whether the settings page should keep its own profile fetch or join the shared profile-loading path from Priority 1.
+- [x] Decide whether the settings page should keep its own profile fetch or join the shared profile-loading path from Priority 1.
   - Evidence:
     - `/settings` calls `useAuth()` and then separately fetches `/api/profile` inside its own effect instead of using `useProfile()` (`src/app/settings/page.tsx`)
   - Why this stays in the final plan:
@@ -136,6 +136,6 @@ Validated against: source, current build output, and the five prior audit files
 3. [x] Fix the recipe detail share/comment waterfall.
 4. [x] Narrow middleware auth refresh safely.
 5. [x] Serverize `/recipes/[id]/auto-adjust`.
-6. [ ] Add public share endpoint caching.
-7. [ ] Cache prompt docs and add OpenRouter timeouts.
-8. [ ] Narrow broad recipe row selections.
+6. [x] Add public share endpoint caching.
+7. [x] Cache prompt docs and add OpenRouter timeouts.
+8. [x] Narrow broad recipe row selections.
