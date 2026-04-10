@@ -11,6 +11,16 @@ function readDoc(relativePath: string): string {
   }
 }
 
+const PROMPT_DOCS = {
+  rangeSystem: readDoc('coffee-range-system-skill.md'),
+  methodLogic: readDoc('method-decision-logic.md'),
+  outputFormat: readDoc('output-format.md'),
+  kUltraTable: readDoc('grinder-tables/1zpresso-k-ultra-grind-table.md'),
+  qAirTable: readDoc('grinder-tables/1zpresso-q-air-grind-table.md'),
+  baratzaTable: readDoc('grinder-tables/baratza-encore-esp-grind-table.md'),
+  timemoreC2Table: readDoc('grinder-tables/timemore-c2-grind-table.md'),
+} as const
+
 export function buildExtractionPrompt(): string {
   return `You are an expert coffee specialist with deep knowledge of specialty coffee bags and their labeling conventions.
 
@@ -62,31 +72,23 @@ export function buildRecipePrompt(
   method: string,
   targetVolumeMl?: number,
 ): { system: string; user: string } {
-  const rangeSystem = readDoc('coffee-range-system-skill.md')
-  const methodLogic = readDoc('method-decision-logic.md')
-  const outputFormat = readDoc('output-format.md')
-  const kUltraTable = readDoc('grinder-tables/1zpresso-k-ultra-grind-table.md')
-  const qAirTable = readDoc('grinder-tables/1zpresso-q-air-grind-table.md')
-  const baratzaTable = readDoc('grinder-tables/baratza-encore-esp-grind-table.md')
-  const timemoreC2Table = readDoc('grinder-tables/timemore-c2-grind-table.md')
-
   const system = `You are an expert specialty coffee barista and recipe developer. Your task is to generate a precise, structured pour-over recipe following the Coffee Range System.
 
 ## COFFEE RANGE SYSTEM (follow exactly)
 
-${rangeSystem}
+${PROMPT_DOCS.rangeSystem}
 
 ---
 
 ## METHOD DECISION LOGIC (context for why this method was selected)
 
-${methodLogic}
+${PROMPT_DOCS.methodLogic}
 
 ---
 
 ## OUTPUT FORMAT (your output must match this exactly)
 
-${outputFormat}
+${PROMPT_DOCS.outputFormat}
 
 ---
 
@@ -94,19 +96,19 @@ ${outputFormat}
 
 ### 1Zpresso K-Ultra (primary reference)
 
-${kUltraTable}
+${PROMPT_DOCS.kUltraTable}
 
 ### 1Zpresso Q-Air
 
-${qAirTable}
+${PROMPT_DOCS.qAirTable}
 
 ### Baratza Encore ESP
 
-${baratzaTable}
+${PROMPT_DOCS.baratzaTable}
 
 ### Timemore C2
 
-${timemoreC2Table}
+${PROMPT_DOCS.timemoreC2Table}
 
 ---
 

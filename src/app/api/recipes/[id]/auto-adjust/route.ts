@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { buildAuthenticatedOpenRouterUserId, createOpenRouterClient } from '@/lib/openrouter'
+import { AUTO_ADJUST_SOURCE_SELECT } from '@/lib/recipe-select'
 import { createClient } from '@/lib/supabase/server'
-import { BeanProfile, Recipe, RecipeSchema } from '@/types/recipe'
+import { BeanProfile, Recipe, RecipeSchema, SavedRecipe } from '@/types/recipe'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import {
   parseKUltraRange,
@@ -286,18 +287,22 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   // Fetch source recipe (verify ownership)
-  const { data: sourceRow, error: fetchError } = await supabase
+  const { data: sourceRowData, error: fetchError } = await supabase
     .from('recipes')
-    .select('*')
+    .select(AUTO_ADJUST_SOURCE_SELECT)
     .eq('id', id)
     .eq('user_id', user.id)
     .eq('archived', false)
     .single()
 
-  if (fetchError || !sourceRow) {
+  if (fetchError || !sourceRowData) {
     return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
   }
 
+  const sourceRow = sourceRowData as unknown as Pick<
+    SavedRecipe,
+    'method' | 'bean_info' | 'current_recipe_json'
+  >
   const source = sourceRow.current_recipe_json as Recipe
 
   // Pre-scale deterministically

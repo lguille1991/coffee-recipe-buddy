@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
+import { listRecipesForUser } from '@/lib/recipe-list'
 import { createClient } from '@/lib/supabase/server'
 import { SaveRecipeRequestSchema } from '@/types/recipe'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
-
-type FeedbackHistoryRow = Array<{ type?: string }>
-type RecipeRow = { feedback_history?: FeedbackHistoryRow; parent_recipe_id?: string | null; [key: string]: unknown }
 
 // ─── POST /api/recipes — save a recipe ───────────────────────────────────────
 
@@ -80,46 +78,22 @@ export async function GET(request: Request) {
   const q = searchParams.get('q')
   const page = parseInt(searchParams.get('page') ?? '1', 10)
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50)
-  const offset = (page - 1) * limit
+  try {
+    const { recipes } = await listRecipesForUser(supabase, {
+      userId: user.id,
+      method: method ?? undefined,
+      q: q ?? undefined,
+      page,
+      limit,
+    })
 
-  let query = supabase
-    .from('recipes')
-    .select('id, method, bean_info, image_url, created_at, schema_version, feedback_history, parent_recipe_id')
-    .eq('user_id', user.id)
-    .eq('archived', false)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
-
-  if (method) {
-    query = query.eq('method', method)
-  }
-
-  if (q) {
-    // Full-text search across bean_info jsonb fields
-    // PostgREST .or() uses column->>key syntax (no quotes around key)
-    const safe = q.replace(/[%_\\]/g, '\\$&')
-    query = query.or(
-      `bean_info->>bean_name.ilike.%${safe}%,bean_info->>origin.ilike.%${safe}%,bean_info->>roaster.ilike.%${safe}%`,
+    return NextResponse.json({ recipes, page, limit }, {
+      headers: { 'Cache-Control': 'private, no-store' },
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to load recipes' },
+      { status: 500 },
     )
   }
-
-  const { data, error } = await query
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  const recipes = (data ?? []).map((row: RecipeRow) => {
-    const history: FeedbackHistoryRow = row.feedback_history ?? []
-    const has_manual_edits = history.some(r => r.type === 'manual_edit' || r.type === 'auto_adjust')
-    const has_feedback_adjustments = history.some(r => !('type' in r) || r.type === 'feedback')
-    const is_scaled = row.parent_recipe_id != null
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { feedback_history: _fh, parent_recipe_id: _pid, ...rest } = row
-    return { ...rest, has_manual_edits, has_feedback_adjustments, is_scaled }
-  })
-
-  return NextResponse.json({ recipes, page, limit }, {
-    headers: { 'Cache-Control': 'private, no-store' },
-  })
 }

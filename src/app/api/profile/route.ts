@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { syncProfileDisplayNameFromAuth } from '@/lib/auth-profile'
+import { getOrCreateUserProfile } from '@/lib/profile'
 import { createClient } from '@/lib/supabase/server'
 import { UpdateProfileRequestSchema } from '@/types/recipe'
 
@@ -10,38 +10,18 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await syncProfileDisplayNameFromAuth(supabase, user)
+  try {
+    const data = await getOrCreateUserProfile(supabase, user)
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (error?.code === 'PGRST116' || !data) {
-    // Row doesn't exist yet — create it with defaults
-    const { data: created, error: insertError } = await supabase
-      .from('profiles')
-      .insert({ id: user.id })
-      .select()
-      .single()
-
-    if (insertError || !created) {
-      return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
-    }
-
-    return NextResponse.json(created, {
+    return NextResponse.json(data, {
       headers: { 'Cache-Control': 'private, max-age=3600' },
     })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to load profile' },
+      { status: 500 },
+    )
   }
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'private, max-age=3600' },
-  })
 }
 
 // ─── PATCH /api/profile ───────────────────────────────────────────────────────

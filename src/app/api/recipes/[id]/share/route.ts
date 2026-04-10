@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
+import { SHARE_SNAPSHOT_SELECT } from '@/lib/recipe-select'
+import { getRecipeShareInfo } from '@/lib/share'
 import { createClient } from '@/lib/supabase/server'
+import type { SavedRecipe } from '@/types/recipe'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -12,17 +15,12 @@ export async function GET(request: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
-    .from('shared_recipes')
-    .select('share_token')
-    .eq('recipe_id', id)
-    .eq('owner_id', user.id)
-    .single()
-
-  if (error || !data) {
+  const shareInfo = await getRecipeShareInfo(supabase, id, user.id)
+  if (!shareInfo.shareToken) {
     return NextResponse.json({
       shareToken: null,
       url: null,
+      commentCount: null,
     }, {
       headers: { 'Cache-Control': 'private, max-age=60' },
     })
@@ -32,8 +30,9 @@ export async function GET(request: Request, { params }: Params) {
   const baseUrl = `${url.protocol}//${url.host}`
 
   return NextResponse.json({
-    shareToken: data.share_token,
-    url: `${baseUrl}/share/${data.share_token}`,
+    shareToken: shareInfo.shareToken,
+    url: `${baseUrl}/share/${shareInfo.shareToken}`,
+    commentCount: shareInfo.commentCount,
   }, {
     headers: { 'Cache-Control': 'private, max-age=300' },
   })
@@ -49,16 +48,21 @@ export async function POST(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Fetch recipe — RLS ensures ownership
-  const { data: recipe, error: recipeError } = await supabase
+  const { data: recipeRow, error: recipeError } = await supabase
     .from('recipes')
-    .select('*')
+    .select(SHARE_SNAPSHOT_SELECT)
     .eq('id', id)
     .eq('archived', false)
     .single()
 
-  if (recipeError || !recipe) {
+  if (recipeError || !recipeRow) {
     return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
   }
+
+  const recipe = recipeRow as unknown as Pick<
+    SavedRecipe,
+    'bean_info' | 'current_recipe_json' | 'image_url' | 'notes'
+  >
 
   const url = new URL(request.url)
   const baseUrl = `${url.protocol}//${url.host}`

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
+import { SAVED_RECIPE_DETAIL_SELECT } from '@/lib/recipe-select'
 import { createClient } from '@/lib/supabase/server'
-import { UpdateRecipeRequestSchema, UpdateNotesRequestSchema } from '@/types/recipe'
+import {
+  SavedRecipe,
+  UpdateRecipeRequestSchema,
+  UpdateNotesRequestSchema,
+} from '@/types/recipe'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -12,18 +17,18 @@ export async function GET(_request: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const { data: recipeRow, error } = await supabase
     .from('recipes')
-    .select('*')
+    .select(SAVED_RECIPE_DETAIL_SELECT)
     .eq('id', id)
     .eq('archived', false)
     .single()
 
-  if (error || !data) {
+  if (error || !recipeRow) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  return NextResponse.json(data, {
+  return NextResponse.json(recipeRow as unknown as SavedRecipe, {
     headers: { 'Cache-Control': 'private, no-store' },
   })
 }

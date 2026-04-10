@@ -6,6 +6,7 @@ import { getAuthUserDisplayName } from '@/lib/auth-profile'
 
 const OPENROUTER_GUEST_COOKIE = 'crp_openrouter_guest_id'
 const OPENROUTER_APP_TITLE = 'Coffee Recipe Buddy'
+const OPENROUTER_TIMEOUT_MS = 45_000
 
 function getAppUrl(request: Request): string {
   return (
@@ -19,6 +20,7 @@ export function createOpenRouterClient(request: Request) {
   return new OpenAI({
     apiKey: process.env.OPENROUTER_API_KEY,
     baseURL: 'https://openrouter.ai/api/v1',
+    timeout: OPENROUTER_TIMEOUT_MS,
     defaultHeaders: {
       'HTTP-Referer': getAppUrl(request),
       'X-OpenRouter-Title': OPENROUTER_APP_TITLE,

@@ -48,6 +48,9 @@ const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: fals
 type RecipeDetailClientProps = {
   id: string
   initialRecipe: SavedRecipe
+  initialShareToken: string | null
+  initialShareUrl: string
+  initialCommentCount: number | null
 }
 
 function parseWholeNumberInput(value: string): number | '' {
@@ -56,7 +59,13 @@ function parseWholeNumberInput(value: string): number | '' {
   return Number.isNaN(parsed) ? '' : Math.max(0, parsed)
 }
 
-export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailClientProps) {
+export default function RecipeDetailClient({
+  id,
+  initialRecipe,
+  initialShareToken,
+  initialShareUrl,
+  initialCommentCount,
+}: RecipeDetailClientProps) {
   const router = useRouter()
   const { setGuard } = useNavGuard()
   const { profile, preferredGrinder } = useProfile()
@@ -70,13 +79,13 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
   const [notes, setNotes] = useState(initialRecipe.notes ?? '')
   const [notesSaving, setNotesSaving] = useState(false)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [shareToken, setShareToken] = useState<string | null>(null)
-  const [shareUrl, setShareUrl] = useState('')
+  const [shareToken, setShareToken] = useState<string | null>(initialShareToken)
+  const [shareUrl, setShareUrl] = useState(initialShareUrl)
   const [showShareSheet, setShowShareSheet] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [revoking, setRevoking] = useState(false)
-  const [commentCount, setCommentCount] = useState<number | null>(null)
+  const [commentCount, setCommentCount] = useState<number | null>(initialCommentCount)
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
@@ -98,25 +107,6 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       setFreshnessAdj(adjustment)
     }
   }, [initialRecipe])
-
-  useEffect(() => {
-    fetch(`/api/recipes/${id}/share`)
-      .then(response => response.ok ? response.json() : null)
-      .then(data => {
-        if (!data?.shareToken) return
-        setShareToken(data.shareToken)
-        setShareUrl(data.url)
-      })
-  }, [id])
-
-  useEffect(() => {
-    if (!shareToken) return
-    fetch(`/api/share/${shareToken}/comments?page=1`)
-      .then(response => response.ok ? response.json() : null)
-      .then(result => {
-        if (result) setCommentCount(result.total)
-      })
-  }, [shareToken])
 
   useEffect(() => {
     return () => {
@@ -335,6 +325,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       const data = await response.json()
       setShareToken(data.shareToken)
       setShareUrl(data.url)
+      setCommentCount(0)
       setShowShareSheet(true)
     } finally {
       setSharing(false)
@@ -368,6 +359,7 @@ export default function RecipeDetailClient({ id, initialRecipe }: RecipeDetailCl
       await fetch(`/api/recipes/${id}/share`, { method: 'DELETE' })
       setShareToken(null)
       setShareUrl('')
+      setCommentCount(null)
       setShowShareSheet(false)
       setShowRevokeConfirm(false)
     } finally {
