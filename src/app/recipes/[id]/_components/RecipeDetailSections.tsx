@@ -239,20 +239,28 @@ export function RecipeViewGrindSettings({
 export function RecipeEditGrindSettings({
   editDraft,
   grindRange,
+  highlightEmptyRequired = false,
   isGrindOutOfRange,
   onChange,
   preferredGrinder,
 }: {
   editDraft: { grind_preferred_value: RecipeDraftStep['water_poured_g'] | string | number }
   grindRange: string | null
+  highlightEmptyRequired?: boolean
   isGrindOutOfRange: boolean
   onChange: (value: string) => void
   preferredGrinder: GrinderId
 }) {
+  const inputClass = `w-full rounded-lg px-3 py-2 text-lg font-bold text-[var(--background)] focus:outline-none border ${
+    highlightEmptyRequired
+      ? 'bg-[var(--danger-fg)]/25 border-[var(--danger-border)] focus:bg-[var(--danger-fg)]/30 focus:ring-2 focus:ring-[var(--danger-border)]/45'
+      : 'bg-[var(--background)]/20 border-[var(--background)]/20 focus:bg-[var(--background)]/30'
+  }`
+
   return (
     <div className="rounded-xl p-3 mb-2 bg-[var(--foreground)] text-[var(--background)]">
       <div className="flex items-center justify-between mb-2">
-        <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
+        <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]} <span className="text-[var(--danger-border)]">*</span></span>
         <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
       </div>
       {preferredGrinder === 'q_air' ? (
@@ -262,7 +270,7 @@ export function RecipeEditGrindSettings({
           placeholder="2.5.0"
           value={String(editDraft.grind_preferred_value)}
           onChange={event => onChange(event.target.value.replace(/[^\d.]/g, ''))}
-          className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
+          className={inputClass}
         />
       ) : (
         <input
@@ -274,7 +282,7 @@ export function RecipeEditGrindSettings({
           value={String(editDraft.grind_preferred_value)}
           onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
           onChange={event => onChange(event.target.value)}
-          className="w-full rounded-lg px-3 py-2 text-lg font-bold bg-[var(--background)]/20 text-[var(--background)] focus:outline-none focus:bg-[var(--background)]/30 border border-[var(--background)]/20"
+          className={inputClass}
         />
       )}
       {grindRange && (

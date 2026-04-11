@@ -38,6 +38,15 @@ function parseWholeNumberInput(value: string): number | '' {
   return Number.isNaN(parsed) ? '' : Math.max(0, parsed)
 }
 
+function getRequiredInputClass(isMissing: boolean) {
+  return [
+    'ui-input bg-[var(--background)] font-semibold px-3',
+    isMissing
+      ? 'border-[var(--danger-border)] bg-[var(--danger-bg)]/45 focus:border-[var(--danger-border)] focus:ring-2 focus:ring-[var(--danger-border)]/45'
+      : '',
+  ].join(' ').trim()
+}
+
 export default function RecipeSessionClient() {
   const router = useRouter()
   const { user } = useAuth()
@@ -135,6 +144,26 @@ export default function RecipeSessionClient() {
     if (!isManualMode || !manualDraft) return { valid: false, error: null as string | null }
     return validateManualRecipeDraft(manualDraft, preferredGrinder, tempUnit)
   }, [isManualMode, manualDraft, preferredGrinder, tempUnit])
+
+  const manualRequiredState = useMemo(() => {
+    if (!manualDraft) {
+      return {
+        temperatureMissing: false,
+        totalTimeMissing: false,
+        coffeeMissing: false,
+        waterMissing: false,
+        grindMissing: false,
+      }
+    }
+
+    return {
+      temperatureMissing: manualDraft.edit_draft.temperature_display === '',
+      totalTimeMissing: manualDraft.edit_draft.total_time.trim() === '',
+      coffeeMissing: manualDraft.edit_draft.coffee_g <= 0,
+      waterMissing: manualDraft.edit_draft.water_g <= 0,
+      grindMissing: manualDraft.edit_draft.grind_preferred_value === '',
+    }
+  }, [manualDraft])
 
   async function handleSave() {
     if (saving) return
@@ -439,6 +468,9 @@ export default function RecipeSessionClient() {
             <p className="ui-body-muted mt-1.5 leading-relaxed">
               Add your own brew parameters and steps. This manual recipe will save once the fields are complete.
             </p>
+            <p className="ui-meta ui-text-danger mt-2">
+              All fields marked * are required before you can save.
+            </p>
           </div>
 
           {saveError && (
@@ -451,7 +483,7 @@ export default function RecipeSessionClient() {
             <h3 className="ui-overline mb-2">Parameters</h3>
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1">
-                <span className="ui-overline">Temp (°{tempUnit})</span>
+                <span className="ui-overline">Temp (°{tempUnit}) <span className="ui-text-danger">*</span></span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -464,12 +496,12 @@ export default function RecipeSessionClient() {
                     ...current,
                     edit_draft: { ...current.edit_draft, temperature_display: parseWholeNumberInput(event.target.value) },
                   }))}
-                  className="ui-input bg-[var(--background)] font-semibold px-3"
+                  className={getRequiredInputClass(manualRequiredState.temperatureMissing)}
                   placeholder={tempUnit === 'F' ? '199' : '93'}
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="ui-overline">Brew Time</span>
+                <span className="ui-overline">Brew Time <span className="ui-text-danger">*</span></span>
                 <input
                   type="text"
                   placeholder="e.g. 3:30"
@@ -478,11 +510,11 @@ export default function RecipeSessionClient() {
                     ...current,
                     edit_draft: { ...current.edit_draft, total_time: event.target.value },
                   }))}
-                  className="ui-input bg-[var(--background)] font-semibold px-3"
+                  className={getRequiredInputClass(manualRequiredState.totalTimeMissing)}
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="ui-overline">Coffee (g)</span>
+                <span className="ui-overline">Coffee (g) <span className="ui-text-danger">*</span></span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -501,12 +533,12 @@ export default function RecipeSessionClient() {
                       },
                     }
                   })}
-                  className="ui-input bg-[var(--background)] font-semibold px-3"
+                  className={getRequiredInputClass(manualRequiredState.coffeeMissing)}
                   placeholder="15"
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="ui-overline">Water (g)</span>
+                <span className="ui-overline">Water (g) <span className="ui-text-danger">*</span></span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -525,7 +557,7 @@ export default function RecipeSessionClient() {
                       },
                     }
                   })}
-                  className="ui-input bg-[var(--background)] font-semibold px-3"
+                  className={getRequiredInputClass(manualRequiredState.waterMissing)}
                   placeholder="250"
                 />
               </label>
@@ -535,6 +567,7 @@ export default function RecipeSessionClient() {
           <RecipeEditGrindSettings
             editDraft={manualDraft.edit_draft}
             grindRange={null}
+            highlightEmptyRequired={manualRequiredState.grindMissing}
             isGrindOutOfRange={false}
             onChange={value => updateManualDraft(current => ({
               ...current,
@@ -546,9 +579,10 @@ export default function RecipeSessionClient() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="ui-overline">Brew Steps</h3>
-              <span className="ui-meta">Start with an empty recipe and add your own steps.</span>
+              <span className="ui-meta">Time, water, and description are required for each step.</span>
             </div>
             <SortableStepList
+              highlightEmptyRequired
               steps={manualDraft.edit_draft.steps}
               onAdd={handleManualStepAdd}
               onDelete={handleManualStepDelete}
