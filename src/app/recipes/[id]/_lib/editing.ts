@@ -1,19 +1,17 @@
 import {
-  kUltraRangeToBaratza,
-  kUltraRangeToQAir,
-  kUltraRangeToTimemoreC2,
   parseGrinderValueForEdit,
   parseKUltraRange,
   grinderValueToKUltraClicks,
   type GrinderEditValue,
 } from '@/lib/grinder-converter'
+import { buildDerivedGrindSettings } from '@/lib/grind-settings'
 import type {
   FeedbackRound,
   GrinderId,
   ManualEditRound,
+  RecipeDraftStep,
   SavedRecipe,
 } from '@/types/recipe'
-import type { DraftStep } from '../SortableStepList'
 
 export type EditDraft = {
   coffee_g: number
@@ -24,7 +22,7 @@ export type EditDraft = {
   temperature_display: number | ''
   total_time: string
   grind_preferred_value: GrinderEditValue
-  steps: DraftStep[]
+  steps: RecipeDraftStep[]
 }
 
 export type AnyFeedbackRound = FeedbackRound | ManualEditRound
@@ -37,7 +35,7 @@ export function isManualEditRound(round: AnyFeedbackRound): round is ManualEditR
   return 'type' in round && (round.type === 'manual_edit' || round.type === 'auto_adjust')
 }
 
-export function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
+export function recomputeAccumulated(steps: RecipeDraftStep[]): RecipeDraftStep[] {
   let accumulated = 0
   return steps.map(step => {
     accumulated = Math.round((accumulated + step.water_poured_g) * 10) / 10
@@ -45,7 +43,7 @@ export function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
   })
 }
 
-export function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater: number): DraftStep[] {
+export function scaleStepsToWater(steps: RecipeDraftStep[], oldWater: number, newWater: number): RecipeDraftStep[] {
   if (oldWater === 0 || oldWater === newWater) return steps
 
   const scaled = steps.map(step => ({
@@ -72,7 +70,7 @@ export function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater
   return recomputeAccumulated(scaled)
 }
 
-export function validateSteps(steps: DraftStep[], targetWaterG: number): string | null {
+export function validateSteps(steps: RecipeDraftStep[], targetWaterG: number): string | null {
   if (steps.length > 20) return 'Recipes can have at most 20 steps.'
 
   const timeRegex = /^\d+:[0-5]\d$/
@@ -120,6 +118,27 @@ export function createEditDraft(recipe: SavedRecipe, tempUnit: 'C' | 'F', prefer
   }
 }
 
+export function createEmptyEditDraft(): EditDraft {
+  return {
+    coffee_g: 0,
+    water_g: 0,
+    ratio_multiplier: 0,
+    scaledFromDose: false,
+    scaledFromRatio: false,
+    temperature_display: '',
+    total_time: '',
+    grind_preferred_value: '',
+    steps: [{
+      step: 1,
+      time: '',
+      action: '',
+      water_poured_g: 0,
+      water_accumulated_g: 0,
+      _dndId: 'step-0-1',
+    }],
+  }
+}
+
 function normalizeDraftForComparison(draft: EditDraft) {
   return {
     coffee_g: draft.coffee_g,
@@ -157,14 +176,6 @@ export function buildLiveGrindSettings(recipe: SavedRecipe, preferredGrinder: Gr
   const range = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const low = range?.low ?? newKUltraClicks
   const high = range?.high ?? newKUltraClicks
-  const qAir = kUltraRangeToQAir(low, high, newKUltraClicks)
-  const baratza = kUltraRangeToBaratza(low, high, newKUltraClicks, recipe.method)
-  const timemore = kUltraRangeToTimemoreC2(low, high, newKUltraClicks, recipe.method)
 
-  return {
-    k_ultra: { ...currentRecipe.grind.k_ultra, starting_point: `${newKUltraClicks} clicks` },
-    q_air: { ...currentRecipe.grind.q_air, starting_point: qAir.starting_point },
-    baratza_encore_esp: { ...currentRecipe.grind.baratza_encore_esp, starting_point: baratza.starting_point, note: baratza.note },
-    timemore_c2: { ...currentRecipe.grind.timemore_c2, starting_point: timemore.starting_point, note: timemore.note },
-  }
+  return buildDerivedGrindSettings(currentRecipe, low, high, newKUltraClicks)
 }

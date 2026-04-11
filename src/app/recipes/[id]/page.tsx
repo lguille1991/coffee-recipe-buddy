@@ -33,6 +33,7 @@ export default async function SavedRecipeDetailPage({ params }: Params) {
   const savedRecipeRow = recipeRow as unknown as SavedRecipe
   const initialRecipe: SavedRecipe = {
     ...savedRecipeRow,
+    creator_display_name: (recipeRow as { creator?: { display_name?: string | null } | null }).creator?.display_name ?? null,
     current_recipe_json: migrateRecipe(
       savedRecipeRow.current_recipe_json,
       savedRecipeRow.schema_version,

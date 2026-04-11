@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MethodRecommendation, MethodId, METHOD_DISPLAY_NAMES } from '@/types/recipe'
+import { createManualRecipeDraft } from '@/lib/manual-recipe'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 const METHOD_ICONS: Record<string, string> = {
@@ -73,10 +74,29 @@ export default function MethodsPage() {
   async function continueWithSelectedMethod() {
     if (!selectedMethod || selecting) return
 
-    setSelecting(selectedMethod.method)
-
+    const flowSource = recipeSessionStorage.getRecipeFlowSource()
     const bean = recipeSessionStorage.getConfirmedBean()
-    if (!bean) { router.replace('/analysis'); return }
+    if (!bean) {
+      router.replace(flowSource === 'manual' ? '/manual' : '/analysis')
+      return
+    }
+
+    if (flowSource === 'manual') {
+      recipeSessionStorage.setSelectedMethod(selectedMethod)
+      recipeSessionStorage.setRestoreMethodSelection(true)
+      recipeSessionStorage.setManualRecipeDraft(
+        createManualRecipeDraft(bean, selectedMethod.method),
+      )
+      recipeSessionStorage.clearRecipe()
+      recipeSessionStorage.clearRecipeOriginal()
+      recipeSessionStorage.clearFeedbackRound()
+      recipeSessionStorage.clearAdjustmentHistory()
+      recipeSessionStorage.clearManualEditHistory()
+      router.push('/recipe')
+      return
+    }
+
+    setSelecting(selectedMethod.method)
 
     const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined
 
@@ -94,6 +114,8 @@ export default function MethodsPage() {
 
       const recipe = await res.json()
       recipeSessionStorage.setRecipe(recipe)
+      recipeSessionStorage.setRecipeFlowSource('generated')
+      recipeSessionStorage.clearManualRecipeDraft()
       recipeSessionStorage.clearRecipeOriginal()
       recipeSessionStorage.clearFeedbackRound()
       recipeSessionStorage.clearAdjustmentHistory()

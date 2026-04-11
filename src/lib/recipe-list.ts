@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RecipeListItem } from '@/types/recipe'
+import { isManualRecipeCreated } from '@/lib/recipe-origin'
 
 type FeedbackHistoryRow = Array<{ type?: string }>
 
@@ -10,6 +11,12 @@ type RecipeListRow = {
   image_url: string | null
   created_at: string
   schema_version: number
+  current_recipe_json: {
+    objective: string
+    range_logic: {
+      base_range: string
+    }
+  }
   feedback_history?: FeedbackHistoryRow
   parent_recipe_id?: string | null
 }
@@ -36,6 +43,7 @@ function sanitizeSearchTerm(query: string) {
 
 function mapRecipeListItem(row: RecipeListRow): RecipeListItem {
   const history = row.feedback_history ?? []
+  const is_manual_created = isManualRecipeCreated(row.current_recipe_json)
   const has_manual_edits = history.some(entry => entry.type === 'manual_edit' || entry.type === 'auto_adjust')
   const has_feedback_adjustments = history.some(entry => !('type' in entry) || entry.type === 'feedback')
   const is_scaled = row.parent_recipe_id != null
@@ -47,6 +55,7 @@ function mapRecipeListItem(row: RecipeListRow): RecipeListItem {
     image_url: row.image_url,
     created_at: row.created_at,
     schema_version: row.schema_version,
+    is_manual_created,
     has_manual_edits,
     has_feedback_adjustments,
     is_scaled,
@@ -72,7 +81,7 @@ export async function listRecipesForUser(
 
   let query = supabase
     .from('recipes')
-    .select('id, method, bean_info, image_url, created_at, schema_version, feedback_history, parent_recipe_id')
+    .select('id, method, bean_info, image_url, created_at, schema_version, current_recipe_json, feedback_history, parent_recipe_id')
     .eq('user_id', userId)
     .eq('archived', false)
     .order('created_at', { ascending: false })

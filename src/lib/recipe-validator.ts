@@ -1,21 +1,10 @@
 import { Recipe, BeanProfile, ValidationResult, RecipeSchema } from '@/types/recipe'
+import { getMethodRatioBounds } from './recipe-policy'
 
 const POUR_OVER_METHODS = new Set([
   'v60', 'origami', 'orea_v4', 'hario_switch', 'kalita_wave',
   'chemex', 'ceado_hoop', 'pulsar',
 ])
-
-const METHOD_RATIO_RANGES: Record<string, [number, number]> = {
-  v60: [15, 17],
-  origami: [15, 17],
-  orea_v4: [15, 17],
-  hario_switch: [13, 16],
-  kalita_wave: [15, 17],
-  chemex: [15, 17],
-  ceado_hoop: [14, 16],
-  pulsar: [14, 16],
-  aeropress: [11, 16],
-}
 
 export function validateRecipe(
   rawRecipe: unknown,
@@ -47,15 +36,12 @@ export function validateRecipe(
     }
 
     // Check ratio is within method's range
-    const methodKey = method.toLowerCase().replace(/\s+/g, '_')
-    const ratioRange = METHOD_RATIO_RANGES[methodKey] || METHOD_RATIO_RANGES[recipe.method]
-    if (ratioRange) {
-      const [minRatio, maxRatio] = ratioRange
-      if (ratioNum < minRatio || ratioNum > maxRatio) {
-        errors.push(
-          `Ratio 1:${ratioNum} outside method range 1:${minRatio}–1:${maxRatio} for ${recipe.display_name}.`
-        )
-      }
+    const ratioRange = getMethodRatioBounds(method || recipe.method)
+    const { low: minRatio, high: maxRatio } = ratioRange
+    if (ratioNum < minRatio || ratioNum > maxRatio) {
+      errors.push(
+        `Ratio 1:${ratioNum} outside method range 1:${minRatio}–1:${maxRatio} for ${recipe.display_name}.`
+      )
     }
   }
 

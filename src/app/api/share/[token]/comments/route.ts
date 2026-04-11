@@ -15,7 +15,8 @@ const SHARE_COMMENTS_CACHE_CONTROL = 'public, max-age=0, s-maxage=30, stale-whil
 export async function GET(request: Request, { params }: Params) {
   const { token } = await params
   const { searchParams } = new URL(request.url)
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
+  const requestedPage = parseInt(searchParams.get('page') ?? '1', 10)
+  const page = Number.isFinite(requestedPage) ? Math.max(1, requestedPage) : 1
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 

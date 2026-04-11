@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { RecipeStep } from '@/types/recipe'
+import type { RecipeDraftStep } from '@/types/recipe'
 import {
   DndContext,
   closestCenter,
@@ -20,13 +20,12 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-export type DraftStep = RecipeStep & { _dndId: string }
-
 interface SortableStepRowProps {
-  step: DraftStep
+  step: RecipeDraftStep
   stepIndex: number
   totalSteps: number
-  onUpdate: (id: string, updates: Partial<DraftStep>) => void
+  highlightEmptyRequired: boolean
+  onUpdate: (id: string, updates: Partial<RecipeDraftStep>) => void
   onDelete: (id: string) => void
 }
 
@@ -34,11 +33,23 @@ const SortableStepRow = memo(function SortableStepRow({
   step,
   stepIndex,
   totalSteps,
+  highlightEmptyRequired,
   onUpdate,
   onDelete,
 }: SortableStepRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step._dndId })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  const timeMissing = highlightEmptyRequired && step.time.trim() === ''
+  const waterMissing = highlightEmptyRequired && step.water_poured_g <= 0
+  const actionMissing = highlightEmptyRequired && step.action.trim() === ''
+
+  const inputClass = (isMissing: boolean, widthClass: string) => [
+    widthClass,
+    'rounded-lg py-1.5 text-[var(--foreground)] bg-[var(--background)] border focus:outline-none',
+    isMissing
+      ? 'border-[var(--danger-border)] bg-[var(--danger-bg)]/45 focus:ring-2 focus:ring-[var(--danger-border)]/45'
+      : 'border-[var(--border)] focus:ring-1 focus:ring-[var(--foreground)]/20',
+  ].join(' ')
 
   return (
     <div ref={setNodeRef} style={style} className="bg-[var(--card)] rounded-2xl p-3 flex gap-2 items-start">
@@ -69,7 +80,7 @@ const SortableStepRow = memo(function SortableStepRow({
             placeholder="0:00"
             value={step.time}
             onChange={e => onUpdate(step._dndId, { time: e.target.value.replace(/[^0-9:]/g, '') })}
-            className="w-16 rounded-lg px-2.5 py-1.5 text-sm font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+            className={inputClass(timeMissing, 'w-16 px-2.5 text-sm font-mono')}
           />
           <div className="relative">
             <input
@@ -81,7 +92,7 @@ const SortableStepRow = memo(function SortableStepRow({
               value={step.water_poured_g === 0 ? '' : step.water_poured_g}
               onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
               onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
-              className="w-16 rounded-lg pl-2.5 pr-5 py-1.5 text-sm font-mono text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+              className={inputClass(waterMissing, 'w-16 pl-2.5 pr-5 text-sm font-mono')}
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 ui-meta pointer-events-none">g</span>
           </div>
@@ -97,7 +108,7 @@ const SortableStepRow = memo(function SortableStepRow({
           placeholder="Step description…"
           value={step.action}
           onChange={e => onUpdate(step._dndId, { action: e.target.value })}
-          className="w-full rounded-lg px-2.5 py-1.5 text-base text-[var(--foreground)] bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--foreground)]/20"
+          className={inputClass(actionMissing, 'w-full px-2.5 text-base')}
         />
       </div>
       <button
@@ -115,16 +126,18 @@ const SortableStepRow = memo(function SortableStepRow({
 })
 
 interface SortableStepListProps {
-  steps: DraftStep[]
-  onUpdate: (id: string, updates: Partial<DraftStep>) => void
+  steps: RecipeDraftStep[]
+  highlightEmptyRequired?: boolean
+  onUpdate: (id: string, updates: Partial<RecipeDraftStep>) => void
   onDelete: (id: string) => void
   onAdd: () => void
-  onReorder: (newSteps: DraftStep[]) => void
+  onReorder: (newSteps: RecipeDraftStep[]) => void
   stepError: string | null
 }
 
 export default function SortableStepList({
   steps,
+  highlightEmptyRequired = false,
   onUpdate,
   onDelete,
   onAdd,
@@ -156,6 +169,7 @@ export default function SortableStepList({
           {steps.map((step, i) => (
             <SortableStepRow
               key={step._dndId}
+              highlightEmptyRequired={highlightEmptyRequired}
               step={step}
               stepIndex={i}
               totalSteps={steps.length}

@@ -16,8 +16,11 @@ OpenRouter request setup is centralized in `src/lib/openrouter.ts`. Do not insta
 
 Use the shared helper so requests consistently include:
 - app attribution headers (`HTTP-Referer`, `X-Title`)
-- authenticated tracking IDs as `crp:<supabase-user-id>`
+- authenticated tracking IDs as readable, stable identifiers for operator cost attribution:
+  `crp:<display-slug>:<short-user-id>` when a display name exists, otherwise `crp:<short-user-id>`
 - guest tracking IDs as `guest:<persistent-cookie-id>`
+
+This readable authenticated tracking ID format is intentional in this repo. Do not "fix" it back to a raw Supabase user ID unless the product requirement changes.
 
 Route handlers receive `params` as a `Promise` — always `await params` before destructuring.
 

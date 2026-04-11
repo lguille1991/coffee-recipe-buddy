@@ -9,6 +9,7 @@ export const SAVED_RECIPE_DETAIL_SELECT = [
   'feedback_history',
   'image_url',
   'notes',
+  'creator:profiles!user_id(display_name)',
   'created_at',
   'archived',
   'parent_recipe_id',

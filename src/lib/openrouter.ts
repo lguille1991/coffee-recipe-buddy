@@ -44,7 +44,7 @@ export function buildAuthenticatedOpenRouterUserId(user: User): string {
     .slice(0, 40)
 
   return normalizedName
-    ? `${normalizedName}:${shortId}`
+    ? `crp:${normalizedName}:${shortId}`
     : `crp:${shortId}`
 }
 

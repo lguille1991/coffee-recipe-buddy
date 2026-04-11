@@ -74,6 +74,7 @@ export const RecipeStepSchema = z.object({
 })
 
 export type RecipeStep = z.infer<typeof RecipeStepSchema>
+export type RecipeDraftStep = RecipeStep & { _dndId: string }
 
 export const GrinderSettingSchema = z.object({
   range: z.string(),
@@ -219,6 +220,7 @@ export const SavedRecipeSchema = z.object({
   feedback_history: z.array(AnyFeedbackRoundSchema).default([]),
   image_url: z.string().nullable().optional(),
   notes: z.string().max(1000).nullable().optional(),
+  creator_display_name: z.string().nullable().optional(),
   created_at: z.string(),
   archived: z.boolean().default(false),
   parent_recipe_id: z.string().uuid().nullable().optional(),
@@ -249,6 +251,7 @@ export const RecipeListItemSchema = z.object({
   image_url: z.string().nullable().optional(),
   created_at: z.string(),
   schema_version: z.number().int(),
+  is_manual_created: z.boolean().default(false),
   has_manual_edits: z.boolean().default(false),
   has_feedback_adjustments: z.boolean().default(false),
   is_scaled: z.boolean().default(false),
