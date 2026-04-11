@@ -38,6 +38,33 @@ function parseWholeNumberInput(value: string): number | '' {
   return Number.isNaN(parsed) ? '' : Math.max(0, parsed)
 }
 
+function sanitizeManualBrewTimeInput(value: string) {
+  const filtered = value.replace(/[^\d:-]/g, '')
+  let result = ''
+  let colonCount = 0
+  let dashUsed = false
+
+  for (const char of filtered) {
+    if (/\d/.test(char)) {
+      result += char
+      continue
+    }
+
+    if (char === ':' && colonCount < 2 && result !== '' && result[result.length - 1] !== ':' && result[result.length - 1] !== '-') {
+      result += char
+      colonCount++
+      continue
+    }
+
+    if (char === '-' && !dashUsed && colonCount === 1 && result !== '' && result[result.length - 1] !== '-') {
+      result += char
+      dashUsed = true
+    }
+  }
+
+  return result
+}
+
 function getRequiredInputClass(isMissing: boolean) {
   return [
     'ui-input bg-[var(--background)] font-semibold px-3',
@@ -504,11 +531,12 @@ export default function RecipeSessionClient() {
                 <span className="ui-overline">Brew Time <span className="ui-text-danger">*</span></span>
                 <input
                   type="text"
-                  placeholder="e.g. 3:30"
+                  inputMode="numeric"
+                  placeholder="e.g. 1:00-1:45"
                   value={manualDraft.edit_draft.total_time}
                   onChange={event => updateManualDraft(current => ({
                     ...current,
-                    edit_draft: { ...current.edit_draft, total_time: event.target.value },
+                    edit_draft: { ...current.edit_draft, total_time: sanitizeManualBrewTimeInput(event.target.value) },
                   }))}
                   className={getRequiredInputClass(manualRequiredState.totalTimeMissing)}
                 />

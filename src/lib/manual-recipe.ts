@@ -36,6 +36,8 @@ const MANUAL_QUICK_ADJUSTMENTS: RecipeWithAdjustment['quick_adjustments'] = {
   fast_drain: 'Adjust manually after tasting. Try grinding slightly finer or increasing agitation.',
 }
 
+const MANUAL_BREW_TIME_REGEX = /^\d+:\d{2}(-\d+:\d{2})?$/
+
 function buildDisplayName(method: MethodId, bean: BeanProfile) {
   const methodName = METHOD_DISPLAY_NAMES[method]
   const beanName = bean.bean_name?.trim()
@@ -83,8 +85,8 @@ export function validateManualRecipeDraft(
   if (!editDraft.total_time.trim()) return { valid: false, error: 'Brew time is required.' }
   if (editDraft.grind_preferred_value === '') return { valid: false, error: 'Grind setting is required.' }
 
-  if (!/^\d+:[0-5]\d(\s*[–-]\s*\d+:[0-5]\d)?$/.test(editDraft.total_time)) {
-    return { valid: false, error: 'Brew time must be in m:ss format (e.g. 3:30) or a range (e.g. 3:30 – 4:00).' }
+  if (!MANUAL_BREW_TIME_REGEX.test(editDraft.total_time)) {
+    return { valid: false, error: 'Brew time must use m:ss or m:ss-m:ss format with no spaces, for example 1:00 or 1:00-1:45.' }
   }
 
   if (preferredGrinder === 'q_air' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidQAirSetting(editDraft.grind_preferred_value))) {

@@ -28,6 +28,23 @@ describe('manual recipe helpers', () => {
     })
   })
 
+  it('rejects brew times with spaces or invalid separators in manual mode', () => {
+    const draft = createManualRecipeDraft(WASHED_LIGHT_BEAN, 'v60')
+    draft.edit_draft.coffee_g = 15
+    draft.edit_draft.water_g = 250
+    draft.edit_draft.temperature_display = 93
+    draft.edit_draft.total_time = '1:00 - 1:45'
+    draft.edit_draft.grind_preferred_value = 82
+    draft.edit_draft.steps = [
+      { step: 1, time: '0:00', action: 'Bloom', water_poured_g: 250, water_accumulated_g: 250, _dndId: 'a' },
+    ]
+
+    expect(validateManualRecipeDraft(draft, 'k_ultra', 'C')).toEqual({
+      valid: false,
+      error: 'Brew time must use m:ss or m:ss-m:ss format with no spaces, for example 1:00 or 1:00-1:45.',
+    })
+  })
+
   it('builds a persisted recipe from a completed manual draft', () => {
     const draft = createManualRecipeDraft(WASHED_LIGHT_BEAN, 'v60')
     draft.edit_draft.coffee_g = 15
