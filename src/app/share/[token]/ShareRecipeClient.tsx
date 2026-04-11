@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
 import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
+import { expectOk, runClientMutation } from '@/lib/client-mutation'
 import { useAuth } from '@/hooks/useAuth'
 import ConfirmSheet from '@/components/ConfirmSheet'
 
@@ -37,8 +38,14 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
   useEffect(() => {
     fetch(`/api/share/${data.shareToken}/comments`)
-      .then(r => r.ok ? r.json() : null)
-      .then(res => { if (res) setComments(res.comments) })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load comments')
+        }
+        return response.json()
+      })
+      .then(res => { setComments(res.comments) })
+      .catch(() => setPostError('Failed to load comments. Please refresh and try again.'))
       .finally(() => setCommentsLoading(false))
   }, [data.shareToken])
 
@@ -91,12 +98,17 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
   async function handleDeleteComment(commentId: string) {
     setDeletingId(commentId)
-    try {
-      await fetch(`/api/share/${data.shareToken}/comments/${commentId}`, { method: 'DELETE' })
-      setComments(prev => prev.filter(c => c.id !== commentId))
-    } finally {
-      setDeletingId(null)
-    }
+    setPostError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/share/${data.shareToken}/comments/${commentId}`, { method: 'DELETE' })
+        return expectOk(response, 'Failed to delete comment')
+      },
+      onSuccess: () => setComments(prev => prev.filter(c => c.id !== commentId)),
+      onError: setPostError,
+      onSettled: () => setDeletingId(null),
+      errorMessage: 'Failed to delete comment. Please try again.',
+    })
   }
 
   return (

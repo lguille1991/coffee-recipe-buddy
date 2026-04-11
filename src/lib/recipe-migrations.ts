@@ -1,5 +1,6 @@
 import { RecipeWithAdjustment } from '@/types/recipe'
-import { parseKUltraRange, kUltraRangeToTimemoreC2, kUltraRangeToQAir, kUltraRangeToBaratza } from './grinder-converter'
+import { parseKUltraRange, kUltraRangeToQAir } from './grinder-converter'
+import { buildDerivedGrindSettings, deriveSecondaryGrindSettings, parseClickCount } from './grind-settings'
 
 const CURRENT_SCHEMA_VERSION = 5
 
@@ -16,11 +17,18 @@ const migrations: Record<number, MigrationFn> = {
     if (grind.timemore_c2) return recipe // already present
 
     const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
-    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
-    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange?.mid ?? 82
+    const startClicks = parseClickCount(
+      recipe.grind.k_ultra.starting_point,
+      kuRange?.mid ?? 82,
+    ) ?? 82
 
     const c2 = kuRange
-      ? kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, recipe.method)
+      ? deriveSecondaryGrindSettings(
+          recipe.method,
+          kuRange.low,
+          kuRange.high,
+          startClicks,
+        ).timemore_c2
       : { range: 'clicks 18–22', starting_point: '20 clicks', note: 'Regenerate recipe for precise C2 settings.' }
 
     return {
@@ -33,8 +41,7 @@ const migrations: Record<number, MigrationFn> = {
     const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
     if (!kuRange) return recipe
 
-    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
-    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange.mid
+    const startClicks = parseClickCount(recipe.grind.k_ultra.starting_point, kuRange.mid) ?? kuRange.mid
 
     const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
 
@@ -57,21 +64,12 @@ const migrations: Record<number, MigrationFn> = {
     const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
     if (!kuRange) return recipe
 
-    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
-    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange.mid
-
-    const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
-    const baratza = kUltraRangeToBaratza(kuRange.low, kuRange.high, startClicks, recipe.method)
-    const c2 = kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, recipe.method)
+    const startClicks = parseClickCount(recipe.grind.k_ultra.starting_point, kuRange.mid) ?? kuRange.mid
+    const grind = buildDerivedGrindSettings(recipe, kuRange.low, kuRange.high, startClicks)
 
     return {
       ...recipe,
-      grind: {
-        ...recipe.grind,
-        q_air: { ...recipe.grind.q_air, ...qAir },
-        baratza_encore_esp: { ...recipe.grind.baratza_encore_esp, ...baratza },
-        timemore_c2: { ...recipe.grind.timemore_c2, ...c2 },
-      },
+      grind,
     }
   },
 
@@ -81,8 +79,7 @@ const migrations: Record<number, MigrationFn> = {
     const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
     if (!kuRange) return recipe
 
-    const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
-    const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange.mid
+    const startClicks = parseClickCount(recipe.grind.k_ultra.starting_point, kuRange.mid) ?? kuRange.mid
 
     const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
 

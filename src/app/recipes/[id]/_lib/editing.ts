@@ -1,12 +1,10 @@
 import {
-  kUltraRangeToBaratza,
-  kUltraRangeToQAir,
-  kUltraRangeToTimemoreC2,
   parseGrinderValueForEdit,
   parseKUltraRange,
   grinderValueToKUltraClicks,
   type GrinderEditValue,
 } from '@/lib/grinder-converter'
+import { buildDerivedGrindSettings } from '@/lib/grind-settings'
 import type {
   FeedbackRound,
   GrinderId,
@@ -157,14 +155,6 @@ export function buildLiveGrindSettings(recipe: SavedRecipe, preferredGrinder: Gr
   const range = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const low = range?.low ?? newKUltraClicks
   const high = range?.high ?? newKUltraClicks
-  const qAir = kUltraRangeToQAir(low, high, newKUltraClicks)
-  const baratza = kUltraRangeToBaratza(low, high, newKUltraClicks, recipe.method)
-  const timemore = kUltraRangeToTimemoreC2(low, high, newKUltraClicks, recipe.method)
 
-  return {
-    k_ultra: { ...currentRecipe.grind.k_ultra, starting_point: `${newKUltraClicks} clicks` },
-    q_air: { ...currentRecipe.grind.q_air, starting_point: qAir.starting_point },
-    baratza_encore_esp: { ...currentRecipe.grind.baratza_encore_esp, starting_point: baratza.starting_point, note: baratza.note },
-    timemore_c2: { ...currentRecipe.grind.timemore_c2, starting_point: timemore.starting_point, note: timemore.note },
-  }
+  return buildDerivedGrindSettings(currentRecipe, low, high, newKUltraClicks)
 }

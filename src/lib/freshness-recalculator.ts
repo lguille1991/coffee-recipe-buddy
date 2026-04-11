@@ -1,4 +1,5 @@
 import { RecipeWithAdjustment } from '@/types/recipe'
+import { formatClickOffset, parseClickOffset } from './recipe-policy'
 
 export interface FreshnessAdjustment {
   adjusted: boolean
@@ -15,18 +16,6 @@ function getFreshnessWindow(days: number): FreshnessWindow {
   if (days < 28)  return 'optimal'
   if (days < 45)  return 'fading'
   return 'stale'
-}
-
-function parseFreshnessOffset(offset: string): number {
-  // Offset strings look like "+2 clicks", "-1 click", "0", "+0 clicks"
-  const match = offset.match(/([+-]?\d+)/)
-  return match ? parseInt(match[1], 10) : 0
-}
-
-function formatClickOffset(clicks: number): string {
-  if (clicks > 0) return `+${clicks} clicks`
-  if (clicks < 0) return `${clicks} clicks`
-  return '0 clicks'
 }
 
 function windowOffset(window: FreshnessWindow): number {
@@ -71,7 +60,7 @@ export function recalculateFreshness(
   const currentWindowOffset = windowOffset(currentWindow)
 
   // Determine the window that was in effect when the recipe was generated
-  const savedOffset = parseFreshnessOffset(recipe.range_logic?.freshness_offset ?? '0')
+  const savedOffset = parseClickOffset(recipe.range_logic?.freshness_offset ?? '0')
   const savedWindowOffset = savedOffset // already the offset applied at save time
 
   const delta = currentWindowOffset - savedWindowOffset

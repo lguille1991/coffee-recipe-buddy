@@ -5,14 +5,13 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
+import { expectOk, runClientMutation } from '@/lib/client-mutation'
 import { computeGrindScalingDelta } from '@/lib/grind-scaling-engine'
 import { recalculateFreshness, type FreshnessAdjustment } from '@/lib/freshness-recalculator'
+import { buildDerivedGrindSettings } from '@/lib/grind-settings'
 import {
   grinderValueToKUltraClicks,
   kUltraClicksToGrinderValue,
-  kUltraRangeToBaratza,
-  kUltraRangeToQAir,
-  kUltraRangeToTimemoreC2,
   parseGrinderValueForEdit,
   parseKUltraRange,
 } from '@/lib/grinder-converter'
@@ -78,6 +77,7 @@ export default function RecipeDetailClient({
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
   const [notes, setNotes] = useState(initialRecipe.notes ?? '')
   const [notesSaving, setNotesSaving] = useState(false)
+  const [notesError, setNotesError] = useState<string | null>(null)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [shareToken, setShareToken] = useState<string | null>(initialShareToken)
   const [shareUrl, setShareUrl] = useState(initialShareUrl)
@@ -87,6 +87,7 @@ export default function RecipeDetailClient({
   const [revoking, setRevoking] = useState(false)
   const [commentCount, setCommentCount] = useState<number | null>(initialCommentCount)
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
@@ -166,8 +167,17 @@ export default function RecipeDetailClient({
 
   async function handleDelete() {
     setDeleting(true)
-    await fetch(`/api/recipes/${id}`, { method: 'DELETE' })
-    router.replace('/recipes')
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/recipes/${id}`, { method: 'DELETE' })
+        return expectOk(response, 'Failed to delete recipe')
+      },
+      onSuccess: () => router.replace('/recipes'),
+      onError: setActionError,
+      onSettled: () => setDeleting(false),
+      errorMessage: 'Failed to delete recipe. Please try again.',
+    })
   }
 
   function handleOpenBrewMode() {
@@ -217,16 +227,12 @@ export default function RecipeDetailClient({
     const range = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
     const grindLow = range?.low ?? newKUltraClicks
     const grindHigh = range?.high ?? newKUltraClicks
-    const qAirResult = kUltraRangeToQAir(grindLow, grindHigh, newKUltraClicks)
-    const baratzaResult = kUltraRangeToBaratza(grindLow, grindHigh, newKUltraClicks, recipe.method)
-    const timemoreResult = kUltraRangeToTimemoreC2(grindLow, grindHigh, newKUltraClicks, recipe.method)
-
-    const newGrind = {
-      k_ultra: { ...currentRecipe.grind.k_ultra, starting_point: `${newKUltraClicks} clicks` },
-      q_air: { ...currentRecipe.grind.q_air, starting_point: qAirResult.starting_point },
-      baratza_encore_esp: { ...currentRecipe.grind.baratza_encore_esp, starting_point: baratzaResult.starting_point, note: baratzaResult.note },
-      timemore_c2: { ...currentRecipe.grind.timemore_c2, starting_point: timemoreResult.starting_point, note: timemoreResult.note },
-    }
+    const newGrind = buildDerivedGrindSettings(
+      currentRecipe,
+      grindLow,
+      grindHigh,
+      newKUltraClicks,
+    )
 
     const changes: ManualEditRound['changes'] = []
     if (editDraft.coffee_g !== currentRecipe.parameters.coffee_g) {
@@ -319,17 +325,23 @@ export default function RecipeDetailClient({
 
   async function handleShare() {
     setSharing(true)
-    try {
-      const response = await fetch(`/api/recipes/${id}/share`, { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to create share link')
-      const data = await response.json()
-      setShareToken(data.shareToken)
-      setShareUrl(data.url)
-      setCommentCount(0)
-      setShowShareSheet(true)
-    } finally {
-      setSharing(false)
-    }
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/recipes/${id}/share`, { method: 'POST' })
+        await expectOk(response, 'Failed to create share link')
+        return response.json()
+      },
+      onSuccess: (data: { shareToken: string; url: string }) => {
+        setShareToken(data.shareToken)
+        setShareUrl(data.url)
+        setCommentCount(0)
+        setShowShareSheet(true)
+      },
+      onError: setActionError,
+      onSettled: () => setSharing(false),
+      errorMessage: 'Failed to create share link. Please try again.',
+    })
   }
 
   async function handleCopy() {
@@ -340,31 +352,46 @@ export default function RecipeDetailClient({
 
   function handleNotesChange(value: string) {
     setNotes(value)
+    setNotesError(null)
     if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
 
     notesDebounceRef.current = setTimeout(async () => {
       setNotesSaving(true)
-      await fetch(`/api/recipes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: value || null }),
+      await runClientMutation({
+        execute: async () => {
+          const response = await fetch(`/api/recipes/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: value || null }),
+          })
+          return expectOk(response, 'Failed to save notes')
+        },
+        onError: setNotesError,
+        onSettled: () => setNotesSaving(false),
+        errorMessage: 'Failed to save notes. Please try again.',
       })
-      setNotesSaving(false)
     }, 500)
   }
 
   async function handleRevoke() {
     setRevoking(true)
-    try {
-      await fetch(`/api/recipes/${id}/share`, { method: 'DELETE' })
-      setShareToken(null)
-      setShareUrl('')
-      setCommentCount(null)
-      setShowShareSheet(false)
-      setShowRevokeConfirm(false)
-    } finally {
-      setRevoking(false)
-    }
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/recipes/${id}/share`, { method: 'DELETE' })
+        return expectOk(response, 'Failed to revoke share link')
+      },
+      onSuccess: () => {
+        setShareToken(null)
+        setShareUrl('')
+        setCommentCount(null)
+        setShowShareSheet(false)
+        setShowRevokeConfirm(false)
+      },
+      onError: setActionError,
+      onSettled: () => setRevoking(false),
+      errorMessage: 'Failed to revoke share link. Please try again.',
+    })
   }
 
   const handleStepUpdate = useCallback((dndId: string, updates: Partial<DraftStep>) => {
@@ -529,6 +556,12 @@ export default function RecipeDetailClient({
         {editError && (
           <div className="ui-alert-danger text-sm">
             {editError}
+          </div>
+        )}
+
+        {actionError && !isEditing && (
+          <div className="ui-alert-danger text-sm">
+            {actionError}
           </div>
         )}
 
@@ -737,6 +770,9 @@ export default function RecipeDetailClient({
                 rows={3}
                 className="ui-textarea"
               />
+              {notesError && (
+                <p className="ui-meta ui-text-danger mt-2">{notesError}</p>
+              )}
               <p className="ui-meta text-right mt-1">{notes.length}/1000</p>
             </div>
           </>

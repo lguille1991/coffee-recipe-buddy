@@ -4,32 +4,11 @@
 import { Recipe, Symptom, AdjustmentMetadata, RecipeWithAdjustment, GrinderId } from '@/types/recipe'
 import {
   parseKUltraRange,
-  kUltraRangeToQAir,
-  kUltraRangeToBaratza,
-  kUltraRangeToTimemoreC2,
 } from './grinder-converter'
-
-// ─── Method ratio bounds (Block 1B) ──────────────────────────────────────────
-
-const METHOD_RATIO_RANGES: Record<string, { low: number; high: number }> = {
-  v60: { low: 15, high: 17 },
-  origami: { low: 15, high: 17 },
-  orea_v4: { low: 15, high: 17 },
-  hario_switch: { low: 13, high: 16 },
-  kalita_wave: { low: 15, high: 17 },
-  chemex: { low: 15, high: 17 },
-  ceado_hoop: { low: 14, high: 16 },
-  pulsar: { low: 14, high: 16 },
-  aeropress: { low: 11, high: 16 },
-}
+import { buildDerivedGrindSettings, parseClickCount } from './grind-settings'
+import { getMethodRatioBounds, inferRangeLogicContext } from './recipe-policy'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Parse "82 clicks" or "click 82" → 82 */
-function parseClickValue(s: string): number | null {
-  const m = s.match(/(\d+)/)
-  return m ? parseInt(m[1], 10) : null
-}
 
 /** Parse "1:15" → 15.0 */
 function parseRatioNumber(ratio: string): number | null {
@@ -40,44 +19,6 @@ function parseRatioNumber(ratio: string): number | null {
 /** Format ratio number back to "1:15" or "1:14.5" */
 function formatRatio(n: number): string {
   return n % 1 === 0 ? `1:${n}` : `1:${n.toFixed(1)}`
-}
-
-/** Recalculate all grinder settings from a new K-Ultra click range + starting point */
-function recalculateGrinders(
-  lowClicks: number,
-  highClicks: number,
-  startingClicks: number,
-  method: string,
-  recipe: Recipe,
-) {
-  const qAir = kUltraRangeToQAir(lowClicks, highClicks, startingClicks)
-  const baratza = kUltraRangeToBaratza(lowClicks, highClicks, startingClicks, method)
-  const c2 = kUltraRangeToTimemoreC2(lowClicks, highClicks, startingClicks, method)
-
-  return {
-    k_ultra: {
-      ...recipe.grind.k_ultra,
-      range: `${lowClicks}–${highClicks} clicks`,
-      starting_point: `${startingClicks} clicks`,
-    },
-    q_air: {
-      ...recipe.grind.q_air,
-      range: qAir.range,
-      starting_point: qAir.starting_point,
-    },
-    baratza_encore_esp: {
-      ...recipe.grind.baratza_encore_esp,
-      range: baratza.range,
-      starting_point: baratza.starting_point,
-      note: baratza.note,
-    },
-    timemore_c2: {
-      ...recipe.grind.timemore_c2,
-      range: c2.range,
-      starting_point: c2.starting_point,
-      note: c2.note,
-    },
-  }
 }
 
 /** Scale pour step volumes proportionally when ratio (water total) changes */
@@ -108,15 +49,8 @@ function checkBlock10Conflicts(
   const noConflict: ConflictResult = { override: false, action: null, note: '' }
 
   // Detect bean context from range_logic assumptions (approximations)
-  const isNatural = recipe.range_logic.process_offset.toLowerCase().includes('natural')
-    || recipe.range_logic.process_offset.includes('+2') || recipe.range_logic.process_offset.includes('+3')
-    || recipe.range_logic.process_offset.includes('+4')
-  const isAnaerobic = recipe.range_logic.process_offset.toLowerCase().includes('anaerobic')
-    || recipe.range_logic.process_offset.includes('+5')
-  const isLightRoast = recipe.range_logic.roast_offset.toLowerCase().includes('light')
-    || recipe.range_logic.roast_offset.includes('-2') || recipe.range_logic.roast_offset.includes('-1')
-  const isVeryFresh = recipe.range_logic.freshness_offset.toLowerCase().includes('fresh')
-    || recipe.range_logic.freshness_offset.includes('+2') || recipe.range_logic.freshness_offset.includes('+3')
+  const { isNatural, isAnaerobic, isLightRoast, isVeryFresh } =
+    inferRangeLogicContext(recipe.range_logic)
 
   const rangeMid = (operatingRange.low + operatingRange.high) / 2
   const isMidRange = Math.abs(currentClicks - rangeMid) <= 1.5
@@ -178,7 +112,7 @@ export function applyFeedbackAdjustment(
   }
   const operatingRange: { low: number; high: number; mid: number } = operatingRangeRaw
 
-  const currentClicksRaw = parseClickValue(recipe.grind.k_ultra.starting_point)
+  const currentClicksRaw = parseClickCount(recipe.grind.k_ultra.starting_point)
   if (currentClicksRaw === null) {
     throw new Error(`Cannot parse K-Ultra starting_point: ${recipe.grind.k_ultra.starting_point}`)
   }
@@ -298,12 +232,11 @@ export function applyFeedbackAdjustment(
   if (plan.type === 'grind') {
     const newClicks = plan.clicks
     const rangeObj = parseKUltraRange(recipe.range_logic.final_operating_range)!
-    const newGrind = recalculateGrinders(
+    const newGrind = buildDerivedGrindSettings(
+      recipe,
       rangeObj.low,
       rangeObj.high,
       newClicks,
-      recipe.method,
-      recipe,
     )
     updatedRecipe = { ...updatedRecipe, grind: newGrind }
 
@@ -348,7 +281,7 @@ export function applyFeedbackAdjustment(
       throw new Error(`Cannot parse ratio: ${recipe.parameters.ratio}`)
     }
 
-    const methodBounds = METHOD_RATIO_RANGES[recipe.method] ?? { low: 13, high: 17 }
+    const methodBounds = getMethodRatioBounds(recipe.method)
     const newRatioNum = Math.max(methodBounds.low, Math.min(methodBounds.high, currentRatioNum + plan.delta))
     const newRatio = formatRatio(newRatioNum)
     const newWaterG = Math.round(recipe.parameters.coffee_g * newRatioNum)

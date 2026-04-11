@@ -30,4 +30,28 @@ describe('openrouter client', () => {
       }),
     )
   })
+
+  it('builds readable authenticated tracking IDs with the crp prefix', async () => {
+    const { buildAuthenticatedOpenRouterUserId } = await import('@/lib/openrouter')
+
+    const user = {
+      id: '12345678-1234-1234-1234-123456789abc',
+      user_metadata: { full_name: 'Guillermo Abrego' },
+    }
+
+    expect(buildAuthenticatedOpenRouterUserId(user as never)).toBe(
+      'crp:guillermo-abrego:12345678',
+    )
+  })
+
+  it('falls back to the short user id when no display name is present', async () => {
+    const { buildAuthenticatedOpenRouterUserId } = await import('@/lib/openrouter')
+
+    const user = {
+      id: '12345678-1234-1234-1234-123456789abc',
+      user_metadata: {},
+    }
+
+    expect(buildAuthenticatedOpenRouterUserId(user as never)).toBe('crp:12345678')
+  })
 })

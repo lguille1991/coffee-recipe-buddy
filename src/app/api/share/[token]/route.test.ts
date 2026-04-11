@@ -115,4 +115,33 @@ describe('public share route cache headers', () => {
     expect(body.total).toBe(1)
     expect(body.comments).toHaveLength(1)
   })
+
+  it('falls back to page 1 when the comments page query is invalid', async () => {
+    const sharedRecipeQuery = createSingleResultQuery({
+      data: { share_token: 'share-token' },
+      error: null,
+    })
+    const commentsQuery = createCommentsQuery()
+
+    createClientMock.mockResolvedValue({
+      from: vi.fn((table: string) => {
+        if (table === 'shared_recipes') return sharedRecipeQuery
+        if (table === 'recipe_comments') return commentsQuery
+        throw new Error(`Unexpected table: ${table}`)
+      }),
+    })
+
+    const response = await getComments(
+      new Request('http://localhost/api/share/share-token/comments?page=abc'),
+      {
+        params: Promise.resolve({ token: 'share-token' }),
+      },
+    )
+
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.page).toBe(1)
+    expect(commentsQuery.range).toHaveBeenCalledWith(0, 49)
+  })
 })

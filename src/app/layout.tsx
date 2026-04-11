@@ -1,16 +1,9 @@
 import type { Metadata } from 'next'
-import { Roboto } from 'next/font/google'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import ResponsiveContainer from '@/components/ResponsiveContainer'
 import SideNav from '@/components/SideNav'
 import { AuthProvider } from '@/components/AuthContext'
-
-const roboto = Roboto({
-  variable: '--font-roboto',
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-})
 
 export const metadata: Metadata = {
   title: 'Coffee Recipe Buddy',
@@ -25,11 +18,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${roboto.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full overflow-x-hidden bg-[var(--background)] text-[var(--foreground)] antialiased" style={{ fontFamily: 'var(--font-roboto), Roboto, sans-serif' }}>
+      <body
+        className="min-h-full overflow-x-hidden bg-[var(--background)] text-[var(--foreground)] antialiased"
+        style={{
+          fontFamily: 'Roboto, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        }}
+      >
         <AuthProvider>
           <SideNav />
           <main className="lg:ml-56 min-h-screen" id="main-content">
