@@ -98,6 +98,8 @@ export default function AnalysisPage() {
     if (!bean) return
     const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
     recipeSessionStorage.setConfirmedBean(finalBean)
+    recipeSessionStorage.clearManualRecipeDraft()
+    recipeSessionStorage.setRecipeFlowSource('generated')
 
     const vol = parseInt(targetVolume, 10)
     if (vol > 0) {

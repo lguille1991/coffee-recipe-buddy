@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { RecipeStep } from '@/types/recipe'
+import type { RecipeDraftStep } from '@/types/recipe'
 import {
   DndContext,
   closestCenter,
@@ -20,13 +20,11 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-export type DraftStep = RecipeStep & { _dndId: string }
-
 interface SortableStepRowProps {
-  step: DraftStep
+  step: RecipeDraftStep
   stepIndex: number
   totalSteps: number
-  onUpdate: (id: string, updates: Partial<DraftStep>) => void
+  onUpdate: (id: string, updates: Partial<RecipeDraftStep>) => void
   onDelete: (id: string) => void
 }
 
@@ -115,11 +113,11 @@ const SortableStepRow = memo(function SortableStepRow({
 })
 
 interface SortableStepListProps {
-  steps: DraftStep[]
-  onUpdate: (id: string, updates: Partial<DraftStep>) => void
+  steps: RecipeDraftStep[]
+  onUpdate: (id: string, updates: Partial<RecipeDraftStep>) => void
   onDelete: (id: string) => void
   onAdd: () => void
-  onReorder: (newSteps: DraftStep[]) => void
+  onReorder: (newSteps: RecipeDraftStep[]) => void
   stepError: string | null
 }
 

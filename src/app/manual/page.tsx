@@ -176,6 +176,14 @@ export default function ManualPage() {
     }
 
     recipeSessionStorage.setConfirmedBean(bean)
+    recipeSessionStorage.clearManualRecipeDraft()
+    recipeSessionStorage.clearRecipe()
+    recipeSessionStorage.clearRecipeOriginal()
+    recipeSessionStorage.clearFeedbackRound()
+    recipeSessionStorage.clearAdjustmentHistory()
+    recipeSessionStorage.clearManualEditHistory()
+    recipeSessionStorage.clearSelectedMethod()
+    recipeSessionStorage.setRecipeFlowSource('manual')
 
     const vol = parseInt(targetVolume, 10)
     if (vol > 0) {
@@ -422,7 +430,7 @@ export default function ManualPage() {
             <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
               <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Get Recommendations
+            Continue to Methods
           </button>
         </div>
       </div>

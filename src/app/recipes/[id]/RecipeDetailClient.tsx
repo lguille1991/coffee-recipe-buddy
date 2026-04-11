@@ -16,7 +16,7 @@ import {
   parseKUltraRange,
 } from '@/lib/grinder-converter'
 import { useProfile } from '@/hooks/useProfile'
-import type { ManualEditRound, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
+import type { ManualEditRound, RecipeDraftStep, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import {
   EditHistorySheet as RecipeEditHistorySheet,
   RecipeEditGrindSettings,
@@ -40,8 +40,6 @@ import {
   type EditDraft,
   validateSteps,
 } from './_lib/editing'
-import type { DraftStep } from './SortableStepList'
-
 const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: false })
 
 type RecipeDetailClientProps = {
@@ -394,7 +392,7 @@ export default function RecipeDetailClient({
     })
   }
 
-  const handleStepUpdate = useCallback((dndId: string, updates: Partial<DraftStep>) => {
+  const handleStepUpdate = useCallback((dndId: string, updates: Partial<RecipeDraftStep>) => {
     setEditDraft(draft => {
       if (!draft) return draft
       const updatedSteps = draft.steps.map(step => step._dndId === dndId ? { ...step, ...updates } : step)

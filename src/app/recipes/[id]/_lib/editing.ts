@@ -9,9 +9,9 @@ import type {
   FeedbackRound,
   GrinderId,
   ManualEditRound,
+  RecipeDraftStep,
   SavedRecipe,
 } from '@/types/recipe'
-import type { DraftStep } from '../SortableStepList'
 
 export type EditDraft = {
   coffee_g: number
@@ -22,7 +22,7 @@ export type EditDraft = {
   temperature_display: number | ''
   total_time: string
   grind_preferred_value: GrinderEditValue
-  steps: DraftStep[]
+  steps: RecipeDraftStep[]
 }
 
 export type AnyFeedbackRound = FeedbackRound | ManualEditRound
@@ -35,7 +35,7 @@ export function isManualEditRound(round: AnyFeedbackRound): round is ManualEditR
   return 'type' in round && (round.type === 'manual_edit' || round.type === 'auto_adjust')
 }
 
-export function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
+export function recomputeAccumulated(steps: RecipeDraftStep[]): RecipeDraftStep[] {
   let accumulated = 0
   return steps.map(step => {
     accumulated = Math.round((accumulated + step.water_poured_g) * 10) / 10
@@ -43,7 +43,7 @@ export function recomputeAccumulated(steps: DraftStep[]): DraftStep[] {
   })
 }
 
-export function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater: number): DraftStep[] {
+export function scaleStepsToWater(steps: RecipeDraftStep[], oldWater: number, newWater: number): RecipeDraftStep[] {
   if (oldWater === 0 || oldWater === newWater) return steps
 
   const scaled = steps.map(step => ({
@@ -70,7 +70,7 @@ export function scaleStepsToWater(steps: DraftStep[], oldWater: number, newWater
   return recomputeAccumulated(scaled)
 }
 
-export function validateSteps(steps: DraftStep[], targetWaterG: number): string | null {
+export function validateSteps(steps: RecipeDraftStep[], targetWaterG: number): string | null {
   if (steps.length > 20) return 'Recipes can have at most 20 steps.'
 
   const timeRegex = /^\d+:[0-5]\d$/
@@ -115,6 +115,27 @@ export function createEditDraft(recipe: SavedRecipe, tempUnit: 'C' | 'F', prefer
     total_time: currentRecipe.parameters.total_time,
     grind_preferred_value: parseGrinderValueForEdit(preferredGrinder, currentRecipe.grind[preferredGrinder].starting_point),
     steps: currentRecipe.steps.map((step, index) => ({ ...step, _dndId: `step-${index}-${step.step}` })),
+  }
+}
+
+export function createEmptyEditDraft(): EditDraft {
+  return {
+    coffee_g: 0,
+    water_g: 0,
+    ratio_multiplier: 0,
+    scaledFromDose: false,
+    scaledFromRatio: false,
+    temperature_display: '',
+    total_time: '',
+    grind_preferred_value: '',
+    steps: [{
+      step: 1,
+      time: '',
+      action: '',
+      water_poured_g: 0,
+      water_accumulated_g: 0,
+      _dndId: 'step-0-1',
+    }],
   }
 }
 

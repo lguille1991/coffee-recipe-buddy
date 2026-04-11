@@ -74,6 +74,7 @@ export const RecipeStepSchema = z.object({
 })
 
 export type RecipeStep = z.infer<typeof RecipeStepSchema>
+export type RecipeDraftStep = RecipeStep & { _dndId: string }
 
 export const GrinderSettingSchema = z.object({
   range: z.string(),

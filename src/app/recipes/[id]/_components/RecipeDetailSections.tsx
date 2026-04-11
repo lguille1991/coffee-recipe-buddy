@@ -1,15 +1,13 @@
 'use client'
 
 import Image from 'next/image'
-import type { GrinderId, ManualEditRound, MethodId, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
+import type { GrinderId, ManualEditRound, MethodId, RecipeWithAdjustment, RecipeDraftStep, SavedRecipe } from '@/types/recipe'
 import { GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
 import {
   formatGrinderRangeForEdit,
   formatGrinderSettingForDisplay,
   isValidQAirSetting,
 } from '@/lib/grinder-converter'
-import type { DraftStep } from '../SortableStepList'
-
 export function RecipeTitleBlock({
   commentCount,
   hasFeedbackAdjustments,
@@ -209,7 +207,7 @@ export function RecipeEditGrindSettings({
   onChange,
   preferredGrinder,
 }: {
-  editDraft: { grind_preferred_value: DraftStep['water_poured_g'] | string | number }
+  editDraft: { grind_preferred_value: RecipeDraftStep['water_poured_g'] | string | number }
   grindRange: string | null
   isGrindOutOfRange: boolean
   onChange: (value: string) => void

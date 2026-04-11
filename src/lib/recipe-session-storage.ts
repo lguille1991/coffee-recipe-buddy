@@ -4,16 +4,19 @@ import type {
   RecipeWithAdjustment,
   SaveRecipeRequest,
 } from '@/types/recipe'
+import type { ManualRecipeDraft } from '@/lib/manual-recipe'
 
 const STORAGE_KEYS = {
   adjustmentHistory: 'adjustment_history',
   confirmedBean: 'confirmedBean',
   extractionResult: 'extractionResult',
   feedbackRound: 'feedback_round',
+  manualRecipeDraft: 'manual_recipe_draft',
   manualEditHistory: 'manual_edit_history',
   methodRecommendations: 'methodRecommendations',
   pendingSaveRecipe: 'pending_save_recipe',
   recipe: 'recipe',
+  recipeFlowSource: 'recipe_flow_source',
   recipeOriginal: 'recipe_original',
   restoreMethodSelection: 'restore_method_selection',
   selectedMethod: 'selectedMethod',
@@ -74,8 +77,14 @@ export const recipeSessionStorage = {
   clearFeedbackRound() {
     remove(STORAGE_KEYS.feedbackRound)
   },
+  clearManualRecipeDraft() {
+    remove(STORAGE_KEYS.manualRecipeDraft)
+  },
   clearManualEditHistory() {
     remove(STORAGE_KEYS.manualEditHistory)
+  },
+  clearMethodRecommendations() {
+    remove(STORAGE_KEYS.methodRecommendations)
   },
   clearPendingSaveRecipe() {
     remove(STORAGE_KEYS.pendingSaveRecipe)
@@ -83,11 +92,17 @@ export const recipeSessionStorage = {
   clearRecipe() {
     remove(STORAGE_KEYS.recipe)
   },
+  clearRecipeFlowSource() {
+    remove(STORAGE_KEYS.recipeFlowSource)
+  },
   clearRecipeOriginal() {
     remove(STORAGE_KEYS.recipeOriginal)
   },
   clearRestoreMethodSelection() {
     remove(STORAGE_KEYS.restoreMethodSelection)
+  },
+  clearSelectedMethod() {
+    remove(STORAGE_KEYS.selectedMethod)
   },
   clearTargetVolumeMl() {
     remove(STORAGE_KEYS.targetVolumeMl)
@@ -110,6 +125,9 @@ export const recipeSessionStorage = {
   getManualEditHistory<T>() {
     return readJson<T[]>(STORAGE_KEYS.manualEditHistory) ?? []
   },
+  getManualRecipeDraft() {
+    return readJson<ManualRecipeDraft>(STORAGE_KEYS.manualRecipeDraft)
+  },
   getMethodRecommendations() {
     return readJson<MethodRecommendation[]>(STORAGE_KEYS.methodRecommendations) ?? []
   },
@@ -118,6 +136,10 @@ export const recipeSessionStorage = {
   },
   getRecipe() {
     return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipe)
+  },
+  getRecipeFlowSource() {
+    const source = readString(STORAGE_KEYS.recipeFlowSource)
+    return source === 'manual' || source === 'generated' ? source : null
   },
   getRecipeOriginal() {
     return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal)
@@ -149,6 +171,9 @@ export const recipeSessionStorage = {
   setManualEditHistory<T>(value: T[]) {
     writeJson(STORAGE_KEYS.manualEditHistory, value)
   },
+  setManualRecipeDraft(value: ManualRecipeDraft) {
+    writeJson(STORAGE_KEYS.manualRecipeDraft, value)
+  },
   setMethodRecommendations(value: MethodRecommendation[]) {
     writeJson(STORAGE_KEYS.methodRecommendations, value)
   },
@@ -157,6 +182,9 @@ export const recipeSessionStorage = {
   },
   setRecipe(value: RecipeWithAdjustment) {
     writeJson(STORAGE_KEYS.recipe, value)
+  },
+  setRecipeFlowSource(value: 'manual' | 'generated') {
+    writeString(STORAGE_KEYS.recipeFlowSource, value)
   },
   setRecipeOriginal(value: RecipeWithAdjustment) {
     writeJson(STORAGE_KEYS.recipeOriginal, value)
