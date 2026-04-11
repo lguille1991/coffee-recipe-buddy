@@ -13,13 +13,12 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
   const roaster = recipe.bean_info.roaster
   const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-  const badge = recipe.has_manual_edits
-    ? 'edited'
-    : recipe.has_feedback_adjustments
-      ? 'auto-adjusted'
-      : recipe.is_scaled
-        ? 'scaled'
-        : null
+  const badges = [
+    recipe.is_manual_created ? 'manual' : null,
+    recipe.has_manual_edits ? 'edited' : null,
+    recipe.has_feedback_adjustments ? 'auto-adjusted' : null,
+    recipe.is_scaled ? 'scaled' : null,
+  ].filter(Boolean) as string[]
 
   return (
     <Link
@@ -39,17 +38,22 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
         {roaster && <p className="ui-meta truncate">{roaster}</p>}
         <div className="flex items-center gap-1.5 mt-0.5">
           <p className="ui-meta">{displayName}</p>
-          {badge && (
-            <span className={`ui-meta font-medium px-2 py-1 rounded-full ${
-              badge === 'edited'
-                ? 'ui-badge-info'
-                : badge === 'scaled'
-                  ? 'ui-badge-neutral'
-                  : 'ui-badge-warning'
-            }`}>
+          {badges.map(badge => (
+            <span
+              key={badge}
+              className={`ui-meta font-medium px-2 py-1 rounded-full ${
+                badge === 'edited'
+                  ? 'ui-badge-info'
+                  : badge === 'scaled'
+                    ? 'ui-badge-neutral'
+                    : badge === 'manual'
+                      ? 'bg-[var(--foreground)]/10 text-[var(--foreground)]'
+                      : 'ui-badge-warning'
+              }`}
+            >
               {badge}
             </span>
-          )}
+          ))}
         </div>
       </div>
       <div className="text-right shrink-0">

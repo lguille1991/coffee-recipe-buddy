@@ -16,9 +16,11 @@ import {
   parseKUltraRange,
 } from '@/lib/grinder-converter'
 import { useProfile } from '@/hooks/useProfile'
+import { isManualRecipeCreated } from '@/lib/recipe-origin'
 import type { ManualEditRound, RecipeDraftStep, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import {
   EditHistorySheet as RecipeEditHistorySheet,
+  ManualCreatorSheet,
   RecipeEditGrindSettings,
   RecipeTitleBlock,
   RecipeViewGrindSettings,
@@ -94,6 +96,7 @@ export default function RecipeDetailClient({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [showEditHistorySheet, setShowEditHistorySheet] = useState(false)
+  const [showManualCreatorSheet, setShowManualCreatorSheet] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [secondaryGrindersOpen, setSecondaryGrindersOpen] = useState(false)
 
@@ -116,6 +119,7 @@ export default function RecipeDetailClient({
   }, [])
 
   const currentRecipe = recipe.current_recipe_json
+  const isManualCreated = isManualRecipeCreated(currentRecipe)
   const allHistory = (recipe.feedback_history ?? []) as AnyFeedbackRound[]
   const manualEditRounds = allHistory.filter(isManualEditRound)
   const feedbackRounds = allHistory.filter(isFeedbackRound)
@@ -523,8 +527,10 @@ export default function RecipeDetailClient({
         <RecipeTitleBlock
           commentCount={commentCount}
           hasFeedbackAdjustments={hasFeedbackAdjustments}
+          isManualCreated={isManualCreated}
           hasManualEdits={hasManualEdits}
           isEditing={isEditing}
+          onOpenManualCreator={() => setShowManualCreatorSheet(true)}
           onOpenEditHistory={() => setShowEditHistorySheet(true)}
           onOpenParentRecipe={() => router.push(`/recipes/${recipe.parent_recipe_id}`)}
           onOpenShare={() => setShowShareSheet(true)}
@@ -845,6 +851,12 @@ export default function RecipeDetailClient({
         manualEditRounds={manualEditRounds}
         onClose={() => setShowEditHistorySheet(false)}
         open={showEditHistorySheet}
+      />
+
+      <ManualCreatorSheet
+        creatorName={recipe.creator_display_name ?? profile?.display_name ?? 'you'}
+        onClose={() => setShowManualCreatorSheet(false)}
+        open={showManualCreatorSheet}
       />
 
       {showDeleteConfirm && (

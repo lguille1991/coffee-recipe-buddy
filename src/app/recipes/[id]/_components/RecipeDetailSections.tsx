@@ -11,8 +11,10 @@ import {
 export function RecipeTitleBlock({
   commentCount,
   hasFeedbackAdjustments,
+  isManualCreated,
   hasManualEdits,
   isEditing,
+  onOpenManualCreator,
   onOpenEditHistory,
   onOpenShare,
   onOpenParentRecipe,
@@ -22,8 +24,10 @@ export function RecipeTitleBlock({
 }: {
   commentCount: number | null
   hasFeedbackAdjustments: boolean
+  isManualCreated: boolean
   hasManualEdits: boolean
   isEditing: boolean
+  onOpenManualCreator: () => void
   onOpenEditHistory: () => void
   onOpenShare: () => void
   onOpenParentRecipe: () => void
@@ -52,6 +56,14 @@ export function RecipeTitleBlock({
       <div>
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="ui-page-title">{displayName}</h1>
+          {isManualCreated && (
+            <button
+              onClick={onOpenManualCreator}
+              className="ui-focus-ring ui-pressable ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-[var(--foreground)]/14"
+            >
+              manual
+            </button>
+          )}
           {hasManualEdits && (
             <button onClick={onOpenEditHistory} className="ui-focus-ring ui-pressable ui-badge ui-badge-info">
               v{versionN} edited
@@ -94,6 +106,30 @@ export function RecipeTitleBlock({
         </p>
       </div>
     </>
+  )
+}
+
+export function ManualCreatorSheet({
+  creatorName,
+  onClose,
+  open,
+}: {
+  creatorName: string
+  onClose: () => void
+  open: boolean
+}) {
+  if (!open) return null
+
+  return (
+    <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56" onClick={onClose}>
+      <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm" onClick={event => event.stopPropagation()}>
+        <h3 className="ui-sheet-title mb-1">Manual Recipe</h3>
+        <p className="ui-sheet-body mb-4">Created by {creatorName}.</p>
+        <button onClick={onClose} className="w-full ui-button-primary font-semibold">
+          Close
+        </button>
+      </div>
+    </div>
   )
 }
 
