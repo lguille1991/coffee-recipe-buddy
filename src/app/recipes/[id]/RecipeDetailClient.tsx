@@ -17,7 +17,12 @@ import {
 } from '@/lib/grinder-converter'
 import { useProfile } from '@/hooks/useProfile'
 import { isManualRecipeCreated } from '@/lib/recipe-origin'
-import type { ManualEditRound, RecipeDraftStep, RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
+import type {
+  ManualEditRound,
+  RecipeDraftStep,
+  RecipeWithAdjustment,
+  SavedRecipeDetail,
+} from '@/types/recipe'
 import {
   EditHistorySheet as RecipeEditHistorySheet,
   ManualCreatorSheet,
@@ -46,7 +51,7 @@ const SortableStepList = dynamic(() => import('./SortableStepList'), { ssr: fals
 
 type RecipeDetailClientProps = {
   id: string
-  initialRecipe: SavedRecipe
+  initialRecipe: SavedRecipeDetail
   initialShareToken: string | null
   initialShareUrl: string
   initialCommentCount: number | null
@@ -70,7 +75,7 @@ export default function RecipeDetailClient({
   const { profile, preferredGrinder } = useProfile()
   const tempUnit = profile?.temp_unit ?? 'C'
 
-  const [recipe, setRecipe] = useState<SavedRecipe>(initialRecipe)
+  const [recipe, setRecipe] = useState<SavedRecipeDetail>(initialRecipe)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [freshnessAdj, setFreshnessAdj] = useState<FreshnessAdjustment | null>(null)
@@ -96,19 +101,24 @@ export default function RecipeDetailClient({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [showEditHistorySheet, setShowEditHistorySheet] = useState(false)
+  const [selectedSnapshotIndex, setSelectedSnapshotIndex] = useState(0)
+  const [isSavingSnapshotAsNew, setIsSavingSnapshotAsNew] = useState(false)
+  const [isUsingSnapshotVersion, setIsUsingSnapshotVersion] = useState(false)
   const [showManualCreatorSheet, setShowManualCreatorSheet] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [secondaryGrindersOpen, setSecondaryGrindersOpen] = useState(false)
 
   useEffect(() => {
     const adjustment = recalculateFreshness(
-      initialRecipe.current_recipe_json,
-      initialRecipe.bean_info.roast_date ?? undefined,
+      recipe.current_recipe_json,
+      recipe.bean_info.roast_date ?? undefined,
     )
     if (adjustment.adjusted) {
       setFreshnessAdj(adjustment)
+    } else {
+      setFreshnessAdj(null)
     }
-  }, [initialRecipe])
+  }, [recipe.bean_info.roast_date, recipe.current_recipe_json])
 
   useEffect(() => {
     return () => {
@@ -119,13 +129,20 @@ export default function RecipeDetailClient({
   }, [])
 
   const currentRecipe = recipe.current_recipe_json
+  const snapshots = recipe.snapshots
+  const liveSnapshotIndex = useMemo(() => {
+    if (!recipe.live_snapshot_id) return Math.max(snapshots.length - 1, 0)
+    const index = snapshots.findIndex(snapshot => snapshot.id === recipe.live_snapshot_id)
+    return index >= 0 ? index : Math.max(snapshots.length - 1, 0)
+  }, [recipe.live_snapshot_id, snapshots])
+  const selectedSnapshot = snapshots[selectedSnapshotIndex] ?? null
   const isManualCreated = isManualRecipeCreated(currentRecipe)
   const allHistory = (recipe.feedback_history ?? []) as AnyFeedbackRound[]
   const manualEditRounds = allHistory.filter(isManualEditRound)
   const feedbackRounds = allHistory.filter(isFeedbackRound)
   const hasManualEdits = manualEditRounds.length > 0
   const hasFeedbackAdjustments = feedbackRounds.length > 0
-  const versionN = allHistory.length + 1
+  const versionN = selectedSnapshot?.snapshot_index ?? snapshots.length
 
   const liveGrindSettings = useMemo(() => {
     if (!isEditing || !editDraft) return null
@@ -150,6 +167,12 @@ export default function RecipeDetailClient({
 
     return () => setGuard(null)
   }, [hasUnsavedEditChanges, isEditing, setGuard])
+
+  useEffect(() => {
+    if (showEditHistorySheet) {
+      setSelectedSnapshotIndex(liveSnapshotIndex)
+    }
+  }, [liveSnapshotIndex, showEditHistorySheet])
 
   function enterEditMode() {
     setEditDraft(createEditDraft(recipe, tempUnit, preferredGrinder))
@@ -306,8 +329,11 @@ export default function RecipeDetailClient({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          snapshot_kind: 'manual_edit',
+          change_summary: changes,
           current_recipe_json: updatedRecipeJson,
           feedback_history: updatedHistory,
+          source_snapshot_id: recipe.live_snapshot_id ?? null,
         }),
       })
 
@@ -316,7 +342,8 @@ export default function RecipeDetailClient({
       }
 
       const saved = await response.json()
-      setRecipe({ ...recipe, ...saved, current_recipe_json: updatedRecipeJson, feedback_history: updatedHistory })
+      setRecipe(saved)
+      setNotes(saved.notes ?? '')
       exitEditMode()
     } catch (error) {
       setEditError(error instanceof Error ? error.message : 'Failed to save. Please try again.')
@@ -394,6 +421,68 @@ export default function RecipeDetailClient({
       onSettled: () => setRevoking(false),
       errorMessage: 'Failed to revoke share link. Please try again.',
     })
+  }
+
+  async function handleSaveSnapshotAsNew() {
+    if (!selectedSnapshot) return
+
+    setIsSavingSnapshotAsNew(true)
+    setActionError(null)
+    try {
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          method: selectedSnapshot.snapshot_recipe_json.method,
+          bean_info: recipe.bean_info,
+          original_recipe_json: selectedSnapshot.snapshot_recipe_json,
+          current_recipe_json: selectedSnapshot.snapshot_recipe_json,
+          feedback_history: [],
+          parent_recipe_id: id,
+          scale_factor: recipe.scale_factor ?? null,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Failed to save snapshot')
+      }
+
+      router.push(`/recipes/${data.id}`)
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to save snapshot')
+    } finally {
+      setIsSavingSnapshotAsNew(false)
+    }
+  }
+
+  async function handleUseSnapshotVersion() {
+    if (!selectedSnapshot || selectedSnapshot.id === recipe.live_snapshot_id) return
+
+    setIsUsingSnapshotVersion(true)
+    setActionError(null)
+    try {
+      const response = await fetch(`/api/recipes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          live_snapshot_id: selectedSnapshot.id,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Failed to switch recipe version')
+      }
+
+      setRecipe(data)
+      setNotes(data.notes ?? '')
+      setShowEditHistorySheet(false)
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to switch recipe version')
+    } finally {
+      setIsUsingSnapshotVersion(false)
+    }
   }
 
   const handleStepUpdate = useCallback((dndId: string, updates: Partial<RecipeDraftStep>) => {
@@ -848,9 +937,22 @@ export default function RecipeDetailClient({
       />
 
       <RecipeEditHistorySheet
-        manualEditRounds={manualEditRounds}
+        activeSnapshotId={recipe.live_snapshot_id}
+        isSaveAsNewPending={isSavingSnapshotAsNew}
+        isUseVersionPending={isUsingSnapshotVersion}
         onClose={() => setShowEditHistorySheet(false)}
+        onNavigate={direction => {
+          setSelectedSnapshotIndex(currentIndex => {
+            if (direction === 'prev') return Math.max(0, currentIndex - 1)
+            return Math.min(snapshots.length - 1, currentIndex + 1)
+          })
+        }}
+        onSaveAsNew={handleSaveSnapshotAsNew}
+        onUseThisVersion={handleUseSnapshotVersion}
         open={showEditHistorySheet}
+        selectedSnapshot={selectedSnapshot}
+        selectedSnapshotIndex={selectedSnapshotIndex}
+        snapshots={snapshots}
       />
 
       <ManualCreatorSheet

@@ -1,7 +1,14 @@
 'use client'
 
 import Image from 'next/image'
-import type { GrinderId, ManualEditRound, MethodId, RecipeWithAdjustment, RecipeDraftStep, SavedRecipe } from '@/types/recipe'
+import type {
+  GrinderId,
+  MethodId,
+  RecipeDraftStep,
+  RecipeSnapshot,
+  RecipeWithAdjustment,
+  SavedRecipe,
+} from '@/types/recipe'
 import { GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
 import {
   formatGrinderRangeForEdit,
@@ -369,50 +376,153 @@ export function ShareSheet({
 }
 
 export function EditHistorySheet({
-  manualEditRounds,
+  activeSnapshotId,
+  isSaveAsNewPending,
+  isUseVersionPending,
   onClose,
+  onNavigate,
+  onSaveAsNew,
+  onUseThisVersion,
   open,
+  selectedSnapshot,
+  selectedSnapshotIndex,
+  snapshots,
 }: {
-  manualEditRounds: ManualEditRound[]
+  activeSnapshotId: string | null | undefined
+  isSaveAsNewPending: boolean
+  isUseVersionPending: boolean
   onClose: () => void
+  onNavigate: (direction: 'prev' | 'next') => void
+  onSaveAsNew: () => void
+  onUseThisVersion: () => void
   open: boolean
+  selectedSnapshot: RecipeSnapshot | null
+  selectedSnapshotIndex: number
+  snapshots: RecipeSnapshot[]
 }) {
   if (!open) return null
+
+  const hasSnapshots = snapshots.length > 0
+  const isFirst = selectedSnapshotIndex <= 0
+  const isLast = selectedSnapshotIndex >= snapshots.length - 1
+  const selectedRecipe = selectedSnapshot?.snapshot_recipe_json ?? null
+  const isLiveSnapshot = selectedSnapshot?.id === activeSnapshotId
 
   return (
     <div className="ui-sheet-overlay items-end pb-[env(safe-area-inset-bottom)] sm:items-center sm:pb-0 lg:pl-56" onClick={onClose}>
       <div className="ui-sheet-panel rounded-t-3xl px-6 pt-6 pb-10 sm:rounded-3xl max-w-sm max-h-[70vh] overflow-y-auto" onClick={event => event.stopPropagation()}>
         <h3 className="ui-sheet-title mb-4">Edit History</h3>
-        <div className="flex flex-col gap-3">
-          {manualEditRounds.map(edit => (
-            <div key={edit.version} className="bg-[var(--background)] rounded-xl px-4 py-3">
-              <div className="flex items-center justify-between mb-2">
+
+        {!hasSnapshots || !selectedSnapshot || !selectedRecipe ? (
+          <p className="ui-sheet-body">No snapshots available yet.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <button
+                onClick={() => onNavigate('prev')}
+                disabled={isFirst}
+                className="ui-button-secondary min-w-24 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <div className="text-center">
+                <p className="ui-overline text-[var(--foreground)]">
+                  {selectedSnapshot.snapshot_kind === 'initial'
+                    ? 'Initial Version'
+                    : selectedSnapshot.snapshot_kind === 'auto_adjust'
+                      ? `Auto Adjust v${selectedSnapshot.snapshot_index}`
+                      : selectedSnapshot.snapshot_kind === 'clone'
+                        ? `Cloned v${selectedSnapshot.snapshot_index}`
+                        : `Edit v${selectedSnapshot.snapshot_index}`}
+                </p>
+                <p className="ui-meta mt-1">
+                  {new Date(selectedSnapshot.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigate('next')}
+                disabled={isLast}
+                className="ui-button-secondary min-w-24 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="bg-[var(--background)] rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between gap-2 mb-3">
                 <span className="ui-overline text-[var(--foreground)]">
-                  {edit.type === 'auto_adjust' ? 'Auto Adjusted' : `Edit v${edit.version}`}
+                  Snapshot {selectedSnapshot.snapshot_index} of {snapshots.length}
                 </span>
-                <span className="ui-meta">
-                  {new Date(edit.edited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <span className={`ui-badge ${isLiveSnapshot ? 'ui-badge-info' : 'bg-[var(--foreground)]/10 text-[var(--foreground)]'}`}>
+                  {isLiveSnapshot ? 'Live version' : 'Read only'}
                 </span>
               </div>
+
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="rounded-xl bg-[var(--card)] px-3 py-2">
+                  <p className="ui-card-title">{selectedRecipe.parameters.coffee_g}g</p>
+                  <p className="ui-overline">Coffee</p>
+                </div>
+                <div className="rounded-xl bg-[var(--card)] px-3 py-2">
+                  <p className="ui-card-title">{selectedRecipe.parameters.water_g}ml</p>
+                  <p className="ui-overline">Water</p>
+                </div>
+                <div className="rounded-xl bg-[var(--card)] px-3 py-2">
+                  <p className="ui-card-title">{selectedRecipe.parameters.total_time}</p>
+                  <p className="ui-overline">Time</p>
+                </div>
+                <div className="rounded-xl bg-[var(--card)] px-3 py-2">
+                  <p className="ui-card-title">{selectedRecipe.parameters.ratio}</p>
+                  <p className="ui-overline">Ratio</p>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1">
-                {edit.changes.map((change, index) => (
-                  <p key={index} className="ui-meta">
-                    <span className="font-medium text-[var(--foreground)]">{{
-                      coffee_g: 'Coffee Dose (g)',
-                      water_g: 'Water (ml)',
-                      temperature_c: 'Temperature (°C)',
-                      total_time: 'Total Time (m:ss)',
-                      grind: 'Grind Setting (clicks)',
-                      ratio: 'Ratio',
-                      steps: 'Steps',
-                      notes: 'Notes',
-                    }[change.field] ?? change.field}</span>: {change.previous_value} → {change.new_value}
-                  </p>
-                ))}
+                {selectedSnapshot.change_summary.length > 0 ? (
+                  selectedSnapshot.change_summary.map((change, index) => (
+                    <p key={index} className="ui-meta">
+                      <span className="font-medium text-[var(--foreground)]">{{
+                        coffee_g: 'Coffee Dose (g)',
+                        water_g: 'Water (ml)',
+                        temperature_c: 'Temperature (°C)',
+                        total_time: 'Total Time (m:ss)',
+                        grind: 'Grind Setting',
+                        ratio: 'Ratio',
+                        steps: 'Steps',
+                        recipe: 'Recipe',
+                      }[change.field] ?? change.field}</span>: {change.previous_value} → {change.new_value}
+                    </p>
+                  ))
+                ) : (
+                  <p className="ui-meta">Starting point for this recipe.</p>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={onSaveAsNew}
+                disabled={isSaveAsNewPending}
+                className="w-full ui-button-primary font-semibold disabled:opacity-40"
+              >
+                {isSaveAsNewPending ? 'Saving…' : 'Save as New Recipe'}
+              </button>
+              {!isLiveSnapshot && (
+                <button
+                  onClick={onUseThisVersion}
+                  disabled={isUseVersionPending}
+                  className="w-full ui-button-secondary disabled:opacity-40"
+                >
+                  {isUseVersionPending ? 'Updating…' : 'Use This Version'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

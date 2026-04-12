@@ -188,20 +188,25 @@ export const FeedbackRoundSchema = z.object({
 
 export type FeedbackRound = z.infer<typeof FeedbackRoundSchema>
 
+export const RecipeChangeSchema = z.object({
+  field: z.string(),
+  previous_value: z.string(),
+  new_value: z.string(),
+})
+
+export type RecipeChange = z.infer<typeof RecipeChangeSchema>
+
 export const ManualEditRoundSchema = z.object({
   type: z.enum(['manual_edit', 'auto_adjust']),
   version: z.number().int().positive(),
   edited_at: z.string(),
-  changes: z.array(z.object({
-    field: z.string(),
-    previous_value: z.string(),
-    new_value: z.string(),
-  })),
+  changes: z.array(RecipeChangeSchema),
 })
 
 export type ManualEditRound = z.infer<typeof ManualEditRoundSchema>
 
 export const AnyFeedbackRoundSchema = z.union([FeedbackRoundSchema, ManualEditRoundSchema])
+export type AnyFeedbackRound = z.infer<typeof AnyFeedbackRoundSchema>
 
 export const GrinderIdSchema = z.enum(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
 export type GrinderId = z.infer<typeof GrinderIdSchema>
@@ -222,6 +227,29 @@ export const UserProfileSchema = z.object({
 
 export type UserProfile = z.infer<typeof UserProfileSchema>
 
+export const RecipeSnapshotKindSchema = z.enum([
+  'initial',
+  'manual_edit',
+  'auto_adjust',
+  'clone',
+])
+
+export type RecipeSnapshotKind = z.infer<typeof RecipeSnapshotKindSchema>
+
+export const RecipeSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  recipe_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  snapshot_index: z.number().int().positive(),
+  snapshot_kind: RecipeSnapshotKindSchema,
+  snapshot_recipe_json: RecipeWithAdjustmentSchema,
+  change_summary: z.array(RecipeChangeSchema).default([]),
+  created_at: z.string(),
+  source_snapshot_id: z.string().uuid().nullable().optional(),
+})
+
+export type RecipeSnapshot = z.infer<typeof RecipeSnapshotSchema>
+
 export const SavedRecipeSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
@@ -236,11 +264,18 @@ export const SavedRecipeSchema = z.object({
   creator_display_name: z.string().nullable().optional(),
   created_at: z.string(),
   archived: z.boolean().default(false),
+  live_snapshot_id: z.string().uuid().nullable().optional(),
   parent_recipe_id: z.string().uuid().nullable().optional(),
   scale_factor: z.number().nullable().optional(),
 })
 
 export type SavedRecipe = z.infer<typeof SavedRecipeSchema>
+
+export const SavedRecipeDetailSchema = SavedRecipeSchema.extend({
+  snapshots: z.array(RecipeSnapshotSchema).default([]),
+})
+
+export type SavedRecipeDetail = z.infer<typeof SavedRecipeDetailSchema>
 
 // ─── API request/response schemas ────────────────────────────────────────────
 
@@ -273,8 +308,11 @@ export const RecipeListItemSchema = z.object({
 export type RecipeListItem = z.infer<typeof RecipeListItemSchema>
 
 export const UpdateRecipeRequestSchema = z.object({
+  snapshot_kind: RecipeSnapshotKindSchema,
+  change_summary: z.array(RecipeChangeSchema).default([]),
   current_recipe_json: RecipeWithAdjustmentSchema,
   feedback_history: z.array(AnyFeedbackRoundSchema),
+  source_snapshot_id: z.string().uuid().nullable().optional(),
 })
 
 export type UpdateRecipeRequest = z.infer<typeof UpdateRecipeRequestSchema>
@@ -284,6 +322,12 @@ export const UpdateNotesRequestSchema = z.object({
 })
 
 export type UpdateNotesRequest = z.infer<typeof UpdateNotesRequestSchema>
+
+export const UseRecipeSnapshotRequestSchema = z.object({
+  live_snapshot_id: z.string().uuid(),
+})
+
+export type UseRecipeSnapshotRequest = z.infer<typeof UseRecipeSnapshotRequestSchema>
 
 export const UpdateProfileRequestSchema = z.object({
   display_name: z.string().nullable().optional(),
