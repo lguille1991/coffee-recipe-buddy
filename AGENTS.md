@@ -48,7 +48,9 @@ export async function GET(_req: Request, { params }: Params) {
 
 # Commit Message Suggestion
 
-When an AI agent finishes implementing a plan, it MUST always include at least one concise suggested commit message in its final handoff.
+When an AI agent finishes implementing a plan that involves code changes:
+- It MUST always include at least one concise suggested commit message in its final handoff.
+- Add user facing changelog to the CHAGELOG.md file.
 
 # Plan Mode Output
 
