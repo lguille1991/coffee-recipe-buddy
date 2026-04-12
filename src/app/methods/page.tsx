@@ -170,7 +170,7 @@ export default function MethodsPage() {
         </div>
       )}
 
-      <div className="px-4 flex flex-col gap-3 pb-24">
+      <div className="px-4 flex flex-col gap-3 pb-[calc(env(safe-area-inset-bottom)+14rem)] sm:pb-52 lg:pb-44">
         {recommendations.map((rec, i) => (
           <button
             key={rec.method}
@@ -293,7 +293,7 @@ export default function MethodsPage() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
+      <div className="ui-sticky-footer fixed bottom-0 left-0 right-0 lg:left-56 pt-4 pb-24 lg:pb-6">
         <div className="w-full px-4 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
           <div className="mb-3 px-1 ui-meta">
             {selectedMethod
