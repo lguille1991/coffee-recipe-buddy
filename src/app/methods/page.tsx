@@ -139,6 +139,8 @@ export default function MethodsPage() {
 
   const recommendedIds = new Set(recommendations.map(r => r.method))
   const otherMethods = ALL_METHODS.filter(m => !recommendedIds.has(m))
+  const recommendationConfidence = recommendations[0]?.confidence ?? 'high'
+  const confidenceNote = recommendations[0]?.confidenceNote
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -154,8 +156,16 @@ export default function MethodsPage() {
       </div>
 
       <p className="px-4 ui-body-muted mb-4">
-        Based on your bean profile, here are the best brewing methods:
+        {recommendationConfidence === 'low'
+          ? 'The bag details are a little uncertain, so these are safer starting points:'
+          : 'Based on your bean profile, here are the best brewing methods:'}
       </p>
+
+      {confidenceNote && (
+        <div className="mx-4 mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
+          <p className="ui-meta leading-relaxed">{confidenceNote}</p>
+        </div>
+      )}
 
       <div className="px-4 flex flex-col gap-3 pb-24">
         {recommendations.map((rec, i) => (
@@ -202,6 +212,16 @@ export default function MethodsPage() {
               </div>
 
               <p className="ui-meta leading-relaxed">{rec.rationale}</p>
+
+              {rec.reasonBadges.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {rec.reasonBadges.map(reason => (
+                    <span key={`${rec.method}-${reason}`} className="ui-chip ui-chip-unselected capitalize">
+                      {reason}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </button>
         ))}

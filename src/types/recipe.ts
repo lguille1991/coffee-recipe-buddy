@@ -41,6 +41,16 @@ export const MethodIdSchema = z.enum([
 
 export type MethodId = z.infer<typeof MethodIdSchema>
 
+export const BrewGoalSchema = z.enum([
+  'clarity',
+  'balanced',
+  'sweetness',
+  'body',
+  'forgiving',
+])
+
+export type BrewGoal = z.infer<typeof BrewGoalSchema>
+
 export const METHOD_DISPLAY_NAMES: Record<MethodId, string> = {
   v60: 'Hario V60',
   origami: 'Origami Air M',
@@ -59,6 +69,9 @@ export const MethodRecommendationSchema = z.object({
   rank: z.number().int().min(1).max(3),
   score: z.number(),
   rationale: z.string(),
+  reasonBadges: z.array(z.string()).default([]),
+  confidence: z.enum(['high', 'medium', 'low']).default('high'),
+  confidenceNote: z.string().optional(),
 })
 
 export type MethodRecommendation = z.infer<typeof MethodRecommendationSchema>

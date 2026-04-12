@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BeanProfile } from '@/types/recipe'
+import { BeanProfile, BrewGoal } from '@/types/recipe'
 import { useAuth } from '@/hooks/useAuth'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
@@ -27,6 +27,14 @@ const ROAST_OPTIONS = [
 const VARIETY_SUGGESTIONS = [
   'Gesha', 'Pacamara', 'Bourbon', 'Typica', 'Caturra', 'Catuai',
   'Catimor', 'SL28', 'SL34', 'Heirloom', 'Java', 'Mundo Novo',
+]
+
+const GOAL_OPTIONS: Array<{ value: BrewGoal; label: string; description: string }> = [
+  { value: 'clarity', label: 'Clarity', description: 'favor separation, florals, and tea-like clarity' },
+  { value: 'balanced', label: 'Balanced', description: 'keep sweetness and structure in the middle' },
+  { value: 'sweetness', label: 'Sweetness', description: 'lean into ripe fruit and round sweetness' },
+  { value: 'body', label: 'Body', description: 'choose brewers with more weight and texture' },
+  { value: 'forgiving', label: 'Forgiving', description: 'start with easier brewers when details are sparse' },
 ]
 
 function PickerField<T extends string>({
@@ -119,6 +127,7 @@ export default function ManualPage() {
   const [altitude, setAltitude] = useState('')
   const [targetVolume, setTargetVolume] = useState('')
   const [roastDate, setRoastDate] = useState('')
+  const [brewGoal, setBrewGoal] = useState<BrewGoal>('balanced')
   const [noteInput, setNoteInput] = useState('')
   const [tastingNotes, setTastingNotes] = useState<string[]>([])
 
@@ -192,7 +201,10 @@ export default function ManualPage() {
       recipeSessionStorage.clearTargetVolumeMl()
     }
 
-    const recs = recommendMethods(bean)
+    const recs = recommendMethods(bean, {
+      brewGoal,
+      source: 'manual',
+    })
     recipeSessionStorage.setMethodRecommendations(recs)
 
     router.push('/methods')
@@ -338,6 +350,27 @@ export default function ManualPage() {
               placeholder="250"
             />
             <span className="ui-body-muted">ml</span>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="ui-overline mb-1.5">Brew Goal</h2>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {GOAL_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setBrewGoal(option.value)}
+                className={`rounded-xl border p-3 text-left transition-colors ${
+                  brewGoal === option.value
+                    ? 'border-[var(--foreground)] bg-[var(--surface-subtle)]'
+                    : 'border-[var(--border)] bg-[var(--card)]'
+                }`}
+              >
+                <div className="ui-card-title">{option.label}</div>
+                <p className="ui-meta mt-1">{option.description}</p>
+              </button>
+            ))}
           </div>
         </div>
 

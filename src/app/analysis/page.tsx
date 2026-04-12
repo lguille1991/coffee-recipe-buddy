@@ -3,7 +3,7 @@
 import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
-import { BeanProfile, ExtractionResponse } from '@/types/recipe'
+import { BeanProfile, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useProfile } from '@/hooks/useProfile'
@@ -23,6 +23,14 @@ const ROAST_LABELS: Record<string, string> = {
   'medium-dark': 'Med-Dark',
   dark: 'Dark',
 }
+
+const GOAL_OPTIONS: Array<{ value: BrewGoal; label: string; description: string }> = [
+  { value: 'clarity', label: 'Clarity', description: 'clean, tea-like, transparent cup' },
+  { value: 'balanced', label: 'Balanced', description: 'sweetness and structure with low fuss' },
+  { value: 'sweetness', label: 'Sweetness', description: 'push ripe fruit and round sweetness' },
+  { value: 'body', label: 'Body', description: 'heavier texture and more weight' },
+  { value: 'forgiving', label: 'Forgiving', description: 'safer starting point when the bag is tricky' },
+]
 
 function ConfidenceBadge({ score }: { score?: number }) {
   if (!score || score >= 0.6) return null
@@ -69,6 +77,7 @@ export default function AnalysisPage() {
   const [bean, setBean] = useState<BeanProfile | null>(null)
   const [roastDate, setRoastDate] = useState('')
   const [targetVolume, setTargetVolume] = useState('')
+  const [brewGoal, setBrewGoal] = useState<BrewGoal>('balanced')
   const [generating] = useState(false)
 
   useEffect(() => {
@@ -109,7 +118,11 @@ export default function AnalysisPage() {
     }
 
     // Run deterministic method recommendation client-side
-    const recs = recommendMethods(finalBean)
+    const recs = recommendMethods(finalBean, {
+      brewGoal,
+      extractionConfidence: extraction?.confidence ?? null,
+      source: 'scan',
+    })
     recipeSessionStorage.setMethodRecommendations(recs)
     router.push('/methods')
   }
@@ -254,6 +267,27 @@ export default function AnalysisPage() {
               placeholder="250"
             />
             <span className="ui-body-muted">ml</span>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="ui-overline px-1 mb-2">Brew Goal</h3>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {GOAL_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setBrewGoal(option.value)}
+                className={`rounded-xl border p-3 text-left transition-colors ${
+                  brewGoal === option.value
+                    ? 'border-[var(--foreground)] bg-[var(--surface-subtle)]'
+                    : 'border-[var(--border)] bg-[var(--card)]'
+                }`}
+              >
+                <div className="ui-card-title">{option.label}</div>
+                <p className="ui-meta mt-1">{option.description}</p>
+              </button>
+            ))}
           </div>
         </div>
       </div>
