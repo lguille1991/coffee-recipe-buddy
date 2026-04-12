@@ -61,9 +61,17 @@ const GOAL_WEIGHTS: Record<BrewGoal, Partial<Record<MethodId, number>>> = {
 }
 
 function initScoreState(): ScoreState {
+  const scores = {} as MethodScores
+  const reasons = {} as Record<MethodId, string[]>
+
+  ALL_METHODS.forEach(method => {
+    scores[method] = 0
+    reasons[method] = []
+  })
+
   return {
-    scores: Object.fromEntries(ALL_METHODS.map(m => [m, 0])) as MethodScores,
-    reasons: Object.fromEntries(ALL_METHODS.map(m => [m, []])) as Record<MethodId, string[]>,
+    scores,
+    reasons,
   }
 }
 

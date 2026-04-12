@@ -57,6 +57,9 @@ export default function MethodsPage() {
       rank: 0,
       score: 0,
       rationale: 'Manually selected — not in top recommendations for this bean.',
+      reasonBadges: ['manual choice'],
+      confidence: 'medium',
+      confidenceNote: 'This brewer was selected manually instead of coming from the ranked recommendations.',
     }
   }
 
