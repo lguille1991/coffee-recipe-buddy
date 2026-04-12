@@ -28,6 +28,8 @@ describe('recommendMethods', () => {
       expect(r.displayName).toBeTruthy()
       expect(typeof r.score).toBe('number')
       expect(r.rationale).toBeTruthy()
+      expect(['high', 'medium', 'low']).toContain(r.confidence)
+      expect(Array.isArray(r.reasonBadges)).toBe(true)
     }
   })
 
@@ -93,6 +95,77 @@ describe('recommendMethods', () => {
     const geshaFriendly = ['v60', 'origami', 'orea_v4']
     const hasGesha = methods.some(m => geshaFriendly.includes(m))
     expect(hasGesha).toBe(true)
+  })
+
+  it('normalizes geisha spelling variants into the same recommendation result', () => {
+    const base: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      tasting_notes: ['jasmine', 'black tea'],
+    }
+
+    const geshaResults = recommendMethods({ ...base, variety: 'Gesha' })
+    const geishaResults = recommendMethods({ ...base, variety: 'Geisha' })
+
+    expect(geshaResults.map(result => result.method)).toEqual(geishaResults.map(result => result.method))
+  })
+
+  it('treats tea-like floral coffees as clarity-first instead of generic naturals', () => {
+    const teaLikeNatural: BeanProfile = {
+      process: 'natural',
+      roast_level: 'medium-light',
+      variety: 'SL28',
+      tasting_notes: ['green tea', 'floral', 'grapefruit', 'pear'],
+      altitude_masl: 1550,
+    }
+
+    const results = recommendMethods(teaLikeNatural)
+    expect(results[0].method).toBe('v60')
+    expect(results[0].reasonBadges).toContain('tea-like')
+  })
+
+  it('fresh coffees tilt toward forgiving brewers', () => {
+    const freshBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      roast_date: '2026-04-09',
+      tasting_notes: ['citrus', 'floral'],
+    }
+
+    const results = recommendMethods(freshBean, { now: new Date('2026-04-12T12:00:00Z') })
+    expect(results.map(result => result.method)).toContain('kalita_wave')
+    expect(results[0].method).not.toBe('origami')
+  })
+
+  it('respects a body-focused brew goal', () => {
+    const goalDrivenBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      tasting_notes: ['jasmine', 'orange'],
+    }
+
+    const results = recommendMethods(goalDrivenBean, { brewGoal: 'body' })
+    expect(results.map(result => result.method)).toContain('hario_switch')
+  })
+
+  it('downgrades confidence when scan metadata is weak', () => {
+    const lowConfidenceBean: BeanProfile = {
+      process: 'unknown',
+      roast_level: 'medium',
+    }
+
+    const results = recommendMethods(lowConfidenceBean, {
+      source: 'scan',
+      extractionConfidence: {
+        process: 0.35,
+        roast_level: 0.45,
+        variety: 0.2,
+      },
+    })
+
+    expect(results[0].confidence).toBe('low')
+    expect(results[0].confidenceNote).toBeTruthy()
+    expect(results.map(result => result.method)).toContain('kalita_wave')
   })
 
   it('no duplicate methods in top-3', () => {
