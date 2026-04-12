@@ -24,47 +24,131 @@ const STORAGE_KEYS = {
 } as const
 
 type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS]
+type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
-function getStorage() {
-  if (typeof window === 'undefined') return null
-  return window.sessionStorage
+const LOCAL_STORAGE_PREFIX = 'recipe_recovery:'
+const LOCAL_STORAGE_TTL_MS = 1000 * 60 * 60 * 24
+
+type LocalStorageEnvelope<T> = {
+  savedAt: number
+  value: T
 }
 
-function readJson<T>(key: StorageKey): T | null {
-  const storage = getStorage()
-  if (!storage) return null
-
-  const raw = storage.getItem(key)
-  if (!raw) return null
+function getSessionStorage(): StorageLike | null {
+  if (typeof window === 'undefined') return null
 
   try {
-    return JSON.parse(raw) as T
+    return window.sessionStorage
   } catch {
     return null
   }
 }
 
-function writeJson(key: StorageKey, value: unknown) {
-  const storage = getStorage()
+function getLocalStorage(): StorageLike | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    return window.localStorage
+  } catch {
+    return null
+  }
+}
+
+function getLocalStorageKey(key: StorageKey) {
+  return `${LOCAL_STORAGE_PREFIX}${key}`
+}
+
+function readPersistentValue<T>(key: StorageKey): T | null {
+  const storage = getLocalStorage()
+  if (!storage) return null
+
+  const raw = storage.getItem(getLocalStorageKey(key))
+  if (!raw) return null
+
+  try {
+    const parsed = JSON.parse(raw) as LocalStorageEnvelope<T>
+    if (typeof parsed?.savedAt !== 'number') {
+      storage.removeItem(getLocalStorageKey(key))
+      return null
+    }
+
+    if (Date.now() - parsed.savedAt > LOCAL_STORAGE_TTL_MS) {
+      storage.removeItem(getLocalStorageKey(key))
+      return null
+    }
+
+    return parsed.value
+  } catch {
+    storage.removeItem(getLocalStorageKey(key))
+    return null
+  }
+}
+
+function writePersistentValue(key: StorageKey, value: unknown) {
+  const storage = getLocalStorage()
   if (!storage) return
-  storage.setItem(key, JSON.stringify(value))
+
+  const payload: LocalStorageEnvelope<unknown> = {
+    savedAt: Date.now(),
+    value,
+  }
+
+  storage.setItem(getLocalStorageKey(key), JSON.stringify(payload))
+}
+
+function removePersistentValue(key: StorageKey) {
+  const storage = getLocalStorage()
+  if (!storage) return
+  storage.removeItem(getLocalStorageKey(key))
+}
+
+function readJson<T>(key: StorageKey): T | null {
+  const sessionStorage = getSessionStorage()
+  const sessionRaw = sessionStorage?.getItem(key)
+
+  if (sessionRaw) {
+    try {
+      return JSON.parse(sessionRaw) as T
+    } catch {
+      sessionStorage?.removeItem(key)
+    }
+  }
+
+  const persisted = readPersistentValue<T>(key)
+  if (persisted !== null) {
+    sessionStorage?.setItem(key, JSON.stringify(persisted))
+  }
+
+  return persisted
+}
+
+function writeJson(key: StorageKey, value: unknown) {
+  const serialized = JSON.stringify(value)
+  getSessionStorage()?.setItem(key, serialized)
+  writePersistentValue(key, value)
 }
 
 function readString(key: StorageKey): string | null {
-  const storage = getStorage()
-  return storage?.getItem(key) ?? null
+  const sessionStorage = getSessionStorage()
+  const sessionValue = sessionStorage?.getItem(key)
+  if (sessionValue !== null && sessionValue !== undefined) return sessionValue
+
+  const persisted = readPersistentValue<string>(key)
+  if (persisted !== null) {
+    sessionStorage?.setItem(key, persisted)
+  }
+
+  return persisted
 }
 
 function writeString(key: StorageKey, value: string) {
-  const storage = getStorage()
-  if (!storage) return
-  storage.setItem(key, value)
+  getSessionStorage()?.setItem(key, value)
+  writePersistentValue(key, value)
 }
 
 function remove(key: StorageKey) {
-  const storage = getStorage()
-  if (!storage) return
-  storage.removeItem(key)
+  getSessionStorage()?.removeItem(key)
+  removePersistentValue(key)
 }
 
 export const recipeSessionStorage = {
