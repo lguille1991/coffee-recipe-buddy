@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createRecipeSnapshot, mirrorRecipeLiveSnapshot } from '@/lib/recipe-snapshots'
 import { createClient } from '@/lib/supabase/server'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
 import { ShareSnapshotSchema } from '@/types/recipe'
@@ -44,12 +45,41 @@ export async function POST(_request: Request, { params }: Params) {
       current_recipe_json,
       feedback_history: [],
       image_url: image_url ?? null,
+      live_snapshot_id: null,
     })
     .select('id')
     .single()
 
   if (error || !data) {
     return NextResponse.json({ error: 'Failed to clone recipe' }, { status: 500 })
+  }
+
+  try {
+    const snapshot = await createRecipeSnapshot({
+      supabase,
+      recipeId: data.id,
+      userId: user.id,
+      snapshotKind: 'clone',
+      snapshotRecipeJson: current_recipe_json,
+      changeSummary: [],
+    })
+
+    await mirrorRecipeLiveSnapshot({
+      supabase,
+      recipeId: data.id,
+      liveSnapshotId: snapshot.id,
+      currentRecipeJson: current_recipe_json,
+      feedbackHistory: [],
+    })
+  } catch (snapshotError) {
+    await supabase
+      .from('recipes')
+      .delete()
+      .eq('id', data.id)
+
+    return NextResponse.json({
+      error: snapshotError instanceof Error ? snapshotError.message : 'Failed to clone recipe',
+    }, { status: 500 })
   }
 
   return NextResponse.json({ id: data.id }, { status: 201 })

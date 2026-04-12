@@ -4,10 +4,10 @@ import type { SavedRecipe } from '@/types/recipe'
 
 const {
   createClientMock,
-  migrateRecipeMock,
   notFoundMock,
   redirectMock,
   getRecipeShareInfoMock,
+  getSavedRecipeDetailMock,
   headersMock,
 } = vi.hoisted(() => ({
   redirectMock: vi.fn((href: string) => {
@@ -17,11 +17,11 @@ const {
     throw new Error('notFound')
   }),
   createClientMock: vi.fn(),
-  migrateRecipeMock: vi.fn(recipe => recipe),
   getRecipeShareInfoMock: vi.fn().mockResolvedValue({
     shareToken: null,
     commentCount: null,
   }),
+  getSavedRecipeDetailMock: vi.fn(),
   headersMock: vi.fn().mockResolvedValue(new Headers({
     host: 'localhost:3000',
   })),
@@ -40,8 +40,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: createClientMock,
 }))
 
-vi.mock('@/lib/recipe-migrations', () => ({
-  migrateRecipe: migrateRecipeMock,
+vi.mock('@/lib/recipe-detail', () => ({
+  getSavedRecipeDetail: getSavedRecipeDetailMock,
 }))
 
 vi.mock('@/lib/share', () => ({
@@ -70,16 +70,6 @@ const BASE_SAVED_RECIPE: SavedRecipe = {
 }
 
 function createSupabaseClient(userId: string | null, recipe = BASE_SAVED_RECIPE) {
-  const query = {
-    select: vi.fn(),
-    eq: vi.fn(),
-    single: vi.fn(),
-  }
-
-  query.select.mockReturnValue(query)
-  query.eq.mockReturnValue(query)
-  query.single.mockResolvedValue({ data: recipe, error: null })
-
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -88,7 +78,6 @@ function createSupabaseClient(userId: string | null, recipe = BASE_SAVED_RECIPE)
         },
       }),
     },
-    from: vi.fn().mockReturnValue(query),
   }
 }
 
@@ -97,8 +86,8 @@ describe('recipe route pages', () => {
     redirectMock.mockClear()
     notFoundMock.mockClear()
     createClientMock.mockReset()
-    migrateRecipeMock.mockClear()
     getRecipeShareInfoMock.mockClear()
+    getSavedRecipeDetailMock.mockReset()
     headersMock.mockClear()
   })
 
@@ -120,6 +109,10 @@ describe('recipe route pages', () => {
 
   it('loads saved recipe detail by id for authenticated users', async () => {
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+    getSavedRecipeDetailMock.mockResolvedValue({
+      ...BASE_SAVED_RECIPE,
+      snapshots: [],
+    })
 
     const result = await SavedRecipeDetailPage({
       params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
@@ -127,11 +120,15 @@ describe('recipe route pages', () => {
 
     expect(result.props.id).toBe(BASE_SAVED_RECIPE.id)
     expect(result.props.initialRecipe.id).toBe(BASE_SAVED_RECIPE.id)
-    expect(migrateRecipeMock).toHaveBeenCalledTimes(2)
+    expect(getSavedRecipeDetailMock).toHaveBeenCalledTimes(1)
   })
 
   it('loads brew mode by id for authenticated users', async () => {
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+    getSavedRecipeDetailMock.mockResolvedValue({
+      ...BASE_SAVED_RECIPE,
+      snapshots: [],
+    })
 
     const result = await BrewModePage({
       params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
@@ -139,7 +136,7 @@ describe('recipe route pages', () => {
 
     expect(result.props.id).toBe(BASE_SAVED_RECIPE.id)
     expect(result.props.recipe.id).toBe(BASE_SAVED_RECIPE.id)
-    expect(migrateRecipeMock).toHaveBeenCalledTimes(2)
+    expect(getSavedRecipeDetailMock).toHaveBeenCalledTimes(1)
   })
 
   it('redirects unauthenticated users away from auto adjust', async () => {
@@ -152,6 +149,10 @@ describe('recipe route pages', () => {
 
   it('loads auto adjust by id for authenticated users', async () => {
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+    getSavedRecipeDetailMock.mockResolvedValue({
+      ...BASE_SAVED_RECIPE,
+      snapshots: [],
+    })
 
     const result = await AutoAdjustPage({
       params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
@@ -159,6 +160,6 @@ describe('recipe route pages', () => {
 
     expect(result.props.id).toBe(BASE_SAVED_RECIPE.id)
     expect(result.props.sourceRecipe.id).toBe(BASE_SAVED_RECIPE.id)
-    expect(migrateRecipeMock).toHaveBeenCalledTimes(2)
+    expect(getSavedRecipeDetailMock).toHaveBeenCalledTimes(1)
   })
 })

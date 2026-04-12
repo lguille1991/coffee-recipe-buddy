@@ -12,6 +12,7 @@ export const SAVED_RECIPE_DETAIL_SELECT = [
   'creator:profiles!user_id(display_name)',
   'created_at',
   'archived',
+  'live_snapshot_id',
   'parent_recipe_id',
   'scale_factor',
 ].join(', ')

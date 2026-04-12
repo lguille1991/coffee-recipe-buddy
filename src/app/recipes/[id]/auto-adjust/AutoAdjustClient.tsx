@@ -6,7 +6,7 @@ import ConfirmSheet from '@/components/ConfirmSheet'
 import { useNavGuard } from '@/components/NavGuardContext'
 import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { useProfile } from '@/hooks/useProfile'
-import { GRINDER_DISPLAY_NAMES, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId, Recipe, SavedRecipe } from '@/types/recipe'
+import { GRINDER_DISPLAY_NAMES, ManualEditRound, METHOD_DISPLAY_NAMES, MethodId, Recipe, SavedRecipeDetail } from '@/types/recipe'
 
 const SCALE_OPTIONS: { value: number; label: string }[] = [
   { value: 0.5, label: '0.5x' },
@@ -19,7 +19,7 @@ const SCALE_OPTIONS: { value: number; label: string }[] = [
 
 type AutoAdjustClientProps = {
   id: string
-  sourceRecipe: SavedRecipe
+  sourceRecipe: SavedRecipeDetail
 }
 
 export default function AutoAdjustClient({ id, sourceRecipe }: AutoAdjustClientProps) {
@@ -122,8 +122,11 @@ export default function AutoAdjustClient({ id, sourceRecipe }: AutoAdjustClientP
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          snapshot_kind: 'auto_adjust',
+          change_summary: newRound.changes,
           current_recipe_json: result,
           feedback_history: [...(sourceRecipe.feedback_history ?? []), newRound],
+          source_snapshot_id: sourceRecipe.live_snapshot_id ?? null,
         }),
       })
       if (!res.ok) {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createRecipeSnapshot, mirrorRecipeLiveSnapshot } from '@/lib/recipe-snapshots'
 import { listRecipesForUser } from '@/lib/recipe-list'
 import { createClient } from '@/lib/supabase/server'
 import { SaveRecipeRequestSchema } from '@/types/recipe'
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
       image_url,
       parent_recipe_id: parent_recipe_id ?? null,
       scale_factor: scale_factor ?? null,
+      live_snapshot_id: null,
     })
     .select()
     .single()
@@ -63,7 +65,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data, { status: 201 })
+  try {
+    const snapshot = await createRecipeSnapshot({
+      supabase,
+      recipeId: data.id,
+      userId: user.id,
+      snapshotKind: parent_recipe_id ? 'clone' : 'initial',
+      snapshotRecipeJson: current_recipe_json,
+      changeSummary: [],
+    })
+
+    const mirrored = await mirrorRecipeLiveSnapshot({
+      supabase,
+      recipeId: data.id,
+      liveSnapshotId: snapshot.id,
+      currentRecipeJson: current_recipe_json,
+      feedbackHistory: feedback_history,
+    })
+
+    return NextResponse.json(mirrored, { status: 201 })
+  } catch (snapshotError) {
+    await supabase
+      .from('recipes')
+      .delete()
+      .eq('id', data.id)
+
+    return NextResponse.json({
+      error: snapshotError instanceof Error ? snapshotError.message : 'Failed to create recipe snapshot',
+    }, { status: 500 })
+  }
 }
 
 // ─── GET /api/recipes — list recipes ─────────────────────────────────────────

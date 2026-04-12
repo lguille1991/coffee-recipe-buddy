@@ -1,10 +1,8 @@
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
-import { migrateRecipe } from '@/lib/recipe-migrations'
-import { SAVED_RECIPE_DETAIL_SELECT } from '@/lib/recipe-select'
+import { getSavedRecipeDetail } from '@/lib/recipe-detail'
 import { getRecipeShareInfo } from '@/lib/share'
 import { createClient } from '@/lib/supabase/server'
-import type { RecipeWithAdjustment, SavedRecipe } from '@/types/recipe'
 import RecipeDetailClient from './RecipeDetailClient'
 
 type Params = { params: Promise<{ id: string }> }
@@ -18,30 +16,9 @@ export default async function SavedRecipeDetailPage({ params }: Params) {
     redirect(`/auth?returnTo=/recipes/${id}`)
   }
 
-  const { data: recipeRow, error } = await supabase
-    .from('recipes')
-    .select(SAVED_RECIPE_DETAIL_SELECT)
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .eq('archived', false)
-    .single()
-
-  if (error || !recipeRow) {
+  const initialRecipe = await getSavedRecipeDetail(supabase, id, user.id)
+  if (!initialRecipe) {
     notFound()
-  }
-
-  const savedRecipeRow = recipeRow as unknown as SavedRecipe
-  const initialRecipe: SavedRecipe = {
-    ...savedRecipeRow,
-    creator_display_name: (recipeRow as { creator?: { display_name?: string | null } | null }).creator?.display_name ?? null,
-    current_recipe_json: migrateRecipe(
-      savedRecipeRow.current_recipe_json,
-      savedRecipeRow.schema_version,
-    ),
-    original_recipe_json: migrateRecipe(
-      savedRecipeRow.original_recipe_json as RecipeWithAdjustment,
-      savedRecipeRow.schema_version,
-    ),
   }
 
   const shareInfo = await getRecipeShareInfo(supabase, id, user.id)
