@@ -1,10 +1,11 @@
 'use client'
 
+import { memo } from 'react'
 import { usePathname } from 'next/navigation'
 import { useNavGuard } from './NavGuardContext'
 import { NAV_ITEMS } from './nav-items'
 
-export default function BottomNav() {
+function BottomNav() {
   const pathname = usePathname()
   const { requestNavigate } = useNavGuard()
 
@@ -32,3 +33,5 @@ export default function BottomNav() {
     </nav>
   )
 }
+
+export default memo(BottomNav)

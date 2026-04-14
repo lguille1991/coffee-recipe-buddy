@@ -2,6 +2,11 @@
 
 All notable product-facing changes are documented here.
 
+## [1.8.3] - 2026-04-14
+
+- Improved navigation responsiveness by fixing potential race conditions in navigation guard logic.
+- Memoized navigation components (BottomNav, SideNav) and icon components to reduce unnecessary re-renders.
+
 ## [1.8.0] - 2026-04-12
 
 - Added immutable recipe snapshot history for saved recipes.

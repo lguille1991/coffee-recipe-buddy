@@ -1,23 +1,24 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 // Guard function: receives the attempted href, returns true to block navigation
 type GuardFn = (href: string) => boolean
 
-let activeGuard: GuardFn | null = null
-
 export function useNavGuard() {
   const router = useRouter()
+  // Use a ref instead of module-level variable to ensure proper React lifecycle management
+  // This prevents race conditions and stale closure issues
+  const activeGuardRef = useRef<GuardFn | null>(null)
 
   const requestNavigate = useCallback((href: string) => {
-    if (activeGuard?.(href)) return
+    if (activeGuardRef.current?.(href)) return
     router.push(href)
   }, [router])
 
   const setGuard = useCallback((fn: GuardFn | null) => {
-    activeGuard = fn
+    activeGuardRef.current = fn
   }, [])
 
   return { requestNavigate, setGuard }
