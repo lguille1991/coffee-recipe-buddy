@@ -1,11 +1,12 @@
 'use client'
 
+import { memo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useNavGuard } from './NavGuardContext'
 import { NAV_ITEMS } from './nav-items'
 
-export default function SideNav() {
+function SideNav() {
   const pathname = usePathname()
   const { requestNavigate } = useNavGuard()
 
@@ -42,3 +43,5 @@ export default function SideNav() {
     </aside>
   )
 }
+
+export default memo(SideNav)

@@ -1,3 +1,19 @@
+# AI Coding Guidelines — READ FIRST
+
+**ALWAYS read `.agents/docs/REACT_BEST_PRACTICES.md` before making any code changes.** This document contains mandatory standards for React, Next.js, TypeScript, and Tailwind CSS that supersede general training knowledge.
+
+## Quick Compliance Checklist
+
+Before writing or modifying code, verify:
+- [ ] Read `.agents/docs/REACT_BEST_PRACTICES.md` — Performance, architecture, and code quality standards
+- [ ] No async waterfalls — use `Promise.all()` for independent operations
+- [ ] No boolean prop proliferation — use composition instead
+- [ ] No components defined inside components
+- [ ] Server Actions have auth checks
+- [ ] Bump `package.json` version following SemVer (see below)
+
+---
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -54,4 +70,4 @@ When an AI agent finishes implementing a plan that involves code changes:
 
 # Plan Mode Output
 
-When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.
+When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` and directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.
