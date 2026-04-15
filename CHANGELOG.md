@@ -2,6 +2,12 @@
 
 All notable product-facing changes are documented here.
 
+## [1.9.0] - 2026-04-14
+
+- Refactored recipe detail and session components for improved performance and maintainability.
+- Split RecipeDetailClient (1015→452 lines) and RecipeSessionClient (734→279 lines) into focused hooks and sub-components.
+- Reduced re-render scope by isolating editing, sharing, notes, and history state into dedicated hooks.
+
 ## [1.8.3] - 2026-04-14
 
 - Improved navigation responsiveness by fixing potential race conditions in navigation guard logic.
