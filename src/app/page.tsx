@@ -15,9 +15,11 @@ export default async function HomePage() {
   let displayName: string | null = null
 
   if (user) {
-    const profile = await getOrCreateUserProfile(supabase, user)
+    const [profile, recipeResult] = await Promise.all([
+      getOrCreateUserProfile(supabase, user),
+      listRecipesForUser(supabase, { userId: user.id, limit: 6 }),
+    ])
     displayName = profile.display_name?.trim() ?? null
-    const recipeResult = await listRecipesForUser(supabase, { userId: user.id, limit: 6 })
     recipes = recipeResult.recipes
   }
 

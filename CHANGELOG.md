@@ -2,6 +2,12 @@
 
 All notable product-facing changes are documented here.
 
+## [1.9.1] - 2026-04-18
+
+- Improved navigation responsiveness by removing avoidable request waterfalls on the home page and saved recipe detail screens.
+- Reduced authenticated route delays by tightening profile bootstrap work in the auth context and profile loader.
+- Switched local dev/build scripts back to the default Next.js toolchain and allowed localhost/127.0.0.1 dev origins to avoid broken local navigation assets.
+
 ## [1.9.0] - 2026-04-14
 
 - Refactored recipe detail and session components for improved performance and maintainability.

@@ -16,12 +16,13 @@ export default async function SavedRecipeDetailPage({ params }: Params) {
     redirect(`/auth?returnTo=/recipes/${id}`)
   }
 
-  const initialRecipe = await getSavedRecipeDetail(supabase, id, user.id)
+  const [initialRecipe, shareInfo] = await Promise.all([
+    getSavedRecipeDetail(supabase, id, user.id),
+    getRecipeShareInfo(supabase, id, user.id),
+  ])
   if (!initialRecipe) {
     notFound()
   }
-
-  const shareInfo = await getRecipeShareInfo(supabase, id, user.id)
   const headersList = await headers()
   const protocol = headersList.get('x-forwarded-proto') ?? 'http'
   const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
