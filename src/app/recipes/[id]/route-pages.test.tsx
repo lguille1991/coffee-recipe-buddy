@@ -123,6 +123,40 @@ describe('recipe route pages', () => {
     expect(getSavedRecipeDetailMock).toHaveBeenCalledTimes(1)
   })
 
+  it('starts recipe detail and share lookups in parallel', async () => {
+    createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+
+    let resolveRecipe: ((value: unknown) => void) | undefined
+    let resolveShare: ((value: unknown) => void) | undefined
+
+    getSavedRecipeDetailMock.mockImplementation(() => new Promise((resolve) => {
+      resolveRecipe = resolve
+    }))
+    getRecipeShareInfoMock.mockImplementation(() => new Promise((resolve) => {
+      resolveShare = resolve
+    }))
+
+    const pagePromise = SavedRecipeDetailPage({
+      params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
+    })
+
+    await vi.waitFor(() => {
+      expect(getSavedRecipeDetailMock).toHaveBeenCalledTimes(1)
+      expect(getRecipeShareInfoMock).toHaveBeenCalledTimes(1)
+    })
+
+    resolveRecipe?.({
+      ...BASE_SAVED_RECIPE,
+      snapshots: [],
+    })
+    resolveShare?.({
+      shareToken: null,
+      commentCount: null,
+    })
+
+    await pagePromise
+  })
+
   it('loads brew mode by id for authenticated users', async () => {
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
     getSavedRecipeDetailMock.mockResolvedValue({

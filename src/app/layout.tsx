@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import ResponsiveContainer from '@/components/ResponsiveContainer'
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="theme-script" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
       </head>
       <body
         className="min-h-full overflow-x-hidden bg-[var(--background)] text-[var(--foreground)] antialiased"

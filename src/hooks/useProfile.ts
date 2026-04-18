@@ -3,11 +3,11 @@
 import { useAuthContext } from '@/components/AuthContext'
 
 export function useProfile() {
-  const { user, profile, loading, refreshProfile, setProfile } = useAuthContext()
+  const { user, profile, profileLoading, refreshProfile, setProfile } = useAuthContext()
 
   return {
     profile,
-    loading,
+    loading: profileLoading,
     preferredGrinder: profile?.preferred_grinder ?? 'k_ultra',
     refreshProfile,
     setProfile,
