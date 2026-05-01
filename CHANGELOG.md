@@ -2,6 +2,13 @@
 
 All notable product-facing changes are documented here.
 
+## [1.13.0] - 2026-05-01
+
+- Added deterministic ratio and brew-time calculation engine and wired recipe generation to override LLM ratio/time output with local skill-based rules.
+- Expanded process support in bean metadata to include `carbonic`, `thermal_shock`, and `experimental`, with deterministic grind/temperature offsets for these profiles.
+- Integrated deterministic symptom-based troubleshooting into `/api/recipes/[id]/auto-adjust` so direct taste/drain complaints can be adjusted locally without requiring an LLM pass.
+- Added and updated tests for deterministic brew parameters, expanded process handling, and deterministic auto-adjust routing behavior.
+
 ## [1.12.0] - 2026-05-01
 
 - Added a deterministic temperature engine and wired recipe generation to override LLM temperature output with local skill-based rules.

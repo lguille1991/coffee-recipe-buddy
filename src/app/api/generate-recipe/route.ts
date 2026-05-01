@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
+import { applySkillBrewParameterSettings } from '@/lib/skill-brew-parameters-engine'
 import { applySkillGrindSettings } from '@/lib/skill-grind-engine'
 import { applySkillTemperatureSettings } from '@/lib/skill-temperature-engine'
 import { createClient } from '@/lib/supabase/server'
@@ -115,7 +116,8 @@ export async function POST(req: NextRequest) {
       const validation = validateRecipe(parsed, beanParsed.data, method)
 
       if (validation.valid) {
-        const temperatureAdjusted = applySkillTemperatureSettings(parsed as Recipe, beanParsed.data)
+        const brewAdjusted = applySkillBrewParameterSettings(parsed as Recipe, beanParsed.data)
+        const temperatureAdjusted = applySkillTemperatureSettings(brewAdjusted, beanParsed.data)
         const recipe = applySkillGrindSettings(temperatureAdjusted, beanParsed.data)
         const deterministicValidation = validateRecipe(recipe, beanParsed.data, method)
         if (!deterministicValidation.valid) {

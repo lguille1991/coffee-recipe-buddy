@@ -34,7 +34,7 @@ Return ONLY a valid JSON object with this exact structure:
     "variety": "string or null (e.g. Gesha, Bourbon, Typica, Caturra, Pacamara, SL28, SL34). IMPORTANT: If the bag prominently shows a country name like 'Kenya' but the origin is different (e.g., origin is El Salvador), extract 'Kenya' as the variety - this indicates Kenyan varieties (SL28/SL34) grown outside Kenya",
     "finca": "string or null (farm/estate name, e.g. Finca La Palma)",
     "producer": "string or null (producer or farmer name)",
-    "process": "washed" | "natural" | "honey" | "anaerobic" | "unknown",
+    "process": "washed" | "natural" | "honey" | "anaerobic" | "carbonic" | "thermal_shock" | "experimental" | "unknown",
     "origin": "string or null (country or region)",
     "altitude_masl": number or null,
     "roast_level": "light" | "medium-light" | "medium" | "medium-dark" | "dark",
@@ -61,6 +61,7 @@ Rules:
 - If a well-known coffee variety name is explicitly printed anywhere on the bag, extract it as variety even when it is also used as the product name.
 - Normalize common Spanish terms when present on labels:
   - process: "lavado" => "washed", "natural" => "natural", "miel/honey" => "honey", "anaerobico/anaerobio" => "anaerobic"
+  - process: "carbonic maceration" => "carbonic", "thermal shock/frozen" => "thermal_shock", "experimental process" => "experimental"
   - roast_level: "medio claro" => "medium-light", "claro" => "light", "medio" => "medium", "medio oscuro" => "medium-dark", "oscuro" => "dark"
 - For process: if not stated, infer from roast level and origin clues. If truly unknown, use "unknown".
 - For roast_level: if not stated, infer from color descriptions (e.g., "bright", "fruity" → light; "dark chocolate", "bold" → dark).

@@ -9,10 +9,10 @@
 - [x] Consolidate skill reference tables into a shared config module (`src/lib/skill-reference.ts`) used by grind + temperature logic.
 
 ## Phase B (Parity Expansion)
-- [ ] Implement deterministic ratio + brew-time engine (`src/lib/skill-brew-parameters-engine.ts`).
-- [ ] Override LLM-derived ratio and total brew time in `/api/generate-recipe`.
-- [ ] Expand process model nuance (honey tiers, carbonic, thermal shock, experimental) with backward-compatible mapping.
-- [ ] Add deterministic troubleshooting engine aligned with skill references and integrate with auto-adjust route.
+- [x] Implement deterministic ratio + brew-time engine (`src/lib/skill-brew-parameters-engine.ts`).
+- [x] Override LLM-derived ratio and total brew time in `/api/generate-recipe`.
+- [x] Expand process model nuance (honey tiers, carbonic, thermal shock, experimental) with backward-compatible mapping.
+- [x] Add deterministic troubleshooting engine aligned with skill references and integrate with auto-adjust route.
 
 ## Phase C (Advanced/Optional)
 - [ ] Add strict grinder table parity mode (direct table-based outputs) with interpolation fallback.

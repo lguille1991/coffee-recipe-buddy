@@ -45,6 +45,12 @@ export function grindProcessOffset(process: BeanProfile['process']): number {
       return 1
     case 'anaerobic':
       return 2
+    case 'carbonic':
+      return 2
+    case 'thermal_shock':
+      return 2
+    case 'experimental':
+      return 2
     case 'unknown':
     default:
       return 0
@@ -100,6 +106,12 @@ export function temperatureProcessOffset(process: BeanProfile['process']): numbe
       return 0
     case 'anaerobic':
       return -2
+    case 'carbonic':
+      return -2
+    case 'thermal_shock':
+      return -2
+    case 'experimental':
+      return -2
     case 'unknown':
     default:
       return 0
@@ -136,4 +148,3 @@ export function temperatureVarietyOffset(variety?: string | null): number {
   if (/\bgesha|geisha\b/.test(normalized)) return -1
   return 0
 }
-
