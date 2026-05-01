@@ -4,7 +4,7 @@ import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
-import { BeanProfile, BrewGoal, ExtractionResponse } from '@/types/recipe'
+import { BeanProfile, BeanProfileSchema, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useAuth } from '@/hooks/useAuth'
@@ -111,7 +111,12 @@ export default function AnalysisPage() {
 
   function buildFinalBean() {
     if (!bean) return null
-    return { ...bean, roast_date: roastDate || undefined } as BeanProfile
+    return BeanProfileSchema.parse({
+      ...bean,
+      process: bean.process ?? 'unknown',
+      roast_level: bean.roast_level ?? 'medium',
+      roast_date: roastDate || undefined,
+    }) as BeanProfile
   }
 
   async function saveCoffeeProfile(finalBean: BeanProfile) {
