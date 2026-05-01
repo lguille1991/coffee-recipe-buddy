@@ -2,6 +2,12 @@
 
 All notable product-facing changes are documented here.
 
+## [1.14.3] - 2026-05-01
+
+- Fixed brew-step water text drift after ratio/water rescaling by synchronizing gram mentions inside `steps[].action` with recalculated `water_poured_g` and `water_accumulated_g`.
+- Applied this sync in both deterministic recipe generation water scaling and feedback-adjustment ratio scaling to keep displayed step text consistent across flows.
+- Added regression coverage for step action gram alignment during deterministic water recomputation.
+
 ## [1.14.2] - 2026-05-01
 
 - Fixed manual recipe construction and shared test fixtures to include required `recipe_mode` so TypeScript validation passes after recipe-mode schema updates.

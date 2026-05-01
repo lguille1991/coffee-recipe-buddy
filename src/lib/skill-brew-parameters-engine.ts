@@ -18,6 +18,28 @@ function formatRatio(ratio: number): string {
   return ratio % 1 === 0 ? `1:${ratio}` : `1:${ratio.toFixed(1)}`
 }
 
+function escapeForRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function replaceActionGramValue(action: string, previousValue: number, nextValue: number): string {
+  if (previousValue === nextValue) return action
+  const escaped = escapeForRegex(String(previousValue))
+  return action.replace(new RegExp(`(?<!\\d)${escaped}g(?!\\d)`, 'g'), `${nextValue}g`)
+}
+
+function syncActionWaterMentions(
+  action: string,
+  previousPoured: number,
+  previousAccumulated: number,
+  nextPoured: number,
+  nextAccumulated: number,
+): string {
+  let nextAction = replaceActionGramValue(action, previousPoured, nextPoured)
+  nextAction = replaceActionGramValue(nextAction, previousAccumulated, nextAccumulated)
+  return nextAction
+}
+
 function computeRatioOffset(bean: BeanProfile): number {
   let offset = 0
 
@@ -54,9 +76,18 @@ function recomputeStepsForWater(steps: Recipe['steps'], newWaterG: number): Reci
 
   let accumulated = 0
   return steps.map((step, idx) => {
+    const previousPoured = step.water_poured_g
+    const previousAccumulated = step.water_accumulated_g
     accumulated += poured[idx]
     return {
       ...step,
+      action: syncActionWaterMentions(
+        step.action,
+        previousPoured,
+        previousAccumulated,
+        poured[idx],
+        accumulated,
+      ),
       water_poured_g: poured[idx],
       water_accumulated_g: accumulated,
     }
@@ -86,4 +117,3 @@ export function applySkillBrewParameterSettings(recipe: Recipe, bean: BeanProfil
     steps: nextSteps,
   }
 }
-

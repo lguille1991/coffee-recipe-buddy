@@ -42,4 +42,31 @@ describe('applySkillBrewParameterSettings', () => {
     expect(result.parameters.total_time).toBe('2:40')
     expect(result.parameters.water_g).toBe(227)
   })
+
+  it('keeps step action gram mentions aligned with recalculated poured and accumulated totals', () => {
+    const bean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'medium',
+    }
+
+    const recipe = withMethod('v60')
+    recipe.parameters.coffee_g = 18
+    recipe.parameters.water_g = 300
+    recipe.parameters.ratio = '1:16.7'
+    recipe.steps = [
+      { step: 1, time: '0:00', action: 'Bloom with 54g of water. Wait 40 seconds.', water_poured_g: 54, water_accumulated_g: 54 },
+      { step: 2, time: '0:40', action: 'Pour to 150g in a steady center pour.', water_poured_g: 96, water_accumulated_g: 150 },
+      { step: 3, time: '1:30', action: 'Pour to 230g, continuing the steady center pour.', water_poured_g: 80, water_accumulated_g: 230 },
+      { step: 4, time: '2:20', action: 'Final pour to 300g. Allow drawdown to complete by 3:00-3:30.', water_poured_g: 70, water_accumulated_g: 300 },
+    ]
+
+    const result = applySkillBrewParameterSettings(recipe, bean)
+
+    expect(result.parameters.water_g).toBe(293)
+    expect(result.steps[0].action).toContain('53g')
+    expect(result.steps[1].action).toContain('147g')
+    expect(result.steps[2].action).toContain('225g')
+    expect(result.steps[3].action).toContain('293g')
+    expect(result.steps[3].water_accumulated_g).toBe(293)
+  })
 })
