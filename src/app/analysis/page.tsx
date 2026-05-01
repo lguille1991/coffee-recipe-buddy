@@ -3,9 +3,11 @@
 import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
-import { BeanProfile, BrewGoal, ExtractionResponse } from '@/types/recipe'
+import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
+import { BeanProfile, BeanProfileSchema, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
+import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 
 const PROCESS_LABELS: Record<string, string> = {
@@ -72,13 +74,17 @@ function EditableField({
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const { profile } = useProfile()
   const [extraction, setExtraction] = useState<ExtractionResponse | null>(null)
   const [bean, setBean] = useState<BeanProfile | null>(null)
   const [roastDate, setRoastDate] = useState('')
   const [targetVolume, setTargetVolume] = useState('')
   const [brewGoal, setBrewGoal] = useState<BrewGoal>('balanced')
-  const [generating] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [savingProfileOnly, setSavingProfileOnly] = useState(false)
+  const [saveProfileError, setSaveProfileError] = useState<string | null>(null)
+  const [savedProfileId, setSavedProfileId] = useState<string | null>(null)
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -103,28 +109,117 @@ export default function AnalysisPage() {
     setBean(prev => prev ? { ...prev, [key]: value } : prev)
   }
 
-  function handleGenerate() {
-    if (!bean) return
-    const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
-    recipeSessionStorage.setConfirmedBean(finalBean)
-    recipeSessionStorage.clearManualRecipeDraft()
-    recipeSessionStorage.setRecipeFlowSource('generated')
+  function buildFinalBean() {
+    if (!bean) return null
+    return BeanProfileSchema.parse({
+      ...bean,
+      process: bean.process ?? 'unknown',
+      roast_level: bean.roast_level ?? 'medium',
+      roast_date: roastDate || undefined,
+    }) as BeanProfile
+  }
 
-    const vol = parseInt(targetVolume, 10)
-    if (vol > 0) {
-      recipeSessionStorage.setTargetVolumeMl(vol)
-    } else {
-      recipeSessionStorage.clearTargetVolumeMl()
+  async function saveCoffeeProfile(finalBean: BeanProfile) {
+    if (!isSavedCoffeeProfilesEnabled() || !user) {
+      return { profileId: null as string | null }
     }
 
-    // Run deterministic method recommendation client-side
-    const recs = recommendMethods(finalBean, {
-      brewGoal,
-      extractionConfidence: extraction?.confidence ?? null,
-      source: 'scan',
+    const imageDataUrl = recipeSessionStorage.getScannedBagImageDataUrl()
+    const response = await fetch('/api/coffee-profiles', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: finalBean.bean_name || `${finalBean.roaster || 'Coffee'} — ${finalBean.origin || 'Unknown Origin'}`,
+        bean_profile_json: finalBean,
+        scan_source: 'scan',
+        image_data_url: imageDataUrl ?? undefined,
+      }),
     })
-    recipeSessionStorage.setMethodRecommendations(recs)
-    router.push('/methods')
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error ?? 'Failed to save coffee profile')
+    }
+
+    return {
+      profileId: typeof data?.profile?.id === 'string' ? data.profile.id : null,
+      imageError: typeof data?.primary_image_error === 'string' ? data.primary_image_error : null,
+    }
+  }
+
+  function clearSaveOnlySessionState() {
+    recipeSessionStorage.clearConfirmedBean()
+    recipeSessionStorage.clearMethodRecommendations()
+    recipeSessionStorage.clearRecipeFlowSource()
+    recipeSessionStorage.clearSelectedMethod()
+    recipeSessionStorage.clearTargetVolumeMl()
+    recipeSessionStorage.clearRecipe()
+    recipeSessionStorage.clearRecipeOriginal()
+    recipeSessionStorage.clearPendingSaveRecipe()
+    recipeSessionStorage.clearFeedbackRound()
+    recipeSessionStorage.clearAdjustmentHistory()
+    recipeSessionStorage.clearExtractionResult()
+    recipeSessionStorage.clearScannedBagImageDataUrl()
+  }
+
+  async function handleSaveProfileOnly() {
+    const finalBean = buildFinalBean()
+    if (!finalBean) return
+
+    setSavingProfileOnly(true)
+    setSaveProfileError(null)
+
+    try {
+      const saved = await saveCoffeeProfile(finalBean)
+      clearSaveOnlySessionState()
+      setSavedProfileId(saved.profileId)
+      if (saved.imageError) {
+        setSaveProfileError(`Coffee saved, but image upload failed: ${saved.imageError}`)
+      }
+    } catch (error) {
+      setSaveProfileError(error instanceof Error ? error.message : 'Failed to save coffee profile')
+    } finally {
+      setSavingProfileOnly(false)
+    }
+  }
+
+  async function handleSaveAndGenerate() {
+    const finalBean = buildFinalBean()
+    if (!finalBean) return
+
+    setGenerating(true)
+    setSaveProfileError(null)
+
+    if (isSavedCoffeeProfilesEnabled()) {
+      try {
+        await saveCoffeeProfile(finalBean)
+      } catch {
+        // Continue recipe generation flow even if profile save fails.
+      }
+    }
+
+    try {
+      recipeSessionStorage.setConfirmedBean(finalBean)
+      recipeSessionStorage.clearManualRecipeDraft()
+      recipeSessionStorage.setRecipeFlowSource('generated')
+
+      const vol = parseInt(targetVolume, 10)
+      if (vol > 0) {
+        recipeSessionStorage.setTargetVolumeMl(vol)
+      } else {
+        recipeSessionStorage.clearTargetVolumeMl()
+      }
+
+      const recs = recommendMethods(finalBean, {
+        brewGoal,
+        extractionConfidence: extraction?.confidence ?? null,
+        source: 'scan',
+      })
+      recipeSessionStorage.setMethodRecommendations(recs)
+      router.push('/methods')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   if (!bean || !extraction) {
@@ -292,12 +387,49 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* Generate button — fixed bottom */}
+      {/* Action buttons — fixed bottom */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-56 bg-[var(--background)] pt-4 pb-24 lg:pb-6">
-        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
+        <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8 flex flex-col gap-2">
+          {savedProfileId && (
+            <div className="ui-card-interactive bg-[var(--card)] rounded-xl p-3">
+              <p className="ui-body-muted">Coffee saved.</p>
+              <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => router.push(`/coffees/${savedProfileId}`)}
+                  className="ui-button-secondary"
+                >
+                  View Saved Coffee
+                </button>
+                <button
+                  onClick={handleSaveAndGenerate}
+                  disabled={generating}
+                  className="ui-button-primary"
+                >
+                  {generating ? 'Generating...' : 'Generate Recipe Now'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {saveProfileError && (
+            <div className="ui-alert-danger text-sm">
+              {saveProfileError}
+            </div>
+          )}
+
+          {isSavedCoffeeProfilesEnabled() && user && !savedProfileId && (
+            <button
+              onClick={handleSaveProfileOnly}
+              disabled={savingProfileOnly || generating}
+              className="w-full ui-button-secondary font-semibold disabled:opacity-50"
+            >
+              {savingProfileOnly ? 'Saving coffee...' : 'Save Coffee'}
+            </button>
+          )}
+
           <button
-            onClick={handleGenerate}
-            disabled={generating}
+            onClick={handleSaveAndGenerate}
+            disabled={generating || savingProfileOnly}
             className="w-full ui-button-primary font-semibold disabled:opacity-50"
           >
             {generating ? (
@@ -305,7 +437,7 @@ export default function AnalysisPage() {
             ) : (
               <Sparkles className="ui-icon-action" />
             )}
-            Generate Recipe
+            Save + Generate Recipe
           </button>
         </div>
       </div>

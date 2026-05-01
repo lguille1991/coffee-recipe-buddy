@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { HomeIcon, RecipesIcon, SettingsIcon } from './NavIcons'
+import { CoffeeIcon, HomeIcon, RecipesIcon, SettingsIcon } from './NavIcons'
+import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 
 type NavItem = {
   href: string
@@ -7,7 +8,7 @@ type NavItem = {
   icon: ReactNode
 }
 
-export const NAV_ITEMS: NavItem[] = [
+const baseItems: NavItem[] = [
   {
     href: '/',
     label: 'Home',
@@ -24,3 +25,15 @@ export const NAV_ITEMS: NavItem[] = [
     icon: <SettingsIcon />,
   },
 ]
+
+export const NAV_ITEMS: NavItem[] = isSavedCoffeeProfilesEnabled()
+  ? [
+    ...baseItems.slice(0, 2),
+    {
+      href: '/coffees',
+      label: 'Coffees',
+      icon: <CoffeeIcon />,
+    },
+    baseItems[2],
+  ]
+  : baseItems

@@ -2,6 +2,47 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.3] - 2026-05-01
+
+- Added recipe-detail navigation from saved recipe bean name to linked saved coffee profile (`/coffees/[id]`) when a `coffee_profile_id` exists.
+- Extended saved recipe detail selection/types to include `coffee_profile_id` so recipe UI can resolve coffee-profile navigation.
+- Added archive protection for coffee profiles linked to active recipes: `POST /api/coffee-profiles/:id/archive` now returns `409` instead of archiving.
+- Added archive route tests covering both blocked (linked active recipes) and successful archive flows.
+
+## [1.16.2] - 2026-05-01
+
+- Added split analysis actions so users can either `Save Coffee` only or `Save + Generate Recipe` from scan confirmation.
+- Added in-place save-only success UX on analysis with CTAs to view the saved coffee or generate immediately.
+- Added save-only session cleanup so recipe-generation state is not unintentionally persisted when only saving a profile.
+- Added typed profile image upload status in `POST /api/coffee-profiles` (`uploaded | failed | none`) for explicit client handling.
+- Added coverage for profile-create response semantics and saved-coffee nav feature-flag visibility behavior.
+- Added documentation for save-only flow and later-generation semantics in `docs/save-only-coffee-profile-flow.md`.
+
+## [1.16.1] - 2026-05-01
+
+- Added environment-gated rollout control for Saved Coffee Profiles via `NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES` across APIs, pages, and navigation visibility.
+- Added validation route coverage for profile-based generation payload errors (non-canonical method and invalid water-mode combinations).
+- Added feature-flag-off route coverage to verify saved-profile APIs and profile-based generation return `404` when disabled.
+- Added staging rollout checklist at `docs/saved-coffee-profiles-staging-rollout.md` with preconditions, smoke checks, ownership checks, and go/no-go criteria.
+
+## [1.16.0] - 2026-05-01
+
+- Added scan-to-profile persistence in the analysis confirmation flow so confirmed bean edits are saved as reusable coffee profiles before recipe generation continues.
+- Added authenticated multipart image upload endpoint for saved coffee profiles (`POST /api/coffee-profiles/:id/image`) with server-side optimization and primary-image replacement handling.
+- Added first-pass Saved Coffees UI: list page, detail page, generate-from-profile form, and archive action.
+- Added top-level Coffees navigation entry for mobile and desktop nav.
+- Added route tests covering coffee profile auth guards and profile-based recipe generation behaviors (unauthorized, archived blocked, profile not found, and provenance payload expectations).
+
+## [1.15.0] - 2026-05-01
+
+- Added backend support for saved coffee profiles with per-user ownership, archive state, and linked primary coffee bag image metadata.
+- Added new profile APIs: `GET/POST /api/coffee-profiles`, `GET/PATCH/DELETE /api/coffee-profiles/:id`, and `POST /api/coffee-profiles/:id/archive`.
+- Added profile-driven recipe generation endpoint `POST /api/recipes/from-profile` that generates and immediately persists recipes with snapshot history.
+- Added recipe-to-profile linkage and generation provenance support (`coffee_profile_id`, owner linkage, and `generation_context`) in migration docs.
+- Refactored recipe persistence into a shared save helper so manual saves and profile-driven saves use the same snapshot workflow.
+- Refactored recipe generation into a shared generation helper reused by `/api/generate-recipe` and `/api/recipes/from-profile`.
+- Added migration `docs/migration_009_coffee_profiles.sql` for new tables, constraints, and RLS policies.
+
 ## [1.14.3] - 2026-05-01
 
 - Fixed brew-step water text drift after ratio/water rescaling by synchronizing gram mentions inside `steps[].action` with recalculated `water_poured_g` and `water_accumulated_g`.
