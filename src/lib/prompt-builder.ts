@@ -59,6 +59,9 @@ Rules:
 - The photo may be rotated or sideways. Read text in any orientation before deciding a field is missing.
 - If a prominent bag title combines variety and process, split them correctly. Example: "Geisha Natural" => variety: "Geisha", process: "natural".
 - If a well-known coffee variety name is explicitly printed anywhere on the bag, extract it as variety even when it is also used as the product name.
+- Normalize common Spanish terms when present on labels:
+  - process: "lavado" => "washed", "natural" => "natural", "miel/honey" => "honey", "anaerobico/anaerobio" => "anaerobic"
+  - roast_level: "medio claro" => "medium-light", "claro" => "light", "medio" => "medium", "medio oscuro" => "medium-dark", "oscuro" => "dark"
 - For process: if not stated, infer from roast level and origin clues. If truly unknown, use "unknown".
 - For roast_level: if not stated, infer from color descriptions (e.g., "bright", "fruity" → light; "dark chocolate", "bold" → dark).
 - Tasting notes: extract as an array of individual descriptors (e.g., ["blueberry", "jasmine", "citrus"]).
