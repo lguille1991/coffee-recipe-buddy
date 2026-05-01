@@ -22,6 +22,7 @@ export function RecipeTitleBlock({
   isManualCreated,
   hasManualEdits,
   isEditing,
+  onOpenCoffeeProfile,
   onOpenManualCreator,
   onOpenEditHistory,
   onOpenShare,
@@ -35,6 +36,7 @@ export function RecipeTitleBlock({
   isManualCreated: boolean
   hasManualEdits: boolean
   isEditing: boolean
+  onOpenCoffeeProfile: () => void
   onOpenManualCreator: () => void
   onOpenEditHistory: () => void
   onOpenShare: () => void
@@ -94,7 +96,16 @@ export function RecipeTitleBlock({
             </button>
           )}
         </div>
-        <p className="ui-body-muted mt-0.5">{beanName}</p>
+        {recipe.coffee_profile_id ? (
+          <button
+            onClick={onOpenCoffeeProfile}
+            className="ui-focus-ring ui-pressable mt-0.5 rounded-md ui-body-muted underline underline-offset-2 hover:text-[var(--foreground)]"
+          >
+            {beanName}
+          </button>
+        ) : (
+          <p className="ui-body-muted mt-0.5">{beanName}</p>
+        )}
         {beanProcess && (
           <p className="ui-body-muted mt-0.5 capitalize">{beanProcess}</p>
         )}

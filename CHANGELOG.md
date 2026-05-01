@@ -2,6 +2,13 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.3] - 2026-05-01
+
+- Added recipe-detail navigation from saved recipe bean name to linked saved coffee profile (`/coffees/[id]`) when a `coffee_profile_id` exists.
+- Extended saved recipe detail selection/types to include `coffee_profile_id` so recipe UI can resolve coffee-profile navigation.
+- Added archive protection for coffee profiles linked to active recipes: `POST /api/coffee-profiles/:id/archive` now returns `409` instead of archiving.
+- Added archive route tests covering both blocked (linked active recipes) and successful archive flows.
+
 ## [1.16.2] - 2026-05-01
 
 - Added split analysis actions so users can either `Save Coffee` only or `Save + Generate Recipe` from scan confirmation.

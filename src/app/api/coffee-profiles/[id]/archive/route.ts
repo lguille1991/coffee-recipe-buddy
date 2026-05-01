@@ -14,6 +14,24 @@ export async function POST(_request: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { count: linkedActiveRecipes, error: countError } = await supabase
+    .from('recipes')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('coffee_profile_id', id)
+    .eq('archived', false)
+
+  if (countError) {
+    return NextResponse.json({ error: countError.message }, { status: 500 })
+  }
+
+  if ((linkedActiveRecipes ?? 0) > 0) {
+    return NextResponse.json(
+      { error: 'Cannot archive coffee profile while it is linked to active recipes' },
+      { status: 409 },
+    )
+  }
+
   const { data, error } = await supabase
     .from('coffee_profiles')
     .update({ archived_at: new Date().toISOString() })

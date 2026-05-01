@@ -277,6 +277,7 @@ export const SavedRecipeSchema = z.object({
   live_snapshot_id: z.string().uuid().nullable().optional(),
   parent_recipe_id: z.string().uuid().nullable().optional(),
   scale_factor: z.number().nullable().optional(),
+  coffee_profile_id: z.string().uuid().nullable().optional(),
 })
 
 export type SavedRecipe = z.infer<typeof SavedRecipeSchema>

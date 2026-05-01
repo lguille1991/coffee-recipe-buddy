@@ -215,6 +215,10 @@ export default function RecipeDetailClient({
           isManualCreated={isManualCreated}
           hasManualEdits={hasManualEdits}
           isEditing={editing.isEditing}
+          onOpenCoffeeProfile={() => {
+            if (!recipe.coffee_profile_id) return
+            router.push(`/coffees/${recipe.coffee_profile_id}`)
+          }}
           onOpenManualCreator={() => setShowManualCreatorSheet(true)}
           onOpenEditHistory={() => history.setShowEditHistorySheet(true)}
           onOpenParentRecipe={() => router.push(`/recipes/${recipe.parent_recipe_id}`)}
