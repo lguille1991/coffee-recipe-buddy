@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-import { buildRecipePrompt } from '@/lib/prompt-builder'
-import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
-import { BeanProfileSchema, Recipe } from '@/types/recipe'
-import { applySkillBrewParameterSettings } from '@/lib/skill-brew-parameters-engine'
-import { applySkillGrindSettings } from '@/lib/skill-grind-engine'
-import { applyFourSixRecipeMode } from '@/lib/skill-recipe-mode-engine'
-import { applySkillTemperatureSettings } from '@/lib/skill-temperature-engine'
+import { generateRecipeWithRetries } from '@/lib/recipe-generation'
+import { BeanProfileSchema } from '@/types/recipe'
 import { createClient } from '@/lib/supabase/server'
 import {
   attachGuestOpenRouterCookie,
@@ -14,23 +8,6 @@ import {
   createOpenRouterClient,
   getGuestOpenRouterUserId,
 } from '@/lib/openrouter'
-
-const MAX_RETRIES = 2
-const DEFAULT_MAX_TOKENS = 3000
-const MIN_MAX_TOKENS = 512
-
-function extractAffordableTokenLimit(error: unknown): number | null {
-  const message = error instanceof Error ? error.message : ''
-  const match = message.match(/afford (\d+)/i)
-  if (!match) return null
-
-  const parsed = Number.parseInt(match[1], 10)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-function isCreditLimitError(error: unknown): boolean {
-  return error instanceof Error && /requires more credits|fewer max_tokens/i.test(error.message)
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,115 +34,51 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { system, user: userPrompt } = buildRecipePrompt(beanParsed.data, method, targetVolumeMl)
+    const strictParityMode = process.env.STRICT_GRINDER_TABLE_PARITY === '1'
+    const recipe = await generateRecipeWithRetries({
+      client,
+      openRouterUser,
+      method,
+      bean: beanParsed.data,
+      targetVolumeMl,
+      recipeMode: recipe_mode === 'four_six' ? 'four_six' : 'standard',
+      strictParityMode,
+    })
 
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: system },
-      { role: 'user', content: userPrompt },
-    ]
-
-    let lastErrors: string[] = []
-    let attempt = 0
-    let maxTokens = DEFAULT_MAX_TOKENS
-
-    while (attempt <= MAX_RETRIES) {
-      let rawText = ''
-
-      try {
-        const response = await client.chat.completions.create({
-          model: 'google/gemini-2.0-flash-001',
-          max_tokens: maxTokens,
-          user: openRouterUser,
-          messages,
-        })
-
-        rawText = response.choices[0].message.content ?? ''
-      } catch (error) {
-        if (isCreditLimitError(error)) {
-          const affordableLimit = extractAffordableTokenLimit(error)
-          if (affordableLimit && affordableLimit < maxTokens) {
-            maxTokens = Math.max(MIN_MAX_TOKENS, affordableLimit - 128)
-            continue
-          }
-
-          return NextResponse.json(
-            { error: 'Recipe generation temporarily unavailable: model credit limit reached. Try again in a bit or reduce provider token usage.' },
-            { status: 503 },
-          )
-        }
-
-        throw error
-      }
-
-      const jsonText = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
-
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(jsonText)
-      } catch {
-        lastErrors = [`JSON parse error: ${rawText.slice(0, 200)}`]
-        // Inject retry instruction
-        messages.push({ role: 'assistant', content: rawText })
-        messages.push({
-          role: 'user',
-          content: buildRetryPrompt(lastErrors),
-        })
-        attempt++
-        continue
-      }
-
-      const validation = validateRecipe(parsed, beanParsed.data, method)
-
-      if (validation.valid) {
-        const strictParityMode = process.env.STRICT_GRINDER_TABLE_PARITY === '1'
-        const baseRecipe = {
-          ...(parsed as Recipe),
-          recipe_mode: recipe_mode === 'four_six' ? 'four_six' : 'standard',
-        } as Recipe
-
-        const modeAdjusted = baseRecipe.recipe_mode === 'four_six'
-          ? applyFourSixRecipeMode(baseRecipe, beanParsed.data)
-          : baseRecipe
-
-        const brewAdjusted = modeAdjusted.recipe_mode === 'four_six'
-          ? modeAdjusted
-          : applySkillBrewParameterSettings(modeAdjusted, beanParsed.data)
-        const temperatureAdjusted = brewAdjusted.recipe_mode === 'four_six'
-          ? brewAdjusted
-          : applySkillTemperatureSettings(brewAdjusted, beanParsed.data)
-        const recipe = applySkillGrindSettings(temperatureAdjusted, beanParsed.data, {
-          strictParityMode,
-        })
-        const deterministicValidation = validateRecipe(recipe, beanParsed.data, method)
-        if (!deterministicValidation.valid) {
-          return NextResponse.json(
-            {
-              error: 'Deterministic grind override failed validation',
-              validationErrors: deterministicValidation.errors,
-            },
-            { status: 422 },
-          )
-        }
-        return attachGuestOpenRouterCookie(
-          NextResponse.json(recipe),
-          guestTracking?.newGuestId ?? null,
-        )
-      }
-
-      lastErrors = validation.errors
-      messages.push({ role: 'assistant', content: rawText })
-      messages.push({
-        role: 'user',
-        content: buildRetryPrompt(validation.errors),
-      })
-      attempt++
-    }
-
-    return NextResponse.json(
-      { error: 'Recipe generation failed after retries', validationErrors: lastErrors },
-      { status: 422 },
+    return attachGuestOpenRouterCookie(
+      NextResponse.json(recipe),
+      guestTracking?.newGuestId ?? null,
     )
   } catch (err) {
+    if (err instanceof Error && err.message === 'MODEL_CREDIT_LIMIT') {
+      return NextResponse.json(
+        { error: 'Recipe generation temporarily unavailable: model credit limit reached. Try again in a bit or reduce provider token usage.' },
+        { status: 503 },
+      )
+    }
+
+    if (err instanceof Error && err.message.startsWith('DETERMINISTIC_VALIDATION_FAILED:')) {
+      const details = err.message.replace('DETERMINISTIC_VALIDATION_FAILED:', '').trim()
+      return NextResponse.json(
+        {
+          error: 'Deterministic grind override failed validation',
+          validationErrors: details ? details.split('; ').filter(Boolean) : [],
+        },
+        { status: 422 },
+      )
+    }
+
+    if (err instanceof Error && err.message.startsWith('GENERATION_FAILED:')) {
+      const details = err.message.replace('GENERATION_FAILED:', '').trim()
+      return NextResponse.json(
+        {
+          error: 'Recipe generation failed after retries',
+          validationErrors: details ? details.split('; ').filter(Boolean) : [],
+        },
+        { status: 422 },
+      )
+    }
+
     console.error('[generate-recipe]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

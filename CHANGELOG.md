@@ -2,6 +2,16 @@
 
 All notable product-facing changes are documented here.
 
+## [1.15.0] - 2026-05-01
+
+- Added backend support for saved coffee profiles with per-user ownership, archive state, and linked primary coffee bag image metadata.
+- Added new profile APIs: `GET/POST /api/coffee-profiles`, `GET/PATCH/DELETE /api/coffee-profiles/:id`, and `POST /api/coffee-profiles/:id/archive`.
+- Added profile-driven recipe generation endpoint `POST /api/recipes/from-profile` that generates and immediately persists recipes with snapshot history.
+- Added recipe-to-profile linkage and generation provenance support (`coffee_profile_id`, owner linkage, and `generation_context`) in migration docs.
+- Refactored recipe persistence into a shared save helper so manual saves and profile-driven saves use the same snapshot workflow.
+- Refactored recipe generation into a shared generation helper reused by `/api/generate-recipe` and `/api/recipes/from-profile`.
+- Added migration `docs/migration_009_coffee_profiles.sql` for new tables, constraints, and RLS policies.
+
 ## [1.14.3] - 2026-05-01
 
 - Fixed brew-step water text drift after ratio/water rescaling by synchronizing gram mentions inside `steps[].action` with recalculated `water_poured_g` and `water_accumulated_g`.

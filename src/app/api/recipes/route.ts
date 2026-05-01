@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createRecipeSnapshot, mirrorRecipeLiveSnapshot } from '@/lib/recipe-snapshots'
+import { uploadBagPhotoFromDataUrl } from '@/lib/bag-photo-storage'
+import { saveRecipeWithSnapshot } from '@/lib/save-recipe'
 import { listRecipesForUser } from '@/lib/recipe-list'
 import { createClient } from '@/lib/supabase/server'
 import { SaveRecipeRequestSchema } from '@/types/recipe'
-import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
 
 // ─── POST /api/recipes — save a recipe ───────────────────────────────────────
 
@@ -20,34 +20,13 @@ export async function POST(request: Request) {
 
   const { bean_info, method, original_recipe_json, current_recipe_json, feedback_history, image_data_url, parent_recipe_id, scale_factor } = parsed.data
 
-  let image_url: string | null = null
+  const image_url = image_data_url
+    ? await uploadBagPhotoFromDataUrl(supabase, user.id, image_data_url)
+    : null
 
-  // Upload bag photo to Supabase Storage if provided
-  if (image_data_url) {
-    const base64Data = image_data_url.split(',')[1]
-    const mimeMatch = image_data_url.match(/data:([^;]+);/)
-    const mime = mimeMatch?.[1] ?? 'image/jpeg'
-    const ext = mime.split('/')[1] ?? 'jpg'
-    const buffer = Buffer.from(base64Data, 'base64')
-
-    const filePath = `${user.id}/${crypto.randomUUID()}.${ext}`
-    const { error: uploadError } = await supabase.storage
-      .from('bag-photos')
-      .upload(filePath, buffer, { contentType: mime, upsert: false })
-
-    if (!uploadError) {
-      const { data: signedData } = await supabase.storage
-        .from('bag-photos')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365) // 1-year URL
-      image_url = signedData?.signedUrl ?? null
-    }
-  }
-
-  const { data, error } = await supabase
-    .from('recipes')
-    .insert({
-      user_id: user.id,
-      schema_version: CURRENT_SCHEMA_VERSION,
+  try {
+    const saved = await saveRecipeWithSnapshot(supabase, {
+      userId: user.id,
       bean_info,
       method,
       original_recipe_json,
@@ -56,40 +35,10 @@ export async function POST(request: Request) {
       image_url,
       parent_recipe_id: parent_recipe_id ?? null,
       scale_factor: scale_factor ?? null,
-      live_snapshot_id: null,
-    })
-    .select()
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  try {
-    const snapshot = await createRecipeSnapshot({
-      supabase,
-      recipeId: data.id,
-      userId: user.id,
-      snapshotKind: parent_recipe_id ? 'clone' : 'initial',
-      snapshotRecipeJson: current_recipe_json,
-      changeSummary: [],
     })
 
-    const mirrored = await mirrorRecipeLiveSnapshot({
-      supabase,
-      recipeId: data.id,
-      liveSnapshotId: snapshot.id,
-      currentRecipeJson: current_recipe_json,
-      feedbackHistory: feedback_history,
-    })
-
-    return NextResponse.json(mirrored, { status: 201 })
+    return NextResponse.json(saved, { status: 201 })
   } catch (snapshotError) {
-    await supabase
-      .from('recipes')
-      .delete()
-      .eq('id', data.id)
-
     return NextResponse.json({
       error: snapshotError instanceof Error ? snapshotError.message : 'Failed to create recipe snapshot',
     }, { status: 500 })
