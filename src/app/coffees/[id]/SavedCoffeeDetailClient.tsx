@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import { useProfile } from '@/hooks/useProfile'
 import { BrewGoalSchema, METHOD_DISPLAY_NAMES, MethodIdSchema } from '@/types/recipe'
 
 type ProfileDetail = {
@@ -24,6 +25,7 @@ type ProfileDetailResponse = {
 
 export default function SavedCoffeeDetailClient({ profileId }: { profileId: string }) {
   const router = useRouter()
+  const { profile } = useProfile()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +59,12 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
   }, [profileId])
 
   const archived = useMemo(() => detail?.profile.archived_at != null, [detail])
+
+  useEffect(() => {
+    if (!profile?.default_volume_ml) return
+    if (waterMode !== 'absolute') return
+    setWaterValue(String(profile.default_volume_ml))
+  }, [profile?.default_volume_ml, waterMode])
 
   async function handleGenerate() {
     setSaving(true)
@@ -170,7 +178,23 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
             </select>
 
             <label className="ui-meta">{waterMode === 'absolute' ? 'Water grams' : 'Water delta grams'}</label>
-            <input value={waterValue} onChange={e => setWaterValue(e.target.value)} className="ui-input" inputMode="numeric" />
+            <input
+              value={waterValue}
+              onChange={e => {
+                const raw = e.target.value
+                if (waterMode === 'absolute') {
+                  setWaterValue(raw.replace(/\D/g, ''))
+                  return
+                }
+                const normalized = raw
+                  .replace(/[^\d-]/g, '')
+                  .replace(/(?!^)-/g, '')
+                setWaterValue(normalized)
+              }}
+              className="ui-input"
+              inputMode="numeric"
+              pattern={waterMode === 'absolute' ? '[0-9]*' : '-?[0-9]*'}
+            />
 
             <button onClick={handleGenerate} disabled={saving || archived} className="ui-button-primary">
               {saving ? 'Generating...' : 'Generate Recipe'}
