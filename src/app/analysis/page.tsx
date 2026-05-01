@@ -199,7 +199,6 @@ export default function AnalysisPage() {
     }
 
     try {
-      const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
       recipeSessionStorage.setConfirmedBean(finalBean)
       recipeSessionStorage.clearManualRecipeDraft()
       recipeSessionStorage.setRecipeFlowSource('generated')
