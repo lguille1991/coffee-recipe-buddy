@@ -19,7 +19,6 @@ export async function POST(_request: Request, { params }: Params) {
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .eq('coffee_profile_id', id)
-    .eq('archived', false)
 
   if (countError) {
     return NextResponse.json({ error: countError.message }, { status: 500 })
@@ -27,7 +26,7 @@ export async function POST(_request: Request, { params }: Params) {
 
   if ((linkedActiveRecipes ?? 0) > 0) {
     return NextResponse.json(
-      { error: 'Cannot archive coffee profile while it is linked to active recipes' },
+      { error: 'Cannot archive coffee profile while it is linked to existing recipes' },
       { status: 409 },
     )
   }

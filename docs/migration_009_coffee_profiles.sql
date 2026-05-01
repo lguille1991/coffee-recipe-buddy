@@ -72,6 +72,35 @@ BEGIN
   END IF;
 END $$;
 
+-- Guard against archiving coffee profiles that are still linked to recipes.
+CREATE OR REPLACE FUNCTION public.prevent_archiving_linked_coffee_profiles()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.archived_at IS NOT NULL
+     AND OLD.archived_at IS NULL
+     AND EXISTS (
+       SELECT 1
+       FROM public.recipes r
+       WHERE r.coffee_profile_id = NEW.id
+         AND r.user_id = NEW.user_id
+     ) THEN
+    RAISE EXCEPTION 'Cannot archive coffee profile while it is linked to existing recipes';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS coffee_profiles_prevent_archive_if_linked
+  ON public.coffee_profiles;
+
+CREATE TRIGGER coffee_profiles_prevent_archive_if_linked
+  BEFORE UPDATE ON public.coffee_profiles
+  FOR EACH ROW
+  EXECUTE PROCEDURE public.prevent_archiving_linked_coffee_profiles();
+
 ALTER TABLE public.coffee_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coffee_profile_images ENABLE ROW LEVEL SECURITY;
 

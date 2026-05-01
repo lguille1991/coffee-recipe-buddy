@@ -16,7 +16,7 @@ function createRecipesCountQuery(result: { count: number | null; error: { messag
     select: vi.fn(() => chain),
     eq: vi.fn(() => {
       eqCalls += 1
-      if (eqCalls >= 3) {
+      if (eqCalls >= 2) {
         return Promise.resolve(result)
       }
       return chain
@@ -43,7 +43,7 @@ describe('POST /api/coffee-profiles/[id]/archive', () => {
     process.env.NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES = 'true'
   })
 
-  it('returns 409 when profile is linked to active recipes', async () => {
+  it('returns 409 when profile is linked to any recipes', async () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
       from: vi.fn((table: string) => {
@@ -62,10 +62,12 @@ describe('POST /api/coffee-profiles/[id]/archive', () => {
       params: Promise.resolve({ id: 'profile-1' }),
     })
 
+    const body = await response.json()
     expect(response.status).toBe(409)
+    expect(body.error).toBe('Cannot archive coffee profile while it is linked to existing recipes')
   })
 
-  it('archives when there are no active linked recipes', async () => {
+  it('archives when there are no linked recipes', async () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
       from: vi.fn((table: string) => {

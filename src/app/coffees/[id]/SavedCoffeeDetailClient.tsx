@@ -116,7 +116,8 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
         method: 'POST',
       })
       if (!response.ok) {
-        throw new Error('Failed to archive profile')
+        const data = await response.json()
+        throw new Error(data.error ?? 'Failed to archive profile')
       }
       setDetail(prev => prev ? { ...prev, profile: { ...prev.profile, archived_at: new Date().toISOString() } } : prev)
     } catch (err) {
