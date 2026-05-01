@@ -49,11 +49,11 @@ describe('recommendMethods', () => {
     expect(hasNaturalFriendly).toBe(true)
   })
 
-  it('anaerobic bean avoids v60 and origami in top recommendation', () => {
+  it('anaerobic bean still prioritizes low-agitation brewers in top recommendation', () => {
     const results = recommendMethods(ANAEROBIC_BEAN)
-    // v60 and origami get -2 from anaerobic process rule, should not be rank 1
-    expect(results[0].method).not.toBe('v60')
-    expect(results[0].method).not.toBe('origami')
+    const methods = results.map(r => r.method)
+    expect(['hario_switch', 'aeropress', 'pulsar']).toContain(results[0].method)
+    expect(methods.some(method => ['hario_switch', 'aeropress', 'pulsar'].includes(method))).toBe(true)
   })
 
   it('high-altitude anaerobic dark bean has pulsar or aeropress in top-3', () => {
@@ -122,6 +122,55 @@ describe('recommendMethods', () => {
     const results = recommendMethods(teaLikeNatural)
     expect(results[0].method).toBe('v60')
     expect(results[0].reasonBadges).toContain('tea-like')
+  })
+
+  it('uses origin pairing rules for ethiopian coffees', () => {
+    const ethiopianBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      origin: 'Ethiopia Yirgacheffe',
+      tasting_notes: ['jasmine', 'lemon', 'black tea'],
+    }
+
+    const results = recommendMethods(ethiopianBean)
+    expect(results[0].method).toBe('v60')
+    expect(results.map(result => result.method).some(method => ['origami', 'orea_v4', 'chemex'].includes(method))).toBe(true)
+  })
+
+  it('uses origin pairing rules for brazilian coffees toward fuller-body brewers', () => {
+    const brazilBean: BeanProfile = {
+      process: 'natural',
+      roast_level: 'medium-dark',
+      origin: 'Brazil Cerrado',
+      tasting_notes: ['chocolate', 'caramel', 'body'],
+    }
+
+    const results = recommendMethods(brazilBean)
+    const methods = results.map(r => r.method)
+    expect(methods).toContain('ceado_hoop')
+    expect(methods.some(method => ['hario_switch', 'aeropress'].includes(method))).toBe(true)
+  })
+
+  it('does not apply origin-specific pairing boosts for unknown origin strings', () => {
+    const unknownOriginBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      origin: 'N/A',
+      tasting_notes: ['jasmine', 'citrus'],
+    }
+
+    const noOriginBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      tasting_notes: ['jasmine', 'citrus'],
+    }
+
+    const unknownOriginResults = recommendMethods(unknownOriginBean)
+    const noOriginResults = recommendMethods(noOriginBean)
+
+    expect(unknownOriginResults.map(result => result.method)).toEqual(
+      noOriginResults.map(result => result.method),
+    )
   })
 
   it('fresh coffees tilt toward forgiving brewers', () => {

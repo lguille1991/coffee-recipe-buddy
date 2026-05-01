@@ -2,6 +2,12 @@
 
 All notable product-facing changes are documented here.
 
+## [1.10.0] - 2026-05-01
+
+- Expanded brew method recommendation scoring to include bean-origin pairing rules aligned with the `coffee-recipe-generator` skill matrix.
+- Rebalanced process and variety method scoring to better match profile-based pairings (washed/natural/honey/anaerobic and clarity-vs-body variety tendencies).
+- Updated recommendation tests to cover origin-based behavior and the revised anaerobic pairing expectations.
+
 ## [1.9.3] - 2026-05-01
 
 - Fixed K-Ultra input validation to require dotted `rotation.number.tick` notation so bare integers no longer pass as valid settings.
