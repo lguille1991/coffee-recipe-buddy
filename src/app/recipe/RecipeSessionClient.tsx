@@ -177,8 +177,6 @@ export default function RecipeSessionClient() {
   const saveError = isManualMode ? manualSaveError : feedbackSaveError
   const isValid = isManualMode ? validation.valid : true
 
-  const bean = recipeSessionStorage.getConfirmedBean()
-
   return (
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />

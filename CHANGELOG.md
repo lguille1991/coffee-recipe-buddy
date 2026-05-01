@@ -2,6 +2,12 @@
 
 All notable product-facing changes are documented here.
 
+## [1.14.2] - 2026-05-01
+
+- Fixed manual recipe construction and shared test fixtures to include required `recipe_mode` so TypeScript validation passes after recipe-mode schema updates.
+- Removed dead recipe-editing imports and an unused recipe-session variable left behind after refactors.
+- Deleted the unused `src/app/recipe/_hooks/index.ts` barrel and pruned unreferenced derived type exports from `src/app/recipes/[id]/_hooks/index.ts`.
+
 ## [1.14.1] - 2026-05-01
 
 - Fixed unsaved-change navigation guard prompts so generated/manual recipe sessions and recipe edit flows correctly intercept global side/bottom nav transitions before leaving.

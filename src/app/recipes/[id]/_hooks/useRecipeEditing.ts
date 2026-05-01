@@ -3,11 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNavGuard } from '@/components/NavGuardContext'
-import { computeGrindScalingDelta } from '@/lib/grind-scaling-engine'
 import { buildDerivedGrindSettings } from '@/lib/grind-settings'
 import {
   grinderValueToKUltraClicks,
-  kUltraClicksToGrinderValue,
   parseGrinderValueForEdit,
   parseKUltraRange,
 } from '@/lib/grinder-converter'
@@ -23,10 +21,8 @@ import {
   buildLiveGrindSettings,
   createEditDraft,
   hasEditDraftChanges,
-  isFeedbackRound,
   isManualEditRound,
   recomputeAccumulated,
-  scaleStepsToWater,
   type AnyFeedbackRound,
   type EditDraft,
   validateSteps,
