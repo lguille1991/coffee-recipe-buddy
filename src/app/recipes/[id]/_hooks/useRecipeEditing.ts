@@ -18,7 +18,7 @@ import type {
   RecipeWithAdjustment,
   SavedRecipeDetail,
 } from '@/types/recipe'
-import { isQAirValueInvalid } from '../_components/RecipeDetailSections'
+import { isPreferredGrinderValueInvalid } from '../_components/RecipeDetailSections'
 import {
   buildLiveGrindSettings,
   createEditDraft,
@@ -167,9 +167,13 @@ export function useRecipeEditing({
       ? Math.round((editDraft.temperature_display - 32) * 5 / 9)
       : editDraft.temperature_display
 
-    // Validate Q-Air grind setting
-    if (isQAirValueInvalid(preferredGrinder, editDraft.grind_preferred_value)) {
-      setEditError('Q-Air grind must use R.C.M format, for example 2.5.0.')
+    // Validate notation-based grinder settings
+    if (isPreferredGrinderValueInvalid(preferredGrinder, editDraft.grind_preferred_value)) {
+      setEditError(
+        preferredGrinder === 'k_ultra'
+          ? 'K-Ultra grind must use rotations.number.tick format, for example 0.8.2.'
+          : 'Q-Air grind must use R.C.M format, for example 2.5.0.',
+      )
       return null
     }
 

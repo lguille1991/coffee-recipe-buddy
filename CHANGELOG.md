@@ -2,6 +2,17 @@
 
 All notable product-facing changes are documented here.
 
+## [1.9.3] - 2026-05-01
+
+- Fixed K-Ultra input validation to require dotted `rotation.number.tick` notation so bare integers no longer pass as valid settings.
+- Fixed K-Ultra display normalization to treat bare numeric strings as click counts and render them in `R.N.T` format.
+
+## [1.9.2] - 2026-05-01
+
+- Replaced grinder table references with exact Honest Coffee Guide model-specific settings for 1Zpresso K-Ultra, 1Zpresso Q Air, Baratza Encore ESP, and Timemore C2 Fold.
+- Added K-Ultra `R.N.T` notation support (`rotation.number.tick`) in recipe edit/manual flows while preserving internal click-based conversion math.
+- Updated grind setting parsing/formatting so K-Ultra values are normalized consistently across generation, editing, scaling, and auto-adjust routes.
+
 ## [1.9.1] - 2026-04-18
 
 - Improved navigation responsiveness by removing avoidable request waterfalls on the home page and saved recipe detail screens.

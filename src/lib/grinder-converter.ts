@@ -10,6 +10,10 @@ export interface GrinderSetting {
 
 export type GrinderEditValue = number | string
 
+const K_ULTRA_FULL_ROTATION_CLICKS = 100
+const K_ULTRA_NUMBER_CLICKS = 10
+const K_ULTRA_NOTATION_REGEX = /^\d+\.[0-9](?:\.[0-9])?$/
+
 // ─── K-Ultra: clicks → microns ───────────────────────────────────────────────
 
 // Piecewise linear interpolation based on the grind table.
@@ -276,6 +280,41 @@ export function parseKUltraRange(rangeStr: string): { low: number; high: number;
   return { low, high, mid }
 }
 
+export function isValidKUltraSetting(value: string): boolean {
+  return K_ULTRA_NOTATION_REGEX.test(value.trim())
+}
+
+export function formatKUltraSetting(clicks: number): string {
+  const normalized = Math.max(0, Math.round(clicks))
+  const rotations = Math.floor(normalized / K_ULTRA_FULL_ROTATION_CLICKS)
+  const remaining = normalized % K_ULTRA_FULL_ROTATION_CLICKS
+  const number = Math.floor(remaining / K_ULTRA_NUMBER_CLICKS)
+  const tick = remaining % K_ULTRA_NUMBER_CLICKS
+  return `${rotations}.${number}.${tick}`
+}
+
+export function parseKUltraSetting(value: string): number | null {
+  const trimmed = value.trim()
+  if (!isValidKUltraSetting(trimmed)) return null
+  const [rotationsRaw, numberRaw = '0', tickRaw = '0'] = trimmed.split('.')
+  const rotations = parseInt(rotationsRaw, 10)
+  const number = parseInt(numberRaw, 10)
+  const tick = parseInt(tickRaw, 10)
+  if (
+    Number.isNaN(rotations)
+    || Number.isNaN(number)
+    || Number.isNaN(tick)
+    || number < 0
+    || number > 9
+    || tick < 0
+    || tick > 9
+  ) {
+    return null
+  }
+
+  return rotations * K_ULTRA_FULL_ROTATION_CLICKS + number * K_ULTRA_NUMBER_CLICKS + tick
+}
+
 // ─── Back-conversion utilities (for edit mode) ────────────────────────────────
 
 // Inverse of K_ULTRA_TABLE: microns → K-Ultra clicks
@@ -351,8 +390,15 @@ export function parseGrinderValueForEdit(grinder: string, startingPoint: string)
   if (grinder === 'q_air') {
     return isValidQAirSetting(startingPoint) ? startingPoint.trim() : '1.2.0'
   }
+  if (grinder === 'k_ultra') {
+    const parsedKUltra = parseKUltraSetting(startingPoint)
+    if (parsedKUltra !== null) return formatKUltraSetting(parsedKUltra)
+  }
   const match = startingPoint.match(/(\d+)/)
-  return match ? parseInt(match[1], 10) : 80
+  if (!match) return grinder === 'k_ultra' ? '0.8.0' : 80
+  return grinder === 'k_ultra'
+    ? formatKUltraSetting(parseInt(match[1], 10))
+    : parseInt(match[1], 10)
 }
 
 /**
@@ -362,7 +408,17 @@ export function parseGrinderValueForEdit(grinder: string, startingPoint: string)
  * - Baratza / Timemore C2: clicks → microns → K-Ultra clicks
  */
 export function grinderValueToKUltraClicks(grinder: string, value: GrinderEditValue): number {
-  if (grinder === 'k_ultra') return Math.round(Number(value))
+  if (grinder === 'k_ultra') {
+    if (typeof value === 'string') {
+      const parsed = parseKUltraSetting(value)
+      if (parsed !== null) return parsed
+      // Backward compatibility: legacy persisted values use "NN clicks".
+      const legacyMatch = value.match(/(\d+)/)
+      if (legacyMatch) return parseInt(legacyMatch[1], 10)
+      return Math.round(Number(value))
+    }
+    return Math.round(Number(value))
+  }
   if (grinder === 'q_air') {
     const parsed = typeof value === 'string' ? parseQAirSetting(value) : null
     const microns = qAirRotationsToMicrons(parsed?.rotations ?? 1.2)
@@ -384,7 +440,7 @@ export function grinderValueToKUltraClicks(grinder: string, value: GrinderEditVa
  * - Baratza / Timemore C2: microns → clicks (integer)
  */
 export function kUltraClicksToGrinderValue(grinder: string, clicks: number): GrinderEditValue {
-  if (grinder === 'k_ultra') return clicks
+  if (grinder === 'k_ultra') return formatKUltraSetting(clicks)
   if (grinder === 'q_air') {
     const microns = kUltraClicksToMicrons(clicks)
     const rotations = micronsToQAirRaw(microns)
@@ -405,6 +461,9 @@ export function kUltraClicksToGrinderValue(grinder: string, clicks: number): Gri
 export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { low: number; high: number } | null {
   const parsed = parseKUltraRange(kUltraRangeStr)
   if (!parsed) return null
+  if (grinder === 'k_ultra') {
+    return { low: parsed.low, high: parsed.high }
+  }
   return {
     low: Number(kUltraClicksToGrinderValue(grinder, parsed.low)),
     high: Number(kUltraClicksToGrinderValue(grinder, parsed.high)),
@@ -413,6 +472,13 @@ export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { lo
 
 export function formatGrinderSettingForDisplay(grinder: string, value: string): string {
   if (grinder === 'q_air') return value
+  if (grinder === 'k_ultra') {
+    const parsed = parseKUltraSetting(value)
+    if (parsed !== null) return value
+    const numericMatch = value.match(/(\d+)/)
+    if (!numericMatch) return value
+    return formatKUltraSetting(parseInt(numericMatch[1], 10))
+  }
   return value.replace(/^clicks?\s+(\d+)$/i, '$1 clicks')
 }
 
@@ -428,5 +494,8 @@ export function formatGrinderRangeForEdit(grinder: string, kUltraRangeStr: strin
 
   const numericRange = parseGrinderRange(grinder, kUltraRangeStr)
   if (!numericRange) return null
+  if (grinder === 'k_ultra') {
+    return `${formatKUltraSetting(numericRange.low)}–${formatKUltraSetting(numericRange.high)}`
+  }
   return `${numericRange.low}–${numericRange.high} clicks`
 }

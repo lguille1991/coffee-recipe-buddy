@@ -1,5 +1,7 @@
 import type { Recipe } from '@/types/recipe'
 import {
+  formatKUltraSetting,
+  parseKUltraSetting,
   kUltraRangeToBaratza,
   kUltraRangeToQAir,
   kUltraRangeToTimemoreC2,
@@ -11,6 +13,8 @@ type SecondaryGrindSettings = Pick<
 >
 
 export function parseClickCount(value: string, fallback: number | null = null): number | null {
+  const kUltraClicks = parseKUltraSetting(value)
+  if (kUltraClicks !== null) return kUltraClicks
   const match = value.match(/(\d+)/)
   return match ? parseInt(match[1], 10) : fallback
 }
@@ -49,7 +53,7 @@ export function buildDerivedGrindSettings(
     k_ultra: {
       ...recipe.grind.k_ultra,
       range: `${lowClicks}–${highClicks} clicks`,
-      starting_point: `${startingClicks} clicks`,
+      starting_point: formatKUltraSetting(startingClicks),
     },
     q_air: {
       ...recipe.grind.q_air,

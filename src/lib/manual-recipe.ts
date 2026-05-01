@@ -2,7 +2,7 @@ import { createEmptyEditDraft, recomputeAccumulated, validateSteps, type EditDra
 import type { BeanProfile, GrinderId, MethodId, RecipeDraftStep, RecipeWithAdjustment } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, RecipeWithAdjustmentSchema } from '@/types/recipe'
 import { deriveSecondaryGrindSettings } from '@/lib/grind-settings'
-import { grinderValueToKUltraClicks, isValidQAirSetting } from '@/lib/grinder-converter'
+import { formatKUltraSetting, grinderValueToKUltraClicks, isValidKUltraSetting, isValidQAirSetting } from '@/lib/grinder-converter'
 
 export type ManualRecipeDraft = {
   bean_info: BeanProfile
@@ -92,6 +92,9 @@ export function validateManualRecipeDraft(
   if (preferredGrinder === 'q_air' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidQAirSetting(editDraft.grind_preferred_value))) {
     return { valid: false, error: 'Q-Air grind must use rotations.major.minor format, for example 2.5.0.' }
   }
+  if (preferredGrinder === 'k_ultra' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidKUltraSetting(editDraft.grind_preferred_value))) {
+    return { valid: false, error: 'K-Ultra grind must use rotations.number.tick format, for example 0.8.2.' }
+  }
 
   const stepError = validateSteps(editDraft.steps, editDraft.water_g)
   if (stepError) return { valid: false, error: stepError }
@@ -144,7 +147,7 @@ export function buildRecipeFromManualDraft(
     grind: {
       k_ultra: {
         range: `${kUltraClicks}–${kUltraClicks} clicks`,
-        starting_point: `${kUltraClicks} clicks`,
+        starting_point: formatKUltraSetting(kUltraClicks),
         note: 'Manual recipe entry.',
       },
       q_air: secondary.q_air,
@@ -159,7 +162,7 @@ export function buildRecipeFromManualDraft(
       density_offset: bean.altitude_masl ? `Altitude noted: ${bean.altitude_masl} masl` : 'Altitude not provided',
       final_operating_range: `${kUltraClicks}–${kUltraClicks} clicks`,
       compressed: false,
-      starting_point: `${kUltraClicks} clicks`,
+      starting_point: formatKUltraSetting(kUltraClicks),
     },
     steps,
     quick_adjustments: MANUAL_QUICK_ADJUSTMENTS,

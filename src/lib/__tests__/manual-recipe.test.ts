@@ -34,7 +34,7 @@ describe('manual recipe helpers', () => {
     draft.edit_draft.water_g = 250
     draft.edit_draft.temperature_display = 93
     draft.edit_draft.total_time = '1:00 - 1:45'
-    draft.edit_draft.grind_preferred_value = 82
+    draft.edit_draft.grind_preferred_value = '0.8.2'
     draft.edit_draft.steps = [
       { step: 1, time: '0:00', action: 'Bloom', water_poured_g: 250, water_accumulated_g: 250, _dndId: 'a' },
     ]
@@ -51,7 +51,7 @@ describe('manual recipe helpers', () => {
     draft.edit_draft.water_g = 250
     draft.edit_draft.temperature_display = 93
     draft.edit_draft.total_time = '3:00'
-    draft.edit_draft.grind_preferred_value = 82
+    draft.edit_draft.grind_preferred_value = '0.8.2'
     draft.edit_draft.steps = [
       { step: 1, time: '0:00', action: 'Bloom', water_poured_g: 40, water_accumulated_g: 40, _dndId: 'a' },
       { step: 2, time: '0:45', action: 'Main pour', water_poured_g: 110, water_accumulated_g: 150, _dndId: 'b' },
@@ -72,7 +72,7 @@ describe('manual recipe helpers', () => {
       temperature_c: 93,
       total_time: '3:00',
     })
-    expect(recipe.grind.k_ultra.starting_point).toBe('82 clicks')
+    expect(recipe.grind.k_ultra.starting_point).toBe('0.8.2')
     expect(recipe.range_logic.base_range).toBe('Manual recipe')
     expect(recipe.quick_adjustments.too_acidic).toContain('Adjust manually after tasting')
     expect(recipe.steps[2].water_accumulated_g).toBe(250)

@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
-import { parseKUltraRange, kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2 } from '@/lib/grinder-converter'
+import { grinderValueToKUltraClicks, parseKUltraRange, kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2 } from '@/lib/grinder-converter'
 import { createClient } from '@/lib/supabase/server'
 import {
   attachGuestOpenRouterCookie,
@@ -116,8 +116,9 @@ export async function POST(req: NextRequest) {
       if (validation.valid) {
         const recipe = parsed as Recipe
         const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
-        const startMatch = recipe.grind.k_ultra.starting_point.match(/(\d+)/)
-        const startClicks = startMatch ? parseInt(startMatch[1], 10) : kuRange?.mid
+        const startClicks = recipe.grind.k_ultra.starting_point
+          ? grinderValueToKUltraClicks('k_ultra', recipe.grind.k_ultra.starting_point)
+          : kuRange?.mid
         if (kuRange && startClicks !== undefined) {
           const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
           const baratza = kUltraRangeToBaratza(kuRange.low, kuRange.high, startClicks, method)
