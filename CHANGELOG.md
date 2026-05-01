@@ -2,6 +2,21 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.1] - 2026-05-01
+
+- Added environment-gated rollout control for Saved Coffee Profiles via `NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES` across APIs, pages, and navigation visibility.
+- Added validation route coverage for profile-based generation payload errors (non-canonical method and invalid water-mode combinations).
+- Added feature-flag-off route coverage to verify saved-profile APIs and profile-based generation return `404` when disabled.
+- Added staging rollout checklist at `docs/saved-coffee-profiles-staging-rollout.md` with preconditions, smoke checks, ownership checks, and go/no-go criteria.
+
+## [1.16.0] - 2026-05-01
+
+- Added scan-to-profile persistence in the analysis confirmation flow so confirmed bean edits are saved as reusable coffee profiles before recipe generation continues.
+- Added authenticated multipart image upload endpoint for saved coffee profiles (`POST /api/coffee-profiles/:id/image`) with server-side optimization and primary-image replacement handling.
+- Added first-pass Saved Coffees UI: list page, detail page, generate-from-profile form, and archive action.
+- Added top-level Coffees navigation entry for mobile and desktop nav.
+- Added route tests covering coffee profile auth guards and profile-based recipe generation behaviors (unauthorized, archived blocked, profile not found, and provenance payload expectations).
+
 ## [1.15.0] - 2026-05-01
 
 - Added backend support for saved coffee profiles with per-user ownership, archive state, and linked primary coffee bag image metadata.

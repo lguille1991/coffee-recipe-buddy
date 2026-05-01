@@ -19,6 +19,15 @@ export const RecipesIcon = memo(function RecipesIcon() {
   )
 })
 
+export const CoffeeIcon = memo(function CoffeeIcon() {
+  return (
+    <svg className="ui-icon-nav" viewBox="0 0 20 20" fill="none">
+      <path d="M10 3C6.8 3 4.5 5.3 4.5 8.5C4.5 11.7 6.8 16.5 10 16.5C13.2 16.5 15.5 11.7 15.5 8.5C15.5 5.3 13.2 3 10 3Z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10.5 5.5C9.5 7 11.5 8.3 10.4 9.8C9.7 10.7 9.8 11.4 10.4 12.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+})
+
 export const SettingsIcon = memo(function SettingsIcon() {
   return (
     <svg className="ui-icon-nav" viewBox="0 0 20 20" fill="none">

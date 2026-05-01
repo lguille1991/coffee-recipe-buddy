@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createCoffeeProfileSignedUrl } from '@/lib/coffee-profile-storage'
+import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
 import { UpdateCoffeeProfileRequestSchema } from '@/types/coffee-profile'
 
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_request: Request, { params }: Params) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -52,6 +57,10 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -79,6 +88,10 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

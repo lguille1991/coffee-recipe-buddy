@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   recipe: 'recipe',
   recipeFlowSource: 'recipe_flow_source',
   recipeOriginal: 'recipe_original',
+  scannedBagImageDataUrl: 'scanned_bag_image_data_url',
   restoreMethodSelection: 'restore_method_selection',
   selectedMethod: 'selectedMethod',
   targetVolumeMl: 'targetVolumeMl',
@@ -182,6 +183,9 @@ export const recipeSessionStorage = {
   clearRecipeOriginal() {
     remove(STORAGE_KEYS.recipeOriginal)
   },
+  clearScannedBagImageDataUrl() {
+    remove(STORAGE_KEYS.scannedBagImageDataUrl)
+  },
   clearRestoreMethodSelection() {
     remove(STORAGE_KEYS.restoreMethodSelection)
   },
@@ -228,6 +232,9 @@ export const recipeSessionStorage = {
   getRecipeOriginal() {
     return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal)
   },
+  getScannedBagImageDataUrl() {
+    return readString(STORAGE_KEYS.scannedBagImageDataUrl)
+  },
   shouldRestoreMethodSelection() {
     return readString(STORAGE_KEYS.restoreMethodSelection) === 'true'
   },
@@ -272,6 +279,9 @@ export const recipeSessionStorage = {
   },
   setRecipeOriginal(value: RecipeWithAdjustment) {
     writeJson(STORAGE_KEYS.recipeOriginal, value)
+  },
+  setScannedBagImageDataUrl(value: string) {
+    writeString(STORAGE_KEYS.scannedBagImageDataUrl, value)
   },
   setRestoreMethodSelection(value: boolean) {
     if (value) {

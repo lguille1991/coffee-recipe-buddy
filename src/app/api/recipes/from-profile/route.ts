@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { generateRecipeWithRetries } from '@/lib/recipe-generation'
 import { saveRecipeWithSnapshot } from '@/lib/save-recipe'
 import { createClient } from '@/lib/supabase/server'
@@ -11,6 +12,10 @@ type UserProfileRow = {
 }
 
 export async function POST(request: NextRequest) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

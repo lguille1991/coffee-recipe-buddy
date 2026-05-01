@@ -25,6 +25,15 @@ export default function ScanPage() {
 
     try {
       const compressed = await compressImage(file)
+      const imageDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (typeof reader.result === 'string') resolve(reader.result)
+          else reject(new Error('Failed to read image data'))
+        }
+        reader.onerror = () => reject(new Error('Failed to read image data'))
+        reader.readAsDataURL(compressed)
+      })
       const form = new FormData()
       form.append('image', compressed, 'coffee-bag.jpg')
 
@@ -36,6 +45,7 @@ export default function ScanPage() {
 
       const data = await res.json()
       recipeSessionStorage.setExtractionResult(data)
+      recipeSessionStorage.setScannedBagImageDataUrl(imageDataUrl)
       router.push('/analysis')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')

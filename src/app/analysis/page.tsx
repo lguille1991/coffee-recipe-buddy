@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
+import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { BeanProfile, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
@@ -78,7 +79,7 @@ export default function AnalysisPage() {
   const [roastDate, setRoastDate] = useState('')
   const [targetVolume, setTargetVolume] = useState('')
   const [brewGoal, setBrewGoal] = useState<BrewGoal>('balanced')
-  const [generating] = useState(false)
+  const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -103,28 +104,52 @@ export default function AnalysisPage() {
     setBean(prev => prev ? { ...prev, [key]: value } : prev)
   }
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!bean) return
-    const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
-    recipeSessionStorage.setConfirmedBean(finalBean)
-    recipeSessionStorage.clearManualRecipeDraft()
-    recipeSessionStorage.setRecipeFlowSource('generated')
+    setGenerating(true)
+    if (isSavedCoffeeProfilesEnabled()) {
+      try {
+        const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
+        const imageDataUrl = recipeSessionStorage.getScannedBagImageDataUrl()
 
-    const vol = parseInt(targetVolume, 10)
-    if (vol > 0) {
-      recipeSessionStorage.setTargetVolumeMl(vol)
-    } else {
-      recipeSessionStorage.clearTargetVolumeMl()
+        await fetch('/api/coffee-profiles', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            label: finalBean.bean_name || `${finalBean.roaster || 'Coffee'} — ${finalBean.origin || 'Unknown Origin'}`,
+            bean_profile_json: finalBean,
+            scan_source: 'scan',
+            image_data_url: imageDataUrl ?? undefined,
+          }),
+        })
+      } catch {
+        // Continue recipe generation flow even if profile save fails.
+      }
     }
 
-    // Run deterministic method recommendation client-side
-    const recs = recommendMethods(finalBean, {
-      brewGoal,
-      extractionConfidence: extraction?.confidence ?? null,
-      source: 'scan',
-    })
-    recipeSessionStorage.setMethodRecommendations(recs)
-    router.push('/methods')
+    try {
+      const finalBean: BeanProfile = { ...bean, roast_date: roastDate || undefined }
+      recipeSessionStorage.setConfirmedBean(finalBean)
+      recipeSessionStorage.clearManualRecipeDraft()
+      recipeSessionStorage.setRecipeFlowSource('generated')
+
+      const vol = parseInt(targetVolume, 10)
+      if (vol > 0) {
+        recipeSessionStorage.setTargetVolumeMl(vol)
+      } else {
+        recipeSessionStorage.clearTargetVolumeMl()
+      }
+
+      const recs = recommendMethods(finalBean, {
+        brewGoal,
+        extractionConfidence: extraction?.confidence ?? null,
+        source: 'scan',
+      })
+      recipeSessionStorage.setMethodRecommendations(recs)
+      router.push('/methods')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   if (!bean || !extraction) {

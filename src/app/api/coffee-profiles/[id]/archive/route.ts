@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
+import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
 
 type Params = { params: Promise<{ id: string }> }
 
 export async function POST(_request: Request, { params }: Params) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

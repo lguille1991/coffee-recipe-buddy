@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { createCoffeeProfileSignedUrl, uploadCoffeeProfileImage } from '@/lib/coffee-profile-storage'
+import { createCoffeeProfileSignedUrl, replaceCoffeeProfilePrimaryImage } from '@/lib/coffee-profile-storage'
+import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoffeeProfileRequestSchema } from '@/types/coffee-profile'
 
@@ -8,8 +9,6 @@ const DEFAULT_LIMIT = 20
 
 const CreateCoffeeProfileWithImageSchema = CreateCoffeeProfileRequestSchema.extend({
   image_data_url: z.string().optional(),
-  image_width: z.number().int().positive().optional(),
-  image_height: z.number().int().positive().optional(),
   image_mime_type: z.string().optional(),
 })
 
@@ -35,6 +34,10 @@ type ImageRow = {
 }
 
 export async function POST(request: Request) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -50,8 +53,6 @@ export async function POST(request: Request) {
     bean_profile_json,
     scan_source,
     image_data_url,
-    image_width,
-    image_height,
     image_mime_type,
   } = parsed.data
 
@@ -71,28 +72,41 @@ export async function POST(request: Request) {
   }
 
   let primaryImage: { id: string; signed_url: string | null } | null = null
+  let primaryImageError: string | null = null
 
-  if (image_data_url && image_width && image_height) {
+  if (image_data_url) {
     try {
-      const uploaded = await uploadCoffeeProfileImage(supabase, {
+      const mimeMatch = image_data_url.match(/^data:([^;]+);base64,/)
+      const base64Data = image_data_url.split(',')[1]
+      if (!mimeMatch || !base64Data) {
+        throw new Error('Invalid image_data_url')
+      }
+
+      const uploaded = await replaceCoffeeProfilePrimaryImage(supabase, {
         userId: user.id,
         profileId: profile.id,
-        imageDataUrl: image_data_url,
-        width: image_width,
-        height: image_height,
-        mimeType: image_mime_type,
+        buffer: Buffer.from(base64Data, 'base64'),
+        mimeType: image_mime_type ?? mimeMatch[1],
       })
       const signedUrl = await createCoffeeProfileSignedUrl(supabase, uploaded.storage_path)
       primaryImage = { id: uploaded.id, signed_url: signedUrl }
-    } catch {
-      // Keep profile even if image upload fails; client can retry upload.
+    } catch (error) {
+      primaryImageError = error instanceof Error ? error.message : 'Failed to upload profile image'
     }
   }
 
-  return NextResponse.json({ profile, primary_image: primaryImage }, { status: 201 })
+  return NextResponse.json({
+    profile,
+    primary_image: primaryImage,
+    primary_image_error: primaryImageError,
+  }, { status: 201 })
 }
 
 export async function GET(request: Request) {
+  if (!assertSavedCoffeeProfilesEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
