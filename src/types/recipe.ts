@@ -107,6 +107,7 @@ export const GrinderSettingSchema = z.object({
 
 export const RecipeSchema = z.object({
   method: z.string(),
+  recipe_mode: z.enum(['standard', 'four_six']).default('standard'),
   display_name: z.string(),
   objective: z.string(),
   parameters: z.object({

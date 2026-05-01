@@ -15,12 +15,12 @@
 - [x] Add deterministic troubleshooting engine aligned with skill references and integrate with auto-adjust route.
 
 ## Phase C (Advanced/Optional)
-- [ ] Add strict grinder table parity mode (direct table-based outputs) with interpolation fallback.
-- [ ] Add `recipe_mode: standard | four_six` and deterministic 4:6 generation path.
-- [ ] Reduce LLM scope to narrative/objective/wording once deterministic engines own numeric brew parameters.
+- [x] Add strict grinder table parity mode (direct table-based outputs) with interpolation fallback.
+- [x] Add `recipe_mode: standard | four_six` and deterministic 4:6 generation path.
+- [x] Reduce LLM scope to narrative/objective/wording once deterministic engines own numeric brew parameters.
 
 ## Verification & Release Tracking
-- [ ] Add/expand integration tests covering deterministic overrides in `/api/generate-recipe`.
-- [ ] Ensure post-override validation passes for all deterministic mutation paths.
-- [ ] Update `CHANGELOG.md` with user-facing notes for each completed phase.
-- [ ] Bump `package.json` version per SemVer for each implementation batch.
+- [x] Add/expand integration tests covering deterministic overrides in `/api/generate-recipe`.
+- [x] Ensure post-override validation passes for all deterministic mutation paths.
+- [x] Update `CHANGELOG.md` with user-facing notes for each completed phase.
+- [x] Bump `package.json` version per SemVer for each implementation batch.

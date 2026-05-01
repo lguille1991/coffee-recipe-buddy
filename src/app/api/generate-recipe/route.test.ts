@@ -103,6 +103,38 @@ describe('POST /api/generate-recipe', () => {
     expect(body.grind.k_ultra.starting_point).not.toBe(BASE_RECIPE.grind.k_ultra.starting_point)
   })
 
+  it('supports recipe_mode=four_six with deterministic 4:6 output structure', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
+    })
+
+    const request = new Request('http://localhost/api/generate-recipe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        method: 'v60',
+        recipe_mode: 'four_six',
+        bean: {
+          process: 'washed',
+          roast_level: 'light',
+          altitude_masl: 1600,
+          variety: 'Gesha',
+          origin: 'Panama',
+        },
+      }),
+    })
+
+    const response = await POST(request as never)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.recipe_mode).toBe('four_six')
+    expect(body.parameters.coffee_g).toBe(20)
+    expect(body.parameters.water_g).toBe(300)
+    expect(body.parameters.ratio).toBe('1:15')
+    expect(body.steps).toHaveLength(5)
+  })
+
   it('returns 422 when deterministic override fails post-validation', async () => {
     validateRecipeMock
       .mockReturnValueOnce({ valid: true, errors: [] })

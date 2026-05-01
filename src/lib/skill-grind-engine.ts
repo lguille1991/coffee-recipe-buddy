@@ -1,7 +1,7 @@
 import type { BeanProfile, Recipe } from '@/types/recipe'
 import { buildDerivedGrindSettings } from '@/lib/grind-settings'
 import {
-  METHOD_GRIND_BASES,
+  getMethodGrindBase,
   grindAltitudeOffset,
   grindOriginOffset,
   grindProcessOffset,
@@ -33,6 +33,7 @@ function freshnessOffset(roastDate?: string | null, now = new Date()): { clicks:
 
 interface GrindOptions {
   now?: Date
+  strictParityMode?: boolean
 }
 
 export function applySkillGrindSettings(
@@ -40,7 +41,8 @@ export function applySkillGrindSettings(
   bean: BeanProfile,
   options: GrindOptions = {},
 ): Recipe {
-  const methodBase = METHOD_GRIND_BASES[recipe.method] ?? METHOD_GRIND_BASES.v60
+  const strictParityMode = options.strictParityMode ?? false
+  const methodBase = getMethodGrindBase(recipe.method, strictParityMode)
   const processDelta = grindProcessOffset(bean.process)
   const altitudeDelta = grindAltitudeOffset(bean.altitude_masl)
   const roastDelta = grindRoastOffset(bean.roast_level)

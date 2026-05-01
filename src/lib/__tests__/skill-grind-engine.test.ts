@@ -89,4 +89,23 @@ describe('applySkillGrindSettings', () => {
       withoutOrigin.grind.k_ultra.range,
     )
   })
+
+  it('supports strict grinder parity mode with method-specific base tables', () => {
+    const bean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'medium',
+    }
+
+    const strict = applySkillGrindSettings(withMethod('chemex'), bean, {
+      now: new Date('2026-05-01T12:00:00Z'),
+      strictParityMode: true,
+    })
+    const fallback = applySkillGrindSettings(withMethod('chemex'), bean, {
+      now: new Date('2026-05-01T12:00:00Z'),
+      strictParityMode: false,
+    })
+
+    expect(strict.range_logic.base_range).toContain('STRICT Chemex table base')
+    expect(strict.grind.k_ultra.starting_point).not.toBe(fallback.grind.k_ultra.starting_point)
+  })
 })

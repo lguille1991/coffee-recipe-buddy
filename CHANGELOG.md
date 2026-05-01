@@ -2,6 +2,13 @@
 
 All notable product-facing changes are documented here.
 
+## [1.14.0] - 2026-05-01
+
+- Added `recipe_mode` support with deterministic `four_six` (Tetsu Kasuya 4:6) generation path including fixed 5-pour structure and canonical baseline brew parameters.
+- Added strict grinder table parity mode for deterministic grind calculation (`STRICT_GRINDER_TABLE_PARITY=1`) with method-table base selection and fallback behavior for unsupported cases.
+- Reduced LLM numeric responsibility by explicitly prioritizing narrative/objective/step wording in prompts while server-side deterministic engines own numeric brew parameters.
+- Expanded deterministic test coverage across recipe mode behavior and strict grinder parity selection.
+
 ## [1.13.0] - 2026-05-01
 
 - Added deterministic ratio and brew-time calculation engine and wired recipe generation to override LLM ratio/time output with local skill-based rules.

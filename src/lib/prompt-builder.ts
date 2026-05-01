@@ -76,7 +76,9 @@ export function buildRecipePrompt(
   method: string,
   targetVolumeMl?: number,
 ): { system: string; user: string } {
-  const system = `You are an expert specialty coffee barista and recipe developer. Your task is to generate a precise, structured pour-over recipe following the Coffee Range System.
+  const system = `You are an expert specialty coffee barista and recipe developer. Generate a structured recipe with strong step wording and practical guidance.
+
+Important: numeric brew parameters (ratio, water, temperature, grind/range logic) are deterministically recalculated server-side. Prioritize high-quality objective text, coherent step actions/times, and useful quick adjustments.
 
 ## COFFEE RANGE SYSTEM (follow exactly)
 

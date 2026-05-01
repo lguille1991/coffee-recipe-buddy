@@ -23,6 +23,25 @@ export const METHOD_GRIND_BASES: Record<string, MethodGrindBase> = {
   aeropress: { low: 43, high: 100, label: 'AeroPress base (0.4.3–1.0.0)' },
 }
 
+export const METHOD_GRIND_BASES_STRICT: Record<string, MethodGrindBase> = {
+  v60: { low: 53, high: 92, label: 'STRICT V60 table base' },
+  aeropress: { low: 43, high: 100, label: 'STRICT AeroPress table base' },
+  chemex: { low: 85, high: 100, label: 'STRICT Chemex table base' },
+  kalita_wave: { low: 54, high: 100, label: 'STRICT Pour-over table base' },
+  origami: { low: 54, high: 100, label: 'STRICT Pour-over table base' },
+  orea_v4: { low: 54, high: 100, label: 'STRICT Pour-over table base' },
+  hario_switch: { low: 60, high: 100, label: 'STRICT Steep-and-release base' },
+  ceado_hoop: { low: 54, high: 100, label: 'STRICT Pour-over table base' },
+  pulsar: { low: 54, high: 100, label: 'STRICT Pour-over table base' },
+}
+
+export function getMethodGrindBase(method: string, strictParityMode: boolean): MethodGrindBase {
+  if (strictParityMode) {
+    return METHOD_GRIND_BASES_STRICT[method] ?? METHOD_GRIND_BASES[method] ?? METHOD_GRIND_BASES.v60
+  }
+  return METHOD_GRIND_BASES[method] ?? METHOD_GRIND_BASES.v60
+}
+
 export const METHOD_TEMP_BASES: Record<string, MethodTempBase> = {
   v60: { low: 92, high: 94 },
   origami: { low: 92, high: 94 },
