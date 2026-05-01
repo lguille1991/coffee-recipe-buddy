@@ -3,7 +3,10 @@ import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
+import { applySkillBrewParameterSettings } from '@/lib/skill-brew-parameters-engine'
 import { applySkillGrindSettings } from '@/lib/skill-grind-engine'
+import { applyFourSixRecipeMode } from '@/lib/skill-recipe-mode-engine'
+import { applySkillTemperatureSettings } from '@/lib/skill-temperature-engine'
 import { createClient } from '@/lib/supabase/server'
 import {
   attachGuestOpenRouterCookie,
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
       : guestTracking!.userId
 
     const body = await req.json()
-    const { method, bean, targetVolumeMl } = body
+    const { method, bean, targetVolumeMl, recipe_mode } = body
 
     if (!method || !bean) {
       return NextResponse.json({ error: 'method and bean are required' }, { status: 400 })
@@ -114,7 +117,25 @@ export async function POST(req: NextRequest) {
       const validation = validateRecipe(parsed, beanParsed.data, method)
 
       if (validation.valid) {
-        const recipe = applySkillGrindSettings(parsed as Recipe, beanParsed.data)
+        const strictParityMode = process.env.STRICT_GRINDER_TABLE_PARITY === '1'
+        const baseRecipe = {
+          ...(parsed as Recipe),
+          recipe_mode: recipe_mode === 'four_six' ? 'four_six' : 'standard',
+        } as Recipe
+
+        const modeAdjusted = baseRecipe.recipe_mode === 'four_six'
+          ? applyFourSixRecipeMode(baseRecipe, beanParsed.data)
+          : baseRecipe
+
+        const brewAdjusted = modeAdjusted.recipe_mode === 'four_six'
+          ? modeAdjusted
+          : applySkillBrewParameterSettings(modeAdjusted, beanParsed.data)
+        const temperatureAdjusted = brewAdjusted.recipe_mode === 'four_six'
+          ? brewAdjusted
+          : applySkillTemperatureSettings(brewAdjusted, beanParsed.data)
+        const recipe = applySkillGrindSettings(temperatureAdjusted, beanParsed.data, {
+          strictParityMode,
+        })
         const deterministicValidation = validateRecipe(recipe, beanParsed.data, method)
         if (!deterministicValidation.valid) {
           return NextResponse.json(

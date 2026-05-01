@@ -21,14 +21,49 @@ function formatRatio(n: number): string {
   return n % 1 === 0 ? `1:${n}` : `1:${n.toFixed(1)}`
 }
 
+function escapeForRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function replaceActionGramValue(action: string, previousValue: number, nextValue: number): string {
+  if (previousValue === nextValue) return action
+  const escaped = escapeForRegex(String(previousValue))
+  return action.replace(new RegExp(`(?<!\\d)${escaped}g(?!\\d)`, 'g'), `${nextValue}g`)
+}
+
+function syncActionWaterMentions(
+  action: string,
+  previousPoured: number,
+  previousAccumulated: number,
+  nextPoured: number,
+  nextAccumulated: number,
+): string {
+  let nextAction = replaceActionGramValue(action, previousPoured, nextPoured)
+  nextAction = replaceActionGramValue(nextAction, previousAccumulated, nextAccumulated)
+  return nextAction
+}
+
 /** Scale pour step volumes proportionally when ratio (water total) changes */
 function recalculateSteps(recipe: Recipe, newWaterG: number) {
   const scale = newWaterG / recipe.parameters.water_g
   let accumulated = 0
   return recipe.steps.map(step => {
+    const previousPoured = step.water_poured_g
+    const previousAccumulated = step.water_accumulated_g
     const poured = Math.round(step.water_poured_g * scale)
     accumulated += poured
-    return { ...step, water_poured_g: poured, water_accumulated_g: accumulated }
+    return {
+      ...step,
+      action: syncActionWaterMentions(
+        step.action,
+        previousPoured,
+        previousAccumulated,
+        poured,
+        accumulated,
+      ),
+      water_poured_g: poured,
+      water_accumulated_g: accumulated,
+    }
   })
 }
 

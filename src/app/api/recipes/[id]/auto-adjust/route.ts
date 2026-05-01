@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { buildAuthenticatedOpenRouterUserId, createOpenRouterClient } from '@/lib/openrouter'
 import { AUTO_ADJUST_SOURCE_SELECT } from '@/lib/recipe-select'
+import { applyFeedbackAdjustment } from '@/lib/adjustment-engine'
 import { createClient } from '@/lib/supabase/server'
-import { BeanProfile, Recipe, RecipeSchema, SavedRecipe } from '@/types/recipe'
+import { BeanProfile, Recipe, RecipeSchema, SavedRecipe, Symptom } from '@/types/recipe'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import {
   formatKUltraSetting,
@@ -130,6 +131,17 @@ function validateIntent(intent: string): IntentGuardResult {
   }
 
   return { ok: true, normalized }
+}
+
+function inferSymptomFromIntent(intent: string): Symptom | null {
+  const normalized = intent.toLowerCase()
+
+  if (/\b(sour|acidic|acidity|underextract)/.test(normalized)) return 'too_acidic'
+  if (/\b(bitter|bitterness|astringent|overextract)/.test(normalized)) return 'too_bitter'
+  if (/\b(flat|lifeless|dull|muted)/.test(normalized)) return 'flat_lifeless'
+  if (/\b(slow drain|stalled|choke|too slow|drawdown slow)/.test(normalized)) return 'slow_drain'
+  if (/\b(fast drain|too fast|rushing|drawdown fast)/.test(normalized)) return 'fast_drain'
+  return null
 }
 
 const AutoAdjustRequestSchema = z.object({
@@ -325,6 +337,12 @@ export async function POST(request: Request, { params }: Params) {
   // Pure scale with no intent → skip LLM
   if (normalizedIntent === '') {
     return NextResponse.json({ recipe: scaledRecipe })
+  }
+
+  const inferredSymptom = inferSymptomFromIntent(normalizedIntent)
+  if (inferredSymptom) {
+    const { recipe } = applyFeedbackAdjustment(scaledRecipe, inferredSymptom, 1, 'k_ultra')
+    return NextResponse.json({ recipe })
   }
 
   // Build LLM prompt

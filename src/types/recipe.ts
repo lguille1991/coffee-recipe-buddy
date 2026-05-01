@@ -8,7 +8,16 @@ export const BeanProfileSchema = z.object({
   variety: z.string().nullable().optional(),
   finca: z.string().nullable().optional(),
   producer: z.string().nullable().optional(),
-  process: z.enum(['washed', 'natural', 'honey', 'anaerobic', 'unknown']),
+  process: z.enum([
+    'washed',
+    'natural',
+    'honey',
+    'anaerobic',
+    'carbonic',
+    'thermal_shock',
+    'experimental',
+    'unknown',
+  ]),
   origin: z.string().nullable().optional(),
   altitude_masl: z.number().nullable().optional(),
   roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark']).catch('medium'),
@@ -98,6 +107,7 @@ export const GrinderSettingSchema = z.object({
 
 export const RecipeSchema = z.object({
   method: z.string(),
+  recipe_mode: z.enum(['standard', 'four_six']).default('standard'),
   display_name: z.string(),
   objective: z.string(),
   parameters: z.object({

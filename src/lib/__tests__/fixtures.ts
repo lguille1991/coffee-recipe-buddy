@@ -3,6 +3,7 @@ import type { RecipeWithAdjustment, BeanProfile } from '@/types/recipe'
 /** A minimal valid recipe fixture used across test files. */
 export const BASE_RECIPE: RecipeWithAdjustment = {
   method: 'v60',
+  recipe_mode: 'standard',
   display_name: 'Hario V60',
   objective: 'Clarity-focused pour-over',
   parameters: {

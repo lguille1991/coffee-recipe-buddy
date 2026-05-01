@@ -134,6 +134,7 @@ export function buildRecipeFromManualDraft(
 
   return {
     method,
+    recipe_mode: 'standard',
     display_name: draft.display_name || buildDisplayName(method, bean),
     objective: 'Manual recipe created without AI guidance.',
     parameters: {

@@ -103,7 +103,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(createCompletionMock).not.toHaveBeenCalled()
     expect(body.recipe.parameters.coffee_g).toBe(22.5)
     expect(body.recipe.parameters.water_g).toBe(375)
-    expect(body.recipe.grind.k_ultra.starting_point).toBe('84 clicks')
+    expect(body.recipe.grind.k_ultra.starting_point).toBe('0.8.4')
   })
 
   it('falls back to GPT-5 Nano after Gemma exhausts invalid JSON retries', async () => {
@@ -159,6 +159,22 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(response.status).toBe(400)
     expect(createCompletionMock).not.toHaveBeenCalled()
     expect(body.error).toContain('Intent must stay focused on coffee brewing adjustments')
+  })
+
+  it('applies deterministic troubleshooting for symptom-style intents without calling the LLM', async () => {
+    const response = await POST(buildRequest({
+      scale_factor: 1.0,
+      intent: 'This cup is too acidic and sour',
+    }), {
+      params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
+    })
+
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(createCompletionMock).not.toHaveBeenCalled()
+    expect(body.recipe.adjustment_applied).toBeDefined()
+    expect(body.recipe.adjustment_applied.variable_changed).toBe('grind')
   })
 
   it('returns 422 when both models fail after retries', async () => {

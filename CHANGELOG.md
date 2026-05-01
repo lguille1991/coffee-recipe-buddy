@@ -2,6 +2,44 @@
 
 All notable product-facing changes are documented here.
 
+## [1.14.3] - 2026-05-01
+
+- Fixed brew-step water text drift after ratio/water rescaling by synchronizing gram mentions inside `steps[].action` with recalculated `water_poured_g` and `water_accumulated_g`.
+- Applied this sync in both deterministic recipe generation water scaling and feedback-adjustment ratio scaling to keep displayed step text consistent across flows.
+- Added regression coverage for step action gram alignment during deterministic water recomputation.
+
+## [1.14.2] - 2026-05-01
+
+- Fixed manual recipe construction and shared test fixtures to include required `recipe_mode` so TypeScript validation passes after recipe-mode schema updates.
+- Removed dead recipe-editing imports and an unused recipe-session variable left behind after refactors.
+- Deleted the unused `src/app/recipe/_hooks/index.ts` barrel and pruned unreferenced derived type exports from `src/app/recipes/[id]/_hooks/index.ts`.
+
+## [1.14.1] - 2026-05-01
+
+- Fixed unsaved-change navigation guard prompts so generated/manual recipe sessions and recipe edit flows correctly intercept global side/bottom nav transitions before leaving.
+- Restored shared nav guard state between page-level guard setters and global navigation triggers to prevent silent route changes while drafts are unsaved.
+
+## [1.14.0] - 2026-05-01
+
+- Added `recipe_mode` support with deterministic `four_six` (Tetsu Kasuya 4:6) generation path including fixed 5-pour structure and canonical baseline brew parameters.
+- Added strict grinder table parity mode for deterministic grind calculation (`STRICT_GRINDER_TABLE_PARITY=1`) with method-table base selection and fallback behavior for unsupported cases.
+- Reduced LLM numeric responsibility by explicitly prioritizing narrative/objective/step wording in prompts while server-side deterministic engines own numeric brew parameters.
+- Expanded deterministic test coverage across recipe mode behavior and strict grinder parity selection.
+
+## [1.13.0] - 2026-05-01
+
+- Added deterministic ratio and brew-time calculation engine and wired recipe generation to override LLM ratio/time output with local skill-based rules.
+- Expanded process support in bean metadata to include `carbonic`, `thermal_shock`, and `experimental`, with deterministic grind/temperature offsets for these profiles.
+- Integrated deterministic symptom-based troubleshooting into `/api/recipes/[id]/auto-adjust` so direct taste/drain complaints can be adjusted locally without requiring an LLM pass.
+- Added and updated tests for deterministic brew parameters, expanded process handling, and deterministic auto-adjust routing behavior.
+
+## [1.12.0] - 2026-05-01
+
+- Added a deterministic temperature engine and wired recipe generation to override LLM temperature output with local skill-based rules.
+- Added freshness-aware deterministic grind offsets based on roast age windows, including range-logic freshness annotations.
+- Consolidated method base ranges and core offset tables into a shared skill reference module used by deterministic grind and temperature engines.
+- Expanded tests for freshness windows, temperature profile behavior, and API-level deterministic override outputs.
+
 ## [1.11.2] - 2026-05-01
 
 - Preserved process labels in deterministic `range_logic.process_offset` so downstream inference can correctly detect contexts like anaerobic processing.
