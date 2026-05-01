@@ -2,6 +2,42 @@
 
 All notable product-facing changes are documented here.
 
+## [1.11.2] - 2026-05-01
+
+- Preserved process labels in deterministic `range_logic.process_offset` so downstream inference can correctly detect contexts like anaerobic processing.
+- Tightened origin matching regex boundaries in deterministic grind logic to avoid accidental partial matches.
+- Added API route coverage for the post-override deterministic validation failure branch (`422` response path).
+
+## [1.11.1] - 2026-05-01
+
+- Fixed deterministic grind offset units to use true click increments so downstream range-logic heuristics no longer misclassify process context.
+- Capped deterministic K-Ultra output to the skill-compatible range ceiling to avoid generating out-of-band settings.
+- Added post-override validation in recipe generation so deterministic grind mutations are validated before returning the API response.
+
+## [1.11.0] - 2026-05-01
+
+- Replaced LLM-derived grind settings in recipe generation with a deterministic grind engine that follows the same 5-determinant stacking logic used in the `coffee-recipe-generator` skill (method base -> process -> altitude/origin -> roast -> variety).
+- Generation now always overrides `grind` and `range_logic` from this deterministic engine so K-Ultra outputs are stable and consistent across app and skill runs.
+- Added unit tests for washed medium-light high-altitude and natural medium-dark low-altitude profiles to verify deterministic grind behavior.
+
+## [1.10.2] - 2026-05-01
+
+- Added explicit Spanish label normalization in bag extraction prompts (`lavado`, `medio claro`, etc.) to reduce misclassification of process and roast level.
+- Added a washed-floral profile guardrail in recipe grind logic instructions to bias delicate high-altitude washed coffees toward finer starting points.
+- Capped freshness-driven coarsening for washed floral coffees unless roast age is explicitly under 4 days.
+
+## [1.10.1] - 2026-05-01
+
+- Tuned AI grind-calculation prompt rules to reduce systematic coarse bias by shifting brew-method base ranges finer across supported methods.
+- Rebalanced process grind offsets (especially natural/honey/anaerobic) to align closer with the `coffee-recipe-generator` determinant framework.
+- Corrected density guidance to treat high-altitude coffees as finer-leaning and split Gesha vs Pacamara/Maragogipe variety behavior for better real-world dialing.
+
+## [1.10.0] - 2026-05-01
+
+- Expanded brew method recommendation scoring to include bean-origin pairing rules aligned with the `coffee-recipe-generator` skill matrix.
+- Rebalanced process and variety method scoring to better match profile-based pairings (washed/natural/honey/anaerobic and clarity-vs-body variety tendencies).
+- Updated recommendation tests to cover origin-based behavior and the revised anaerobic pairing expectations.
+
 ## [1.9.3] - 2026-05-01
 
 - Fixed K-Ultra input validation to require dotted `rotation.number.tick` notation so bare integers no longer pass as valid settings.

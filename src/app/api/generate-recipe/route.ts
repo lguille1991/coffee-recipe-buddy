@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
-import { grinderValueToKUltraClicks, parseKUltraRange, kUltraRangeToQAir, kUltraRangeToBaratza, kUltraRangeToTimemoreC2 } from '@/lib/grinder-converter'
+import { applySkillGrindSettings } from '@/lib/skill-grind-engine'
 import { createClient } from '@/lib/supabase/server'
 import {
   attachGuestOpenRouterCookie,
@@ -114,18 +114,16 @@ export async function POST(req: NextRequest) {
       const validation = validateRecipe(parsed, beanParsed.data, method)
 
       if (validation.valid) {
-        const recipe = parsed as Recipe
-        const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
-        const startClicks = recipe.grind.k_ultra.starting_point
-          ? grinderValueToKUltraClicks('k_ultra', recipe.grind.k_ultra.starting_point)
-          : kuRange?.mid
-        if (kuRange && startClicks !== undefined) {
-          const qAir = kUltraRangeToQAir(kuRange.low, kuRange.high, startClicks)
-          const baratza = kUltraRangeToBaratza(kuRange.low, kuRange.high, startClicks, method)
-          const c2 = kUltraRangeToTimemoreC2(kuRange.low, kuRange.high, startClicks, method)
-          recipe.grind.q_air = { ...recipe.grind.q_air, ...qAir }
-          recipe.grind.baratza_encore_esp = { ...recipe.grind.baratza_encore_esp, ...baratza }
-          recipe.grind.timemore_c2 = { ...recipe.grind.timemore_c2, ...c2 }
+        const recipe = applySkillGrindSettings(parsed as Recipe, beanParsed.data)
+        const deterministicValidation = validateRecipe(recipe, beanParsed.data, method)
+        if (!deterministicValidation.valid) {
+          return NextResponse.json(
+            {
+              error: 'Deterministic grind override failed validation',
+              validationErrors: deterministicValidation.errors,
+            },
+            { status: 422 },
+          )
         }
         return attachGuestOpenRouterCookie(
           NextResponse.json(recipe),

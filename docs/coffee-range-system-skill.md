@@ -10,15 +10,15 @@ These are the **starting ranges** before any offsets. All grind values are in 1Z
 
 | Method | Grind Range (K-Ultra clicks) | Temp Base (°C) |
 |---|---|---|
-| V60 (Hario V60 02 / Mugen) | 78–84 | 92–94 |
-| Origami Air M | 78–84 | 92–94 |
-| Orea V4 | 76–83 | 92–94 |
-| Hario Switch 03 | 80–86 | 91–94 |
-| Kalita Wave | 80–86 | 91–93 |
-| Chemex | 82–88 | 92–94 |
-| Ceado Hoop | 80–87 | 91–94 |
-| NextLevel Pulsar | 78–85 | 91–94 |
-| AeroPress (Original + XL) | 70–80 | 88–92 |
+| V60 (Hario V60 02 / Mugen) | 72–79 | 92–94 |
+| Origami Air M | 72–79 | 92–94 |
+| Orea V4 | 71–78 | 92–94 |
+| Hario Switch 03 | 75–82 | 91–94 |
+| Kalita Wave | 76–82 | 91–93 |
+| Chemex | 78–84 | 92–94 |
+| Ceado Hoop | 76–83 | 91–94 |
+| NextLevel Pulsar | 73–80 | 91–94 |
+| AeroPress (Original + XL) | 66–76 | 88–92 |
 
 ---
 
@@ -47,10 +47,10 @@ Apply these offsets to the Block 1 base range. **This is the primary and largest
 
 | Process | Grind Offset (clicks) | Temp Offset (°C) | Notes |
 |---|---|---|---|
-| Washed | −2 to 0 (finer) | 0 to +1 (hotter) | Clarity first; highlight brightness |
-| Natural | +2 to +4 (coarser) | −1 to −2 (cooler) | Manage body; prevent jammy/overextracted |
-| Honey | +1 to +2 (coarser) | 0 to −1 | Between washed and natural |
-| Anaerobic | +3 to +5 (coarser) | −2 to −3 (coolest) | Heavy body, ferment notes; needs restraint |
+| Washed | −2 to −1 (finer) | 0 to +1 (hotter) | Clarity first; highlight brightness |
+| Natural | +1 to +2 (coarser) | −1 to −2 (cooler) | Manage body; prevent jammy/overextracted |
+| Honey | 0 to +1 (slightly coarser) | 0 to −1 | Between washed and natural |
+| Anaerobic | +1 to +3 (coarser) | −2 to −3 (coolest) | Heavy body, ferment notes; needs restraint |
 
 ---
 
@@ -92,7 +92,8 @@ Apply as micro-adjustments (±1–2 clicks max per factor) after Block 4.
 
 | Variety Type | Density | Grind Offset |
 |---|---|---|
-| Gesha / Pacamara / exotic cultivars | Low density | −1 click (finer) |
+| Gesha / Geisha / delicate exotic cultivars | Dense, tight extraction window | −1 click (finer) |
+| Pacamara / Maragogipe (large-bean cultivars) | Large particle distribution | +1 click (coarser) |
 | Bourbon / Typica / Caturra | Medium density | 0 (neutral) |
 | Catimor / Robusta-hybrid | High density | +1 click (coarser) |
 | Unknown | — | 0, skip Block 5 |
@@ -101,13 +102,13 @@ Apply as micro-adjustments (±1–2 clicks max per factor) after Block 4.
 
 | Altitude (masl) | Density | Grind Offset |
 |---|---|---|
-| 1800+ masl | Very high density | +1 click (coarser) |
-| 1400–1800 masl | High density | 0 to +1 |
+| 1800+ masl | Very high density | −1 click (finer) |
+| 1400–1800 masl | High density | 0 to −1 |
 | 1000–1400 masl | Medium | 0 (neutral) |
-| Below 1000 masl | Low density | −1 click (finer) |
+| Below 1000 masl | Low density | +1 click (coarser) |
 | Unknown | — | 0, skip altitude sub-block |
 
-**Alignment rule:** If variety and altitude point in the same direction, apply the offset **once at midpoint** (e.g., both say coarser → apply +1, not +2). If they conflict, apply 0 (cancel out).
+**Alignment rule:** If variety and altitude point in the same direction, apply the offset **once at midpoint** (e.g., both say finer → apply −1, not −2). If they conflict, apply 0 (cancel out).
 
 **If variety and altitude are both unknown:** Skip Block 5 entirely. Note in `range_logic.density_offset`: "Skipped — variety/altitude unknown."
 
@@ -174,14 +175,32 @@ Handle these specific combinations:
 
 | Combination | Risk | Resolution |
 |---|---|---|
-| Natural + Light roast | Double-coarser conflict → very wide range | Apply Block 5B compression; choose upper midpoint |
-| Washed + Dark roast | Double-finer conflict → very narrow/too fine | Floor at base −4 clicks; warn of extraction risk |
+| Natural + Light roast | Opposing offsets (natural coarser, light finer) | Keep process priority, then center with Block 5B if needed |
+| Washed + Dark roast | Opposing offsets (washed finer, dark coarser) | Keep process priority; avoid pushing too coarse late in chain |
 | Very fresh + Finer tendency | Contradicts fresh offset (wants coarser) | Prioritize freshness (coarser); note in output |
 | Anaerobic + Light roast | Heavy offsets both directions | Compress hard; prioritize anaerobic (coarser) |
-| High altitude + Dark roast | Dense bean + dark roast conflict | Apply altitude offset only; ignore dark coarser |
+| High altitude + Dark roast | Dense bean + dark roast conflict | Apply altitude finer offset first; cap dark-roast coarsening at +1 |
 
 **General principle:** When two offsets strongly conflict, prioritize in this order:
 1. Process (Block 2) — highest priority
 2. Freshness (Block 4) — second
 3. Roast (Block 3) — third
 4. Density (Block 5) — lowest priority
+
+---
+
+## Block 11 — Profile Guardrails (Washed Floral Coffees)
+
+Apply these guardrails after Block 10 when the coffee is clearly in the washed/floral profile:
+
+- process is `washed`
+- roast is `light` or `medium-light`
+- altitude is `1300+ masl` (when known)
+- notes include floral/citrus/tea-like fruit descriptors
+
+Then:
+- Bias the starting point to the **finer half** of the final operating range.
+- Apply an extra **−1 click** micro-adjustment before midpoint selection.
+- Do not let freshness coarsening exceed **+1 click** for this profile unless roast age is explicitly `< 4 days`.
+
+This guardrail prevents systematic over-coarsening on delicate washed coffees where clarity and acidity are expected.

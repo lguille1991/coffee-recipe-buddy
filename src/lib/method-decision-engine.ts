@@ -145,24 +145,24 @@ function deriveSensoryFamilies(bean: BeanProfile): SensoryFamily[] {
 function scoreProcess(state: ScoreState, process: BeanProfile['process']) {
   const rules: Record<string, { best: MethodId[]; good: MethodId[]; avoid: MethodId[] }> = {
     washed: {
-      best: ['v60', 'origami', 'orea_v4'],
-      good: ['kalita_wave', 'chemex'],
+      best: ['v60', 'origami', 'kalita_wave'],
+      good: ['orea_v4', 'chemex'],
       avoid: [],
     },
     natural: {
-      best: ['hario_switch', 'pulsar', 'kalita_wave'],
-      good: ['ceado_hoop', 'aeropress'],
+      best: ['chemex', 'hario_switch', 'kalita_wave'],
+      good: ['ceado_hoop', 'aeropress', 'pulsar'],
       avoid: [],
     },
     honey: {
-      best: ['hario_switch', 'kalita_wave', 'ceado_hoop'],
-      good: ['v60', 'origami'],
+      best: ['v60', 'kalita_wave', 'origami'],
+      good: ['hario_switch', 'ceado_hoop'],
       avoid: [],
     },
     anaerobic: {
       best: ['pulsar', 'aeropress', 'hario_switch'],
-      good: ['ceado_hoop'],
-      avoid: ['v60', 'origami'],
+      good: ['v60', 'ceado_hoop'],
+      avoid: [],
     },
     unknown: { best: [], good: [], avoid: [] },
   }
@@ -220,12 +220,42 @@ function scoreVariety(state: ScoreState, variety?: string) {
   const isSweetStructured = /\bbourbon rosa|pink bourbon|bourbon|typica|caturra|catuai|mundo novo\b/.test(normalized)
 
   if (isRareClarity) {
-    applyWeights(state, { v60: 2, origami: 2, orea_v4: 2, pulsar: 1 }, `variety ${normalized} prefers clarity`)
+    applyWeights(state, { v60: 2, origami: 2, orea_v4: 1, chemex: 1 }, `variety ${normalized} prefers clarity`)
   }
 
   if (isSweetStructured) {
     applyWeights(state, { kalita_wave: 2, hario_switch: 2, chemex: 1, v60: 1 }, `variety ${normalized} rewards sweetness and balance`)
   }
+}
+
+function scoreOrigin(state: ScoreState, origin?: string | null) {
+  if (!origin) return
+
+  const normalized = origin.trim().toLowerCase()
+
+  const rules: Array<{
+    pattern: RegExp
+    best: MethodId[]
+    good?: MethodId[]
+  }> = [
+    { pattern: /\b(?:ethiopia|yirgacheffe|sidamo)\b/, best: ['v60', 'chemex', 'origami'], good: ['kalita_wave', 'orea_v4'] },
+    { pattern: /\bkenya\b/, best: ['v60', 'kalita_wave', 'origami'], good: ['chemex', 'orea_v4'] },
+    { pattern: /\b(?:colombia|huila)\b/, best: ['v60', 'kalita_wave', 'hario_switch'], good: ['origami', 'aeropress'] },
+    { pattern: /\bbrazil\b/, best: ['ceado_hoop', 'hario_switch', 'aeropress'], good: ['kalita_wave', 'chemex'] },
+    { pattern: /\bguatemala\b/, best: ['v60', 'kalita_wave', 'hario_switch'], good: ['origami'] },
+    { pattern: /\byemen\b/, best: ['v60', 'chemex', 'origami'], good: ['kalita_wave'] },
+    { pattern: /\bpanama\b/, best: ['v60', 'origami', 'kalita_wave'], good: ['orea_v4', 'chemex'] },
+    { pattern: /\bcosta rica\b/, best: ['v60', 'kalita_wave', 'origami'], good: ['aeropress'] },
+    { pattern: /\brwanda\b/, best: ['v60', 'origami', 'kalita_wave'], good: ['orea_v4'] },
+    { pattern: /\bel salvador\b/, best: ['v60', 'chemex', 'kalita_wave'], good: ['origami'] },
+    { pattern: /\b(?:indonesia|sumatra)\b/, best: ['ceado_hoop', 'hario_switch', 'aeropress'], good: ['kalita_wave'] },
+  ]
+
+  rules.forEach(rule => {
+    if (!rule.pattern.test(normalized)) return
+    rule.best.forEach(method => applyWeight(state, method, 3, `origin ${normalized} pairing`))
+    rule.good?.forEach(method => applyWeight(state, method, 1, `origin ${normalized} fit`))
+  })
 }
 
 function scoreSensoryFamilies(state: ScoreState, bean: BeanProfile) {
@@ -392,6 +422,7 @@ export function recommendMethods(
   scoreProcess(state, bean.process ?? undefined)
   scoreRoast(state, bean.roast_level ?? undefined)
   scoreVariety(state, bean.variety ?? undefined)
+  scoreOrigin(state, bean.origin)
   scoreSensoryFamilies(state, bean)
   scoreAltitude(state, bean.altitude_masl ?? undefined)
   scoreFreshness(state, bean.roast_date ?? undefined, options.now)
