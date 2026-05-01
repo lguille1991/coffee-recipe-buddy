@@ -124,13 +124,15 @@ export async function POST(req: NextRequest) {
         } as Recipe
 
         const modeAdjusted = baseRecipe.recipe_mode === 'four_six'
-          ? applyFourSixRecipeMode(baseRecipe)
+          ? applyFourSixRecipeMode(baseRecipe, beanParsed.data)
           : baseRecipe
 
         const brewAdjusted = modeAdjusted.recipe_mode === 'four_six'
           ? modeAdjusted
           : applySkillBrewParameterSettings(modeAdjusted, beanParsed.data)
-        const temperatureAdjusted = applySkillTemperatureSettings(brewAdjusted, beanParsed.data)
+        const temperatureAdjusted = brewAdjusted.recipe_mode === 'four_six'
+          ? brewAdjusted
+          : applySkillTemperatureSettings(brewAdjusted, beanParsed.data)
         const recipe = applySkillGrindSettings(temperatureAdjusted, beanParsed.data, {
           strictParityMode,
         })

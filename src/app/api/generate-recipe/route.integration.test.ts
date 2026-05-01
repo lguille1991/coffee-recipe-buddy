@@ -88,4 +88,38 @@ describe('POST /api/generate-recipe (integration validator path)', () => {
     expect(body.range_logic.final_operating_range).toBe('66–76 clicks')
     expect(body.parameters.temperature_c).toBe(94)
   })
+
+  it('returns 200 in four_six mode with real validateRecipe', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
+    })
+
+    const request = new Request('http://localhost/api/generate-recipe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        method: 'v60',
+        recipe_mode: 'four_six',
+        bean: {
+          process: 'washed',
+          roast_level: 'light',
+          altitude_masl: 1600,
+          variety: 'Gesha',
+          origin: 'Panama',
+          tasting_notes: ['floral', 'tea-like'],
+        },
+      }),
+    })
+
+    const response = await POST(request as never)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.recipe_mode).toBe('four_six')
+    expect(body.parameters.coffee_g).toBe(20)
+    expect(body.parameters.water_g).toBe(300)
+    expect(body.parameters.ratio).toBe('1:15')
+    expect(body.parameters.temperature_c).toBe(94)
+    expect(body.steps).toHaveLength(5)
+  })
 })

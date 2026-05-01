@@ -1,18 +1,24 @@
-import type { Recipe } from '@/types/recipe'
+import type { BeanProfile, Recipe } from '@/types/recipe'
 
 function formatRatio(value: number): string {
   return value % 1 === 0 ? `1:${value}` : `1:${value.toFixed(1)}`
 }
 
-function chooseFourSixTemperature(roastLevel: Recipe['parameters']['temperature_c'], recipe: Recipe): number {
-  const roastHint = recipe.range_logic.roast_offset.toLowerCase()
-  if (roastHint.includes('dark')) return 83
-  if (roastHint.includes('medium')) return 88
-  if (roastHint.includes('light')) return 94
-  return Math.max(87, Math.min(94, roastLevel))
+function chooseFourSixTemperature(bean: BeanProfile): number {
+  switch (bean.roast_level) {
+    case 'dark':
+      return 83
+    case 'medium':
+    case 'medium-dark':
+      return 88
+    case 'light':
+    case 'medium-light':
+    default:
+      return 94
+  }
 }
 
-export function applyFourSixRecipeMode(recipe: Recipe): Recipe {
+export function applyFourSixRecipeMode(recipe: Recipe, bean: BeanProfile): Recipe {
   const coffeeG = 20
   const waterG = 300
   const pour = 60
@@ -24,7 +30,7 @@ export function applyFourSixRecipeMode(recipe: Recipe): Recipe {
     { step: 5, time: '3:00', action: 'Pour 5 (finish at 300g)', water_poured_g: pour, water_accumulated_g: 300 },
   ]
 
-  const temperature = chooseFourSixTemperature(recipe.parameters.temperature_c, recipe)
+  const temperature = chooseFourSixTemperature(bean)
 
   return {
     ...recipe,
@@ -41,4 +47,3 @@ export function applyFourSixRecipeMode(recipe: Recipe): Recipe {
     steps,
   }
 }
-
