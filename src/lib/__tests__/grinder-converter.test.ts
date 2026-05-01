@@ -13,6 +13,9 @@ import {
   isValidQAirSetting,
   formatGrinderSettingForDisplay,
   formatGrinderRangeForEdit,
+  formatKUltraSetting,
+  isValidKUltraSetting,
+  parseKUltraSetting,
 } from '../grinder-converter'
 
 // ─── kUltraClicksToMicrons ────────────────────────────────────────────────────
@@ -141,9 +144,9 @@ describe('kUltraRangeToTimemoreC2', () => {
 // ─── parseGrinderValueForEdit ─────────────────────────────────────────────────
 
 describe('parseGrinderValueForEdit', () => {
-  it('extracts clicks from k_ultra starting_point string', () => {
-    expect(parseGrinderValueForEdit('k_ultra', '82 clicks')).toBe(82)
-    expect(parseGrinderValueForEdit('k_ultra', 'click 95')).toBe(95)
+  it('normalizes k_ultra values to R.N.T strings', () => {
+    expect(parseGrinderValueForEdit('k_ultra', '82 clicks')).toBe('0.8.2')
+    expect(parseGrinderValueForEdit('k_ultra', '0.9.5')).toBe('0.9.5')
   })
 
   it('preserves Q-Air R.C.M strings for edit mode', () => {
@@ -160,13 +163,13 @@ describe('parseGrinderValueForEdit', () => {
 // ─── kUltraClicksToGrinderValue ──────────────────────────────────────────────
 
 describe('kUltraClicksToGrinderValue', () => {
-  it('returns identity for k_ultra', () => {
-    expect(kUltraClicksToGrinderValue('k_ultra', 82)).toBe(82)
+  it('returns R.N.T format for k_ultra', () => {
+    expect(kUltraClicksToGrinderValue('k_ultra', 82)).toBe('0.8.2')
   })
 
   it('returns Q-Air in R.C.M format', () => {
     const clicks = 82
-    expect(Number.isInteger(kUltraClicksToGrinderValue('k_ultra', clicks))).toBe(true)
+    expect(typeof kUltraClicksToGrinderValue('k_ultra', clicks)).toBe('string')
     expect(kUltraClicksToGrinderValue('q_air', clicks)).toMatch(/^\d+\.\d\.\d$/)
     expect(Number.isInteger(kUltraClicksToGrinderValue('baratza_encore_esp', clicks))).toBe(true)
     expect(Number.isInteger(kUltraClicksToGrinderValue('timemore_c2', clicks))).toBe(true)
@@ -176,8 +179,14 @@ describe('kUltraClicksToGrinderValue', () => {
 // ─── grinderValueToKUltraClicks ───────────────────────────────────────────────
 
 describe('grinderValueToKUltraClicks', () => {
-  it('returns identity for k_ultra', () => {
+  it('parses k_ultra R.N.T notation and keeps numeric input compatibility', () => {
+    expect(grinderValueToKUltraClicks('k_ultra', '0.8.2')).toBe(82)
     expect(grinderValueToKUltraClicks('k_ultra', 82)).toBe(82)
+  })
+
+  it('parses legacy k_ultra click strings', () => {
+    expect(grinderValueToKUltraClicks('k_ultra', '82 clicks')).toBe(82)
+    expect(grinderValueToKUltraClicks('k_ultra', 'clicks 95')).toBe(95)
   })
 
   it('accepts Q-Air R.C.M strings', () => {
@@ -255,7 +264,11 @@ describe('formatGrinderSettingForDisplay', () => {
   })
 
   it('normalizes click-prefixed values for other grinders', () => {
-    expect(formatGrinderSettingForDisplay('k_ultra', 'clicks 82')).toBe('82 clicks')
+    expect(formatGrinderSettingForDisplay('k_ultra', 'clicks 82')).toBe('0.8.2')
+  })
+
+  it('normalizes bare click numbers for k_ultra display', () => {
+    expect(formatGrinderSettingForDisplay('k_ultra', '82')).toBe('0.8.2')
   })
 })
 
@@ -266,6 +279,26 @@ describe('formatGrinderRangeForEdit', () => {
   })
 
   it('formats click grinders as click ranges', () => {
-    expect(formatGrinderRangeForEdit('k_ultra', '81–84 clicks')).toBe('81–84 clicks')
+    expect(formatGrinderRangeForEdit('k_ultra', '81–84 clicks')).toBe('0.8.1–0.8.4')
+  })
+})
+
+describe('k_ultra notation helpers', () => {
+  it('formats clicks to R.N.T notation', () => {
+    expect(formatKUltraSetting(82)).toBe('0.8.2')
+    expect(formatKUltraSetting(105)).toBe('1.0.5')
+  })
+
+  it('parses R.N.T notation to click counts', () => {
+    expect(parseKUltraSetting('0.8.2')).toBe(82)
+    expect(parseKUltraSetting('1.0.5')).toBe(105)
+    expect(parseKUltraSetting('1')).toBeNull()
+  })
+
+  it('validates K-Ultra format', () => {
+    expect(isValidKUltraSetting('0.8.2')).toBe(true)
+    expect(isValidKUltraSetting('82')).toBe(false)
+    expect(isValidKUltraSetting('1.10.0')).toBe(false)
+    expect(isValidKUltraSetting('abc')).toBe(false)
   })
 })

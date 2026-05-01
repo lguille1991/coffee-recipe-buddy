@@ -13,6 +13,7 @@ import { GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
 import {
   formatGrinderRangeForEdit,
   formatGrinderSettingForDisplay,
+  isValidKUltraSetting,
   isValidQAirSetting,
 } from '@/lib/grinder-converter'
 export function RecipeTitleBlock({
@@ -270,11 +271,11 @@ export function RecipeEditGrindSettings({
         <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]} <span className="text-[var(--danger-border)]">*</span></span>
         <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
       </div>
-      {preferredGrinder === 'q_air' ? (
+      {preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra' ? (
         <input
           type="text"
           inputMode="decimal"
-          placeholder="2.5.0"
+          placeholder={preferredGrinder === 'k_ultra' ? '0.8.2' : '2.5.0'}
           value={String(editDraft.grind_preferred_value)}
           onChange={event => onChange(event.target.value.replace(/[^\d.]/g, ''))}
           className={inputClass}
@@ -300,6 +301,11 @@ export function RecipeEditGrindSettings({
       {preferredGrinder === 'q_air' && (
         <p className="ui-body-muted text-[var(--background)] mt-1.5">
           Use rotations.major.minor format, for example 2.5.0.
+        </p>
+      )}
+      {preferredGrinder === 'k_ultra' && (
+        <p className="ui-body-muted text-[var(--background)] mt-1.5">
+          Use rotations.number.tick format, for example 0.8.2.
         </p>
       )}
       {isGrindOutOfRange && (
@@ -528,8 +534,14 @@ export function EditHistorySheet({
   )
 }
 
-export function isQAirValueInvalid(preferredGrinder: GrinderId, value: string | number) {
-  return preferredGrinder === 'q_air' && (typeof value !== 'string' || !isValidQAirSetting(value))
+export function isPreferredGrinderValueInvalid(preferredGrinder: GrinderId, value: string | number) {
+  if (preferredGrinder === 'q_air') {
+    return typeof value !== 'string' || !isValidQAirSetting(value)
+  }
+  if (preferredGrinder === 'k_ultra') {
+    return typeof value !== 'string' || !isValidKUltraSetting(value)
+  }
+  return false
 }
 
 export function getGrindRangeForEdit(preferredGrinder: GrinderId, range: string) {

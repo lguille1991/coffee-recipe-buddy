@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { BeanProfile, Recipe, RecipeSchema, SavedRecipe } from '@/types/recipe'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import {
+  formatKUltraSetting,
+  grinderValueToKUltraClicks,
   parseKUltraRange,
   kUltraRangeToQAir,
   kUltraRangeToBaratza,
@@ -147,17 +149,11 @@ const SCALE_GRIND_OFFSET: Record<number, number> = {
   2.0:  +3,
 }
 
-function parseClickValue(s: string): number | null {
-  const m = s.match(/(\d+)/)
-  return m ? parseInt(m[1], 10) : null
-}
-
 function applyGrindOffset(recipe: Recipe, scaleFactor: number, method: string): Recipe['grind'] {
   const offset = SCALE_GRIND_OFFSET[scaleFactor] ?? 0
   if (offset === 0) return recipe.grind
 
-  const currentClicks = parseClickValue(recipe.grind.k_ultra.starting_point)
-  if (currentClicks === null) return recipe.grind
+  const currentClicks = grinderValueToKUltraClicks('k_ultra', recipe.grind.k_ultra.starting_point)
 
   const range = parseKUltraRange(recipe.range_logic.final_operating_range)
   const low = range?.low ?? currentClicks
@@ -170,7 +166,7 @@ function applyGrindOffset(recipe: Recipe, scaleFactor: number, method: string): 
   const c2 = kUltraRangeToTimemoreC2(low, high, newClicks, method)
 
   return {
-    k_ultra: { ...recipe.grind.k_ultra, starting_point: `${newClicks} clicks` },
+    k_ultra: { ...recipe.grind.k_ultra, starting_point: formatKUltraSetting(newClicks) },
     q_air: { ...recipe.grind.q_air, starting_point: qAir.starting_point },
     baratza_encore_esp: { ...recipe.grind.baratza_encore_esp, starting_point: baratza.starting_point, note: baratza.note },
     timemore_c2: { ...recipe.grind.timemore_c2, starting_point: c2.starting_point, note: c2.note },

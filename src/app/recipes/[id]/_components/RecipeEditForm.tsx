@@ -226,7 +226,7 @@ export default function RecipeEditForm({
           isGrindOutOfRange={isGrindOutOfRange}
           onChange={value => setEditDraft(draft => {
             if (!draft) return draft
-            if (preferredGrinder === 'q_air') {
+            if (preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra') {
               return { ...draft, grind_preferred_value: value }
             }
             return { ...draft, grind_preferred_value: parseWholeNumberInput(value) }
