@@ -99,6 +99,11 @@ export async function POST(request: Request) {
     profile,
     primary_image: primaryImage,
     primary_image_error: primaryImageError,
+    primary_image_status: primaryImage
+      ? 'uploaded'
+      : primaryImageError
+        ? 'failed'
+        : 'none',
   }, { status: 201 })
 }
 

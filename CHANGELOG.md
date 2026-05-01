@@ -2,6 +2,15 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.2] - 2026-05-01
+
+- Added split analysis actions so users can either `Save Coffee` only or `Save + Generate Recipe` from scan confirmation.
+- Added in-place save-only success UX on analysis with CTAs to view the saved coffee or generate immediately.
+- Added save-only session cleanup so recipe-generation state is not unintentionally persisted when only saving a profile.
+- Added typed profile image upload status in `POST /api/coffee-profiles` (`uploaded | failed | none`) for explicit client handling.
+- Added coverage for profile-create response semantics and saved-coffee nav feature-flag visibility behavior.
+- Added documentation for save-only flow and later-generation semantics in `docs/save-only-coffee-profile-flow.md`.
+
 ## [1.16.1] - 2026-05-01
 
 - Added environment-gated rollout control for Saved Coffee Profiles via `NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES` across APIs, pages, and navigation visibility.

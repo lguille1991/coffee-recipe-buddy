@@ -156,6 +156,9 @@ export const recipeSessionStorage = {
   clearAdjustmentHistory() {
     remove(STORAGE_KEYS.adjustmentHistory)
   },
+  clearConfirmedBean() {
+    remove(STORAGE_KEYS.confirmedBean)
+  },
   clearExtractionResult() {
     remove(STORAGE_KEYS.extractionResult)
   },
