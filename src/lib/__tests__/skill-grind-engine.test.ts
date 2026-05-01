@@ -25,10 +25,10 @@ describe('applySkillGrindSettings', () => {
       tasting_notes: ['floral', 'orange', 'honey'],
     }
 
-    const result = applySkillGrindSettings(withMethod('v60'), bean)
-    expect(result.grind.k_ultra.starting_point).toBe('0.7.2')
-    expect(result.grind.k_ultra.range).toBe('67–77 clicks')
-    expect(result.range_logic.freshness_offset).toBe('0 clicks')
+    const result = applySkillGrindSettings(withMethod('v60'), bean, { now: new Date('2026-05-01T12:00:00Z') })
+    expect(result.grind.k_ultra.starting_point).toBe('0.7.1')
+    expect(result.grind.k_ultra.range).toBe('66–76 clicks')
+    expect(result.range_logic.freshness_offset).toContain('+0 clicks')
   })
 
   it('coarsens natural, low-altitude, medium-dark coffees', () => {
@@ -44,6 +44,27 @@ describe('applySkillGrindSettings', () => {
     expect(result.grind.k_ultra.starting_point).toBe('0.7.8')
     expect(result.grind.k_ultra.range).toBe('73–83 clicks')
     expect(result.range_logic.process_offset).toContain('natural')
+  })
+
+  it('applies freshness windows for very fresh and stale coffees', () => {
+    const veryFreshBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'medium',
+      roast_date: '2026-04-29',
+    }
+    const staleBean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'medium',
+      roast_date: '2026-02-15',
+    }
+
+    const freshResult = applySkillGrindSettings(withMethod('v60'), veryFreshBean, { now: new Date('2026-05-01T12:00:00Z') })
+    const staleResult = applySkillGrindSettings(withMethod('v60'), staleBean, { now: new Date('2026-05-01T12:00:00Z') })
+
+    expect(freshResult.grind.k_ultra.starting_point).toBe('0.7.4')
+    expect(freshResult.range_logic.freshness_offset).toContain('+2 clicks')
+    expect(staleResult.grind.k_ultra.starting_point).toBe('0.6.9')
+    expect(staleResult.range_logic.freshness_offset).toContain('-3 clicks')
   })
 
   it('does not apply origin offset for non-matching origin tokens', () => {

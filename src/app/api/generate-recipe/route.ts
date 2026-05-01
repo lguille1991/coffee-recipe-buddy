@@ -4,6 +4,7 @@ import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { validateRecipe, buildRetryPrompt } from '@/lib/recipe-validator'
 import { BeanProfileSchema, Recipe } from '@/types/recipe'
 import { applySkillGrindSettings } from '@/lib/skill-grind-engine'
+import { applySkillTemperatureSettings } from '@/lib/skill-temperature-engine'
 import { createClient } from '@/lib/supabase/server'
 import {
   attachGuestOpenRouterCookie,
@@ -114,7 +115,8 @@ export async function POST(req: NextRequest) {
       const validation = validateRecipe(parsed, beanParsed.data, method)
 
       if (validation.valid) {
-        const recipe = applySkillGrindSettings(parsed as Recipe, beanParsed.data)
+        const temperatureAdjusted = applySkillTemperatureSettings(parsed as Recipe, beanParsed.data)
+        const recipe = applySkillGrindSettings(temperatureAdjusted, beanParsed.data)
         const deterministicValidation = validateRecipe(recipe, beanParsed.data, method)
         if (!deterministicValidation.valid) {
           return NextResponse.json(

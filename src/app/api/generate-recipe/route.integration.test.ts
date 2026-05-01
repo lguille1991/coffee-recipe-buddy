@@ -83,9 +83,9 @@ describe('POST /api/generate-recipe (integration validator path)', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(body.grind.k_ultra.starting_point).toBe('0.7.2')
-    expect(body.grind.k_ultra.range).toBe('67–77 clicks')
-    expect(body.range_logic.final_operating_range).toBe('67–77 clicks')
+    expect(body.grind.k_ultra.starting_point).toBe('0.7.1')
+    expect(body.grind.k_ultra.range).toBe('66–76 clicks')
+    expect(body.range_logic.final_operating_range).toBe('66–76 clicks')
+    expect(body.parameters.temperature_c).toBe(94)
   })
 })
-

@@ -2,6 +2,13 @@
 
 All notable product-facing changes are documented here.
 
+## [1.12.0] - 2026-05-01
+
+- Added a deterministic temperature engine and wired recipe generation to override LLM temperature output with local skill-based rules.
+- Added freshness-aware deterministic grind offsets based on roast age windows, including range-logic freshness annotations.
+- Consolidated method base ranges and core offset tables into a shared skill reference module used by deterministic grind and temperature engines.
+- Expanded tests for freshness windows, temperature profile behavior, and API-level deterministic override outputs.
+
 ## [1.11.2] - 2026-05-01
 
 - Preserved process labels in deterministic `range_logic.process_offset` so downstream inference can correctly detect contexts like anaerobic processing.
