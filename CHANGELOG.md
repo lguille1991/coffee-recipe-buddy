@@ -2,6 +2,11 @@
 
 All notable product-facing changes are documented here.
 
+## [1.14.1] - 2026-05-01
+
+- Fixed unsaved-change navigation guard prompts so generated/manual recipe sessions and recipe edit flows correctly intercept global side/bottom nav transitions before leaving.
+- Restored shared nav guard state between page-level guard setters and global navigation triggers to prevent silent route changes while drafts are unsaved.
+
 ## [1.14.0] - 2026-05-01
 
 - Added `recipe_mode` support with deterministic `four_six` (Tetsu Kasuya 4:6) generation path including fixed 5-pour structure and canonical baseline brew parameters.
