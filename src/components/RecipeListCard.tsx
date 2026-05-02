@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
 import MethodIcon from '@/components/MethodIcon'
 
-const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: RecipeListItem }) {
+export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { recipe: RecipeListItem }) {
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
   const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
   const beanProcess = recipe.bean_info.process?.trim()
@@ -21,10 +21,7 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
   ].filter(Boolean) as string[]
 
   return (
-    <Link
-      href={`/recipes/${recipe.id}`}
-      className="ui-card-interactive group flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3"
-    >
+    <>
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-[var(--border)] shrink-0 flex items-center justify-center transition-transform duration-200 ease-out group-hover:scale-[1.03]">
         {recipe.image_url ? (
           <Image src={recipe.image_url} alt={beanName} width={56} height={56} className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" />
@@ -62,6 +59,17 @@ const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: Recipe
           <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
+    </>
+  )
+})
+
+const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: RecipeListItem }) {
+  return (
+    <Link
+      href={`/recipes/${recipe.id}`}
+      className="ui-card-interactive group flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3"
+    >
+      <RecipeCardContent recipe={recipe} />
     </Link>
   )
 })

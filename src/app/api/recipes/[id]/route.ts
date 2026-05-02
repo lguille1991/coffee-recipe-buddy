@@ -155,6 +155,8 @@ export async function DELETE(_request: Request, { params }: Params) {
     .from('recipes')
     .update({ archived: true })
     .eq('id', id)
+    .eq('user_id', user.id)
+    .eq('archived', false)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
