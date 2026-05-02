@@ -1,14 +1,25 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
+import ConfirmSheet from '@/components/ConfirmSheet'
+import { useNavGuard } from '@/components/NavGuardContext'
 import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { BeanProfile, BeanProfileSchema, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
+
+type DuplicateCandidate = {
+  id: string
+  label: string
+}
+
+type SaveCoffeeProfileResult =
+  | { type: 'created'; profileId: string | null; imageError: string | null }
+  | { type: 'duplicate_blocked'; selectedCandidateId: string; candidates: DuplicateCandidate[] }
 
 const PROCESS_LABELS: Record<string, string> = {
   washed: 'Washed',
@@ -74,6 +85,7 @@ function EditableField({
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { setGuard } = useNavGuard()
   const { user } = useAuth()
   const { profile } = useProfile()
   const [extraction, setExtraction] = useState<ExtractionResponse | null>(null)
@@ -85,6 +97,12 @@ export default function AnalysisPage() {
   const [savingProfileOnly, setSavingProfileOnly] = useState(false)
   const [saveProfileError, setSaveProfileError] = useState<string | null>(null)
   const [savedProfileId, setSavedProfileId] = useState<string | null>(null)
+  const [duplicateCandidates, setDuplicateCandidates] = useState<DuplicateCandidate[]>([])
+  const [selectedDuplicateProfileId, setSelectedDuplicateProfileId] = useState<string | null>(null)
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
+  const [pendingDuplicateAction, setPendingDuplicateAction] = useState<'save' | 'save_and_generate' | null>(null)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -105,6 +123,37 @@ export default function AnalysisPage() {
     })
   }, [router])
 
+  const hasUnsavedCoffeeProfile =
+    isSavedCoffeeProfilesEnabled() && Boolean(user) && !savedProfileId && !savingProfileOnly && !generating
+
+  useEffect(() => {
+    if (!hasUnsavedCoffeeProfile) {
+      return
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedCoffeeProfile])
+
+  useEffect(() => {
+    if (hasUnsavedCoffeeProfile) {
+      setGuard((href: string) => {
+        setPendingNavHref(href)
+        setShowLeaveConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+
+    return () => setGuard(null)
+  }, [hasUnsavedCoffeeProfile, setGuard])
+
   function updateField<K extends keyof BeanProfile>(key: K, value: BeanProfile[K]) {
     setBean(prev => prev ? { ...prev, [key]: value } : prev)
   }
@@ -121,15 +170,16 @@ export default function AnalysisPage() {
 
   async function saveCoffeeProfile(finalBean: BeanProfile) {
     if (!isSavedCoffeeProfilesEnabled() || !user) {
-      return { profileId: null as string | null }
+      return { type: 'created', profileId: null, imageError: null } satisfies SaveCoffeeProfileResult
     }
 
     const imageDataUrl = recipeSessionStorage.getScannedBagImageDataUrl()
+    const label = finalBean.bean_name || `${finalBean.roaster || 'Coffee'} — ${finalBean.origin || 'Unknown Origin'}`
     const response = await fetch('/api/coffee-profiles', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        label: finalBean.bean_name || `${finalBean.roaster || 'Coffee'} — ${finalBean.origin || 'Unknown Origin'}`,
+        label,
         bean_profile_json: finalBean,
         scan_source: 'scan',
         image_data_url: imageDataUrl ?? undefined,
@@ -137,14 +187,73 @@ export default function AnalysisPage() {
     })
 
     const data = await response.json()
+    if (response.status === 409 && data?.status === 'duplicate_blocked') {
+      const selectedCandidateId = typeof data?.selected_candidate_id === 'string'
+        ? data.selected_candidate_id
+        : null
+      if (!selectedCandidateId) {
+        throw new Error('Duplicate profile found, but no candidate id was returned')
+      }
+
+      const candidates = Array.isArray(data?.candidates)
+        ? data.candidates
+          .filter((candidate: unknown): candidate is DuplicateCandidate => {
+            const typed = candidate as { id?: unknown; label?: unknown }
+            return typeof typed.id === 'string' && typeof typed.label === 'string'
+          })
+        : []
+
+      return {
+        type: 'duplicate_blocked',
+        selectedCandidateId,
+        candidates,
+      } satisfies SaveCoffeeProfileResult
+    }
+
     if (!response.ok) {
       throw new Error(data.error ?? 'Failed to save coffee profile')
     }
 
     return {
+      type: 'created',
       profileId: typeof data?.profile?.id === 'string' ? data.profile.id : null,
       imageError: typeof data?.primary_image_error === 'string' ? data.primary_image_error : null,
+    } satisfies SaveCoffeeProfileResult
+  }
+
+  function openDuplicateConfirm(result: Extract<SaveCoffeeProfileResult, { type: 'duplicate_blocked' }>, action: 'save' | 'save_and_generate') {
+    setDuplicateCandidates(result.candidates)
+    setSelectedDuplicateProfileId(result.selectedCandidateId)
+    setPendingDuplicateAction(action)
+    setShowDuplicateConfirm(true)
+  }
+
+  function continueToMethodSelection(finalBean: BeanProfile, profileId: string | null) {
+    if (profileId) {
+      recipeSessionStorage.setSelectedCoffeeProfileId(profileId)
+    } else {
+      recipeSessionStorage.clearSelectedCoffeeProfileId()
     }
+
+    recipeSessionStorage.setSelectedBrewGoal(brewGoal)
+    recipeSessionStorage.setConfirmedBean(finalBean)
+    recipeSessionStorage.clearManualRecipeDraft()
+    recipeSessionStorage.setRecipeFlowSource('generated')
+
+    const vol = parseInt(targetVolume, 10)
+    if (vol > 0) {
+      recipeSessionStorage.setTargetVolumeMl(vol)
+    } else {
+      recipeSessionStorage.clearTargetVolumeMl()
+    }
+
+    const recs = recommendMethods(finalBean, {
+      brewGoal,
+      extractionConfidence: extraction?.confidence ?? null,
+      source: 'scan',
+    })
+    recipeSessionStorage.setMethodRecommendations(recs)
+    router.push('/methods')
   }
 
   function clearSaveOnlySessionState() {
@@ -160,6 +269,8 @@ export default function AnalysisPage() {
     recipeSessionStorage.clearAdjustmentHistory()
     recipeSessionStorage.clearExtractionResult()
     recipeSessionStorage.clearScannedBagImageDataUrl()
+    recipeSessionStorage.clearSelectedCoffeeProfileId()
+    recipeSessionStorage.clearSelectedBrewGoal()
   }
 
   async function handleSaveProfileOnly() {
@@ -171,6 +282,10 @@ export default function AnalysisPage() {
 
     try {
       const saved = await saveCoffeeProfile(finalBean)
+      if (saved.type === 'duplicate_blocked') {
+        openDuplicateConfirm(saved, 'save')
+        return
+      }
       clearSaveOnlySessionState()
       setSavedProfileId(saved.profileId)
       if (saved.imageError) {
@@ -189,38 +304,87 @@ export default function AnalysisPage() {
 
     setGenerating(true)
     setSaveProfileError(null)
+    recipeSessionStorage.clearSelectedCoffeeProfileId()
+    recipeSessionStorage.setSelectedBrewGoal(brewGoal)
 
     if (isSavedCoffeeProfilesEnabled()) {
       try {
-        await saveCoffeeProfile(finalBean)
+        const saved = await saveCoffeeProfile(finalBean)
+        if (saved.type === 'duplicate_blocked') {
+          openDuplicateConfirm(saved, 'save_and_generate')
+          return
+        }
+        if (saved.profileId) {
+          recipeSessionStorage.setSelectedCoffeeProfileId(saved.profileId)
+        }
       } catch {
         // Continue recipe generation flow even if profile save fails.
       }
     }
 
     try {
-      recipeSessionStorage.setConfirmedBean(finalBean)
-      recipeSessionStorage.clearManualRecipeDraft()
-      recipeSessionStorage.setRecipeFlowSource('generated')
-
-      const vol = parseInt(targetVolume, 10)
-      if (vol > 0) {
-        recipeSessionStorage.setTargetVolumeMl(vol)
-      } else {
-        recipeSessionStorage.clearTargetVolumeMl()
-      }
-
-      const recs = recommendMethods(finalBean, {
-        brewGoal,
-        extractionConfidence: extraction?.confidence ?? null,
-        source: 'scan',
-      })
-      recipeSessionStorage.setMethodRecommendations(recs)
-      router.push('/methods')
+      continueToMethodSelection(finalBean, recipeSessionStorage.getSelectedCoffeeProfileId())
     } finally {
       setGenerating(false)
     }
   }
+
+  function handleUseExistingDuplicate() {
+    const selectedId = selectedDuplicateProfileId
+    const action = pendingDuplicateAction
+    if (!selectedId || !action) {
+      setShowDuplicateConfirm(false)
+      return
+    }
+
+    setShowDuplicateConfirm(false)
+    setSavedProfileId(selectedId)
+    recipeSessionStorage.setSelectedCoffeeProfileId(selectedId)
+
+    if (action === 'save') {
+      clearSaveOnlySessionState()
+      setSavedProfileId(selectedId)
+      return
+    }
+
+    const finalBean = buildFinalBean()
+    if (!finalBean) return
+    continueToMethodSelection(finalBean, selectedId)
+  }
+
+  const handleCancelDuplicate = useCallback(() => {
+    setShowDuplicateConfirm(false)
+    setDuplicateCandidates([])
+    setSelectedDuplicateProfileId(null)
+    setPendingDuplicateAction(null)
+    setGenerating(false)
+    setSavingProfileOnly(false)
+  }, [])
+
+  const handleConfirmLeave = useCallback(() => {
+    setGuard(null)
+    if (pendingNavHref) {
+      router.push(pendingNavHref)
+    } else {
+      router.back()
+    }
+    setPendingNavHref(null)
+    setShowLeaveConfirm(false)
+  }, [pendingNavHref, router, setGuard])
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveConfirm(false)
+    setPendingNavHref(null)
+  }, [])
+
+  const handleBack = useCallback(() => {
+    if (hasUnsavedCoffeeProfile) {
+      setShowLeaveConfirm(true)
+      return
+    }
+
+    router.back()
+  }, [hasUnsavedCoffeeProfile, router])
 
   if (!bean || !extraction) {
     return (
@@ -236,7 +400,7 @@ export default function AnalysisPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
+        <button onClick={handleBack} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <ArrowLeft className="ui-icon-action" />
         </button>
         <h2 className="ui-section-title">Coffee Analysis</h2>
@@ -393,17 +557,17 @@ export default function AnalysisPage() {
           {savedProfileId && (
             <div className="ui-card-interactive bg-[var(--card)] rounded-xl p-3">
               <p className="ui-body-muted">Coffee saved.</p>
-              <div className="mt-2 flex flex-col sm:flex-row gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
                   onClick={() => router.push(`/coffees/${savedProfileId}`)}
-                  className="ui-button-secondary"
+                  className="w-full ui-button-secondary"
                 >
                   View Saved Coffee
                 </button>
                 <button
                   onClick={handleSaveAndGenerate}
                   disabled={generating}
-                  className="ui-button-primary"
+                  className="w-full ui-button-primary"
                 >
                   {generating ? 'Generating...' : 'Generate Recipe Now'}
                 </button>
@@ -441,6 +605,28 @@ export default function AnalysisPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmSheet
+        open={showLeaveConfirm}
+        title="Leave without saving?"
+        message="If you leave now, this coffee profile will be lost."
+        confirmLabel="Leave screen"
+        destructive
+        onConfirm={handleConfirmLeave}
+        onCancel={handleCancelLeave}
+      />
+      <ConfirmSheet
+        open={showDuplicateConfirm}
+        title="Duplicate coffee found"
+        message={
+          duplicateCandidates.length > 1
+            ? `A matching active profile already exists. Using "${duplicateCandidates[0]?.label ?? 'existing profile'}" by default.`
+            : 'A matching active profile already exists. Use the existing profile to continue.'
+        }
+        confirmLabel="Use Existing"
+        onConfirm={handleUseExistingDuplicate}
+        onCancel={handleCancelDuplicate}
+      />
     </div>
   )
 }

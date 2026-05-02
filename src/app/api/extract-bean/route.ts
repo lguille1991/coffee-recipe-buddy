@@ -16,6 +16,7 @@ const KNOWN_VARIETY_PATTERNS: Array<[RegExp, string]> = [
   [/\btypica\b/i, 'Typica'],
   [/\bcaturra\b/i, 'Caturra'],
   [/\bcatuai\b/i, 'Catuai'],
+  [/\bpacas\b/i, 'Pacas'],
   [/\bpacamara\b/i, 'Pacamara'],
   [/\bmaragogipe\b/i, 'Maragogipe'],
   [/\blaurina\b/i, 'Laurina'],

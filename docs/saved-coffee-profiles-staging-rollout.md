@@ -2,6 +2,8 @@
 
 ## Preconditions
 - [ ] Run SQL migration `docs/migration_009_coffee_profiles.sql` in staging.
+- [ ] If `migration_010` fails with duplicate-profile conflict, run `docs/migration_010_deduplicate.sql` first.
+- [ ] Run SQL migration `docs/migration_010_coffee_profile_duplicate_fingerprint.sql` in staging.
 - [ ] Create private Supabase Storage bucket `coffee-bag-images` in staging.
 - [ ] Ensure Storage RLS/policies allow only authenticated owner paths under `users/{user_id}/...`.
 - [ ] Set env flag `NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES=true` in staging.

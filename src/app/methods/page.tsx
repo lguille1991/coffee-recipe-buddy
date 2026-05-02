@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MethodRecommendation, MethodId, METHOD_DISPLAY_NAMES } from '@/types/recipe'
+import { MethodRecommendation, MethodId, METHOD_DISPLAY_NAMES, RecipeWithAdjustment } from '@/types/recipe'
 import { createManualRecipeDraft } from '@/lib/manual-recipe'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
@@ -102,20 +102,47 @@ export default function MethodsPage() {
     setSelecting(selectedMethod.method)
 
     const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined
+    const selectedCoffeeProfileId = recipeSessionStorage.getSelectedCoffeeProfileId()
+    const selectedBrewGoal = recipeSessionStorage.getSelectedBrewGoal() ?? 'balanced'
 
     try {
-      const res = await fetch('/api/generate-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: selectedMethod.method, bean, targetVolumeMl }),
-      })
+      let recipePayload: unknown
+      if (selectedCoffeeProfileId) {
+        const res = await fetch('/api/recipes/from-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            coffee_profile_id: selectedCoffeeProfileId,
+            method: selectedMethod.method,
+            goal: selectedBrewGoal,
+            water_mode: 'absolute',
+            water_grams: targetVolumeMl ?? 250,
+          }),
+        })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Recipe generation failed')
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Recipe generation failed')
+        }
+
+        const data = await res.json() as { recipe?: unknown }
+        recipePayload = data.recipe
+      } else {
+        const res = await fetch('/api/generate-recipe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ method: selectedMethod.method, bean, targetVolumeMl }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Recipe generation failed')
+        }
+
+        recipePayload = await res.json()
       }
 
-      const recipe = await res.json()
+      const recipe = recipePayload as RecipeWithAdjustment
       recipeSessionStorage.setRecipe(recipe)
       recipeSessionStorage.setRecipeFlowSource('generated')
       recipeSessionStorage.clearManualRecipeDraft()
@@ -124,6 +151,8 @@ export default function MethodsPage() {
       recipeSessionStorage.clearAdjustmentHistory()
       recipeSessionStorage.setSelectedMethod(selectedMethod)
       recipeSessionStorage.setRestoreMethodSelection(true)
+      recipeSessionStorage.clearSelectedCoffeeProfileId()
+      recipeSessionStorage.clearSelectedBrewGoal()
       router.push('/recipe')
     } catch (err) {
       console.error(err)

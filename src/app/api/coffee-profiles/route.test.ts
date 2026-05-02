@@ -28,8 +28,10 @@ function createAuthedSupabaseClient() {
 
 function createAuthedSupabaseClientForPost() {
   const coffeeProfilesInsertQuery = {
-    insert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({
       data: {
         id: 'profile-1',
@@ -54,6 +56,57 @@ function createAuthedSupabaseClientForPost() {
       if (table === 'coffee_profiles') {
         return coffeeProfilesInsertQuery
       }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }
+    }),
+  }
+}
+
+function createAuthedSupabaseClientForDuplicatePost() {
+  const coffeeProfilesQuery = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    then: undefined,
+  }
+
+  coffeeProfilesQuery.eq
+    .mockReturnValue(coffeeProfilesQuery)
+
+  coffeeProfilesQuery.select.mockImplementation(() => coffeeProfilesQuery)
+  coffeeProfilesQuery.is.mockImplementation(() => ({
+    eq: vi.fn().mockResolvedValue({
+      data: [{
+        id: 'profile-existing',
+        label: 'Coffee',
+        bean_profile_json: {
+          roaster: 'Roaster',
+          bean_name: 'Bean',
+          origin: 'Origin',
+          process: 'washed',
+          roast_level: 'medium',
+        },
+        created_at: '2026-05-01T00:00:00.000Z',
+        updated_at: '2026-05-01T00:00:00.000Z',
+        archived_at: null,
+        duplicate_fingerprint: 'fp',
+      }],
+      error: null,
+    }),
+  }))
+
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
+    },
+    from: vi.fn((table: string) => {
+      if (table === 'coffee_profiles') return coffeeProfilesQuery
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -125,5 +178,31 @@ describe('api/coffee-profiles route auth', () => {
     expect(body.profile?.id).toBe('profile-1')
     expect(body.primary_image_status).toBe('none')
     expect(body.primary_image_error).toBeNull()
+  })
+
+  it('POST returns 409 duplicate_blocked and does not insert on active duplicate', async () => {
+    const supabase = createAuthedSupabaseClientForDuplicatePost()
+    createClientMock.mockResolvedValue(supabase)
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'Coffee',
+        bean_profile_json: {
+          roaster: 'Roaster',
+          bean_name: 'Bean',
+          origin: 'Origin',
+          process: 'washed',
+          roast_level: 'medium',
+        },
+      }),
+    }))
+
+    const body = await response.json()
+    expect(response.status).toBe(409)
+    expect(body.status).toBe('duplicate_blocked')
+    expect(body.selected_candidate_id).toBe('profile-existing')
+    expect(body.candidates?.length).toBeGreaterThan(0)
   })
 })
