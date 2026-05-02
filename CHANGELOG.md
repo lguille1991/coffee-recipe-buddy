@@ -2,6 +2,10 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.4] - 2026-05-01
+
+- Fixed scan extraction variety normalization to recognize `Pacas` from extracted text so `bean.variety` is populated even when the model only returns `bean_name`.
+
 ## [1.16.3] - 2026-05-01
 
 - Added recipe-detail navigation from saved recipe bean name to linked saved coffee profile (`/coffees/[id]`) when a `coffee_profile_id` exists.
