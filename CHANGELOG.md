@@ -2,6 +2,15 @@
 
 All notable product-facing changes are documented here.
 
+## [1.17.0] - 2026-05-01
+
+- Added active-profile duplicate prevention for coffee profile creation using normalized fingerprint matching across label, roaster, bean name, origin, process, and roast level.
+- Added typed duplicate-block API responses (`status: duplicate_blocked`) with candidate profile metadata and default selected existing profile id.
+- Added database migration `docs/migration_010_coffee_profile_duplicate_fingerprint.sql` to backfill and enforce per-user active-profile uniqueness via `duplicate_fingerprint`.
+- Added analysis flow handling for duplicate profile conflicts with default `Use Existing` action and cancel behavior for both save-only and save+generate paths.
+- Added methods flow branching to generate from an existing selected coffee profile via `/api/recipes/from-profile`, preserving profile linkage and `last_used_at` updates.
+- Added tests for duplicate fingerprint normalization/sorting and API duplicate-block responses.
+
 ## [1.16.6] - 2026-05-01
 
 - Added an analysis-screen leave confirmation prompt that warns users unsaved coffee profile data will be lost when navigating away before saving.

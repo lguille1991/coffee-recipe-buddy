@@ -191,6 +191,8 @@ export default function ManualPage() {
     recipeSessionStorage.clearFeedbackRound()
     recipeSessionStorage.clearAdjustmentHistory()
     recipeSessionStorage.clearManualEditHistory()
+    recipeSessionStorage.clearSelectedCoffeeProfileId()
+    recipeSessionStorage.clearSelectedBrewGoal()
     recipeSessionStorage.clearSelectedMethod()
     recipeSessionStorage.setRecipeFlowSource('manual')
 

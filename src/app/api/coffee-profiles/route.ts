@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { createCoffeeProfileSignedUrl, replaceCoffeeProfilePrimaryImage } from '@/lib/coffee-profile-storage'
+import { buildDuplicateFingerprint, sortDuplicateCandidates, type DuplicateCandidate } from '@/lib/coffee-profile-duplicates'
 import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
 import { CreateCoffeeProfileRequestSchema } from '@/types/coffee-profile'
@@ -25,6 +26,11 @@ type ProfileRow = {
   updated_at: string
   last_used_at: string | null
   archived_at: string | null
+}
+
+type DuplicateRow = DuplicateCandidate & {
+  archived_at: string | null
+  duplicate_fingerprint: string | null
 }
 
 type ImageRow = {
@@ -55,6 +61,52 @@ export async function POST(request: Request) {
     image_data_url,
     image_mime_type,
   } = parsed.data
+  const duplicateFingerprint = parsed.data.duplicate_fingerprint ?? buildDuplicateFingerprint({
+    label,
+    bean_profile_json: {
+      roaster: bean_profile_json.roaster,
+      bean_name: bean_profile_json.bean_name,
+      origin: bean_profile_json.origin,
+      process: bean_profile_json.process,
+      roast_level: bean_profile_json.roast_level,
+    },
+  })
+
+  const { data: duplicateRows, error: duplicateError } = await supabase
+    .from('coffee_profiles')
+    .select('id, label, bean_profile_json, created_at, updated_at, archived_at, duplicate_fingerprint')
+    .eq('user_id', user.id)
+    .is('archived_at', null)
+    .eq('duplicate_fingerprint', duplicateFingerprint)
+
+  if (duplicateError) {
+    return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+  }
+
+  const duplicateCandidates = sortDuplicateCandidates(
+    ((duplicateRows ?? []) as DuplicateRow[]).map(row => ({
+      id: row.id,
+      label: row.label,
+      bean_profile_json: {
+        roaster: row.bean_profile_json.roaster ?? null,
+        bean_name: row.bean_profile_json.bean_name ?? null,
+        origin: row.bean_profile_json.origin ?? null,
+        process: row.bean_profile_json.process ?? 'unknown',
+        roast_level: row.bean_profile_json.roast_level ?? 'medium',
+      },
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    })),
+  )
+
+  if (duplicateCandidates.length > 0) {
+    return NextResponse.json({
+      status: 'duplicate_blocked',
+      error: 'An active coffee profile with the same label and bean attributes already exists',
+      candidates: duplicateCandidates,
+      selected_candidate_id: duplicateCandidates[0].id,
+    }, { status: 409 })
+  }
 
   const { data: profile, error } = await supabase
     .from('coffee_profiles')
@@ -63,11 +115,38 @@ export async function POST(request: Request) {
       label,
       bean_profile_json,
       scan_source,
+      duplicate_fingerprint: duplicateFingerprint,
     })
     .select()
     .single()
 
   if (error || !profile) {
+    if ((error as { code?: string } | null)?.code === '23505') {
+      const { data: existingRows } = await supabase
+        .from('coffee_profiles')
+        .select('id, label, bean_profile_json, created_at, updated_at')
+        .eq('user_id', user.id)
+        .is('archived_at', null)
+        .eq('duplicate_fingerprint', duplicateFingerprint)
+
+      const candidates = sortDuplicateCandidates(((existingRows ?? []) as DuplicateCandidate[]).map(row => ({
+        id: row.id,
+        label: row.label,
+        bean_profile_json: row.bean_profile_json,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      })))
+
+      if (candidates.length > 0) {
+        return NextResponse.json({
+          status: 'duplicate_blocked',
+          error: 'An active coffee profile with the same label and bean attributes already exists',
+          candidates,
+          selected_candidate_id: candidates[0].id,
+        }, { status: 409 })
+      }
+    }
+
     return NextResponse.json({ error: error?.message ?? 'Failed to create profile' }, { status: 500 })
   }
 
@@ -96,6 +175,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
+    status: 'created',
     profile,
     primary_image: primaryImage,
     primary_image_error: primaryImageError,

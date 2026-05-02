@@ -38,6 +38,7 @@ export const CreateCoffeeProfileRequestSchema = z.object({
   label: z.string().min(1).max(120),
   bean_profile_json: BeanProfileSchema,
   scan_source: CoffeeProfileScanSourceSchema.default('scan'),
+  duplicate_fingerprint: z.string().min(1).optional(),
 })
 
 export const UpdateCoffeeProfileRequestSchema = z.object({
@@ -87,3 +88,40 @@ export const GenerateFromProfileResponseSchema = z.object({
   recipe: RecipeWithAdjustmentSchema,
   recipeId: z.string().uuid(),
 })
+
+const DuplicateCandidateSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  bean_profile_json: z.object({
+    roaster: z.string().nullable().optional(),
+    bean_name: z.string().nullable().optional(),
+    origin: z.string().nullable().optional(),
+    process: z.string(),
+    roast_level: z.string(),
+  }),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+
+export const CreateCoffeeProfileSuccessResponseSchema = z.object({
+  status: z.literal('created'),
+  profile: CoffeeProfileSchema,
+  primary_image: z.object({
+    id: z.string(),
+    signed_url: z.string().nullable(),
+  }).nullable(),
+  primary_image_error: z.string().nullable(),
+  primary_image_status: z.enum(['uploaded', 'failed', 'none']),
+})
+
+export const CreateCoffeeProfileDuplicateBlockedResponseSchema = z.object({
+  status: z.literal('duplicate_blocked'),
+  error: z.string(),
+  candidates: z.array(DuplicateCandidateSchema).min(1),
+  selected_candidate_id: z.string(),
+})
+
+export const CreateCoffeeProfileResponseSchema = z.union([
+  CreateCoffeeProfileSuccessResponseSchema,
+  CreateCoffeeProfileDuplicateBlockedResponseSchema,
+])

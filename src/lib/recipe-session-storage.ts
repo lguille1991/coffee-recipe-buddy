@@ -1,5 +1,6 @@
 import type {
   BeanProfile,
+  BrewGoal,
   MethodRecommendation,
   RecipeWithAdjustment,
   SaveRecipeRequest,
@@ -19,6 +20,8 @@ const STORAGE_KEYS = {
   recipeFlowSource: 'recipe_flow_source',
   recipeOriginal: 'recipe_original',
   scannedBagImageDataUrl: 'scanned_bag_image_data_url',
+  selectedCoffeeProfileId: 'selected_coffee_profile_id',
+  selectedBrewGoal: 'selected_brew_goal',
   restoreMethodSelection: 'restore_method_selection',
   selectedMethod: 'selectedMethod',
   targetVolumeMl: 'targetVolumeMl',
@@ -189,6 +192,12 @@ export const recipeSessionStorage = {
   clearScannedBagImageDataUrl() {
     remove(STORAGE_KEYS.scannedBagImageDataUrl)
   },
+  clearSelectedCoffeeProfileId() {
+    remove(STORAGE_KEYS.selectedCoffeeProfileId)
+  },
+  clearSelectedBrewGoal() {
+    remove(STORAGE_KEYS.selectedBrewGoal)
+  },
   clearRestoreMethodSelection() {
     remove(STORAGE_KEYS.restoreMethodSelection)
   },
@@ -238,6 +247,14 @@ export const recipeSessionStorage = {
   getScannedBagImageDataUrl() {
     return readString(STORAGE_KEYS.scannedBagImageDataUrl)
   },
+  getSelectedCoffeeProfileId() {
+    return readString(STORAGE_KEYS.selectedCoffeeProfileId)
+  },
+  getSelectedBrewGoal() {
+    const raw = readString(STORAGE_KEYS.selectedBrewGoal)
+    if (!raw) return null
+    return raw as BrewGoal
+  },
   shouldRestoreMethodSelection() {
     return readString(STORAGE_KEYS.restoreMethodSelection) === 'true'
   },
@@ -285,6 +302,12 @@ export const recipeSessionStorage = {
   },
   setScannedBagImageDataUrl(value: string) {
     writeString(STORAGE_KEYS.scannedBagImageDataUrl, value)
+  },
+  setSelectedCoffeeProfileId(value: string) {
+    writeString(STORAGE_KEYS.selectedCoffeeProfileId, value)
+  },
+  setSelectedBrewGoal(value: BrewGoal) {
+    writeString(STORAGE_KEYS.selectedBrewGoal, value)
   },
   setRestoreMethodSelection(value: boolean) {
     if (value) {
