@@ -1,8 +1,10 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
+import ConfirmSheet from '@/components/ConfirmSheet'
+import { useNavGuard } from '@/components/NavGuardContext'
 import { isSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { BeanProfile, BeanProfileSchema, BrewGoal, ExtractionResponse } from '@/types/recipe'
 import { recommendMethods } from '@/lib/method-decision-engine'
@@ -74,6 +76,7 @@ function EditableField({
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { setGuard } = useNavGuard()
   const { user } = useAuth()
   const { profile } = useProfile()
   const [extraction, setExtraction] = useState<ExtractionResponse | null>(null)
@@ -85,6 +88,8 @@ export default function AnalysisPage() {
   const [savingProfileOnly, setSavingProfileOnly] = useState(false)
   const [saveProfileError, setSaveProfileError] = useState<string | null>(null)
   const [savedProfileId, setSavedProfileId] = useState<string | null>(null)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -104,6 +109,37 @@ export default function AnalysisPage() {
       setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
     })
   }, [router])
+
+  const hasUnsavedCoffeeProfile =
+    isSavedCoffeeProfilesEnabled() && Boolean(user) && !savedProfileId && !savingProfileOnly && !generating
+
+  useEffect(() => {
+    if (!hasUnsavedCoffeeProfile) {
+      return
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedCoffeeProfile])
+
+  useEffect(() => {
+    if (hasUnsavedCoffeeProfile) {
+      setGuard((href: string) => {
+        setPendingNavHref(href)
+        setShowLeaveConfirm(true)
+        return true
+      })
+    } else {
+      setGuard(null)
+    }
+
+    return () => setGuard(null)
+  }, [hasUnsavedCoffeeProfile, setGuard])
 
   function updateField<K extends keyof BeanProfile>(key: K, value: BeanProfile[K]) {
     setBean(prev => prev ? { ...prev, [key]: value } : prev)
@@ -222,6 +258,31 @@ export default function AnalysisPage() {
     }
   }
 
+  const handleConfirmLeave = useCallback(() => {
+    setGuard(null)
+    if (pendingNavHref) {
+      router.push(pendingNavHref)
+    } else {
+      router.back()
+    }
+    setPendingNavHref(null)
+    setShowLeaveConfirm(false)
+  }, [pendingNavHref, router, setGuard])
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveConfirm(false)
+    setPendingNavHref(null)
+  }, [])
+
+  const handleBack = useCallback(() => {
+    if (hasUnsavedCoffeeProfile) {
+      setShowLeaveConfirm(true)
+      return
+    }
+
+    router.back()
+  }, [hasUnsavedCoffeeProfile, router])
+
   if (!bean || !extraction) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -236,7 +297,7 @@ export default function AnalysisPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
+        <button onClick={handleBack} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
           <ArrowLeft className="ui-icon-action" />
         </button>
         <h2 className="ui-section-title">Coffee Analysis</h2>
@@ -393,17 +454,17 @@ export default function AnalysisPage() {
           {savedProfileId && (
             <div className="ui-card-interactive bg-[var(--card)] rounded-xl p-3">
               <p className="ui-body-muted">Coffee saved.</p>
-              <div className="mt-2 flex flex-col sm:flex-row gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
                   onClick={() => router.push(`/coffees/${savedProfileId}`)}
-                  className="ui-button-secondary"
+                  className="w-full ui-button-secondary"
                 >
                   View Saved Coffee
                 </button>
                 <button
                   onClick={handleSaveAndGenerate}
                   disabled={generating}
-                  className="ui-button-primary"
+                  className="w-full ui-button-primary"
                 >
                   {generating ? 'Generating...' : 'Generate Recipe Now'}
                 </button>
@@ -441,6 +502,16 @@ export default function AnalysisPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmSheet
+        open={showLeaveConfirm}
+        title="Leave without saving?"
+        message="If you leave now, this coffee profile will be lost."
+        confirmLabel="Leave screen"
+        destructive
+        onConfirm={handleConfirmLeave}
+        onCancel={handleCancelLeave}
+      />
     </div>
   )
 }

@@ -2,6 +2,14 @@
 
 All notable product-facing changes are documented here.
 
+## [1.16.6] - 2026-05-01
+
+- Added an analysis-screen leave confirmation prompt that warns users unsaved coffee profile data will be lost when navigating away before saving.
+
+## [1.16.5] - 2026-05-01
+
+- Fixed post-save analysis CTAs (`View Saved Coffee` and `Generate Recipe Now`) to split the full available row width evenly so their combined width matches the `Save + Generate Recipe` CTA.
+
 ## [1.16.4] - 2026-05-01
 
 - Fixed scan extraction variety normalization to recognize `Pacas` from extracted text so `bean.variety` is populated even when the model only returns `bean_name`.
