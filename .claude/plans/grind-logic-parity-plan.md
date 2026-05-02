@@ -4,10 +4,11 @@
 - [x] Read `.agents/docs/REACT_BEST_PRACTICES.md` before code changes.
 - [ ] Read relevant Next.js docs under `node_modules/next/dist/docs/` for any route-handler/runtime changes.
 - [ ] Decide and record canonical parity source order:
-- [ ] `coffee-recipe-generator/references/*.md`
-- [ ] `docs/coffee-range-system-skill.md`
-- [ ] `src/lib/skill-reference.ts`
-- [ ] Decide whether saved recipes are immutable, re-derived on read, or migrated.
+- [x] Decide and record canonical parity source order:
+- [x] `docs/coffee-range-system-skill.md` (primary source of truth)
+- [x] `coffee-recipe-generator/references/*.md` (secondary/reference-level tie-breakers)
+- [x] `src/lib/skill-reference.ts` (implementation mirror; must follow canonical docs)
+- [x] Decide whether saved recipes are immutable, re-derived on read, or migrated.
 - [x] Decide whether origin-token offsets are part of parity or must be removed.
 
 ## 1) Reproduction Status
@@ -40,7 +41,8 @@
 - [x] Washed + light/med-light + 1300+ masl floral profile (Block 11 guardrail case)
 - [x] Natural + medium-dark + low altitude case (process-priority coarse case)
 - [ ] Conflict case: natural + light roast + very fresh (priority ordering check)
-- [ ] Add at least one fixture per documented precedence/guardrail rule from the chosen canonical source.
+- [x] Conflict case: natural + light roast + very fresh (priority ordering check)
+- [x] Add at least one fixture per documented precedence/guardrail rule from the chosen canonical source.
 - [x] Mark expected-to-change vs invariant assertions:
 - [x] Expected-to-change: base ranges, offset interactions, starting-point bias rules.
 - [x] Invariant: clamp boundaries, compression width cap behavior, deterministic grinder derivation contract.
@@ -53,6 +55,7 @@
 - [x] Replace fixed per-field offsets with block-driven resolver (Blocks 2–5, 5B, 10, 11) using explicit precedence.
 - [x] Implement density alignment/cancel rule (variety vs altitude) exactly as documented.
 - [ ] Implement conflict handling priority: process > freshness > roast > density.
+- [x] Implement conflict handling priority: process > freshness > roast > density.
 - [x] Implement washed/floral guardrail (Block 11) with explicit criteria and click cap logic.
 - [x] Ensure resolver does not mix canonical parity logic with legacy origin-token heuristics unless explicitly decided in Preconditions.
 - [x] **Phase C — Add test vectors from skill docs**
@@ -60,7 +63,7 @@
 - [x] Assert both final operating range and starting point midpoint/bias rules.
 - [ ] **Phase D — Verify downstream grinder conversions stay deterministic**
 - [x] Keep K-Ultra as source of truth; verify Q-Air/Encore/C2 derived values remain in allowed bands.
-- [ ] Add monotonicity and rounding/step-size checks to prevent conversion regressions when K-Ultra ranges tighten.
+- [x] Add monotonicity and rounding/step-size checks to prevent conversion regressions when K-Ultra ranges tighten.
 - [ ] **Phase E — Operational rollout**
 - [ ] Backfill snapshot comparison for previously saved recipes to estimate drift before enabling parity globally.
 - [x] Gate with feature flag and compare outputs in staging for same bean payloads (skill vs app).
@@ -68,12 +71,14 @@
 - [ ] Define rollback trigger and owner if staging/production diffs exceed threshold.
 
 ## 5) Open Questions / Blockers
-- [ ] Which source is canonical when there is inconsistency between:
-- [ ] `coffee-recipe-generator/references/grind-determinants.md`
-- [ ] `docs/coffee-range-system-skill.md`
-- [ ] `src/lib/skill-reference.ts`
+- [x] Which source is canonical when there is inconsistency between:
+- [x] `coffee-recipe-generator/references/grind-determinants.md`
+- [x] `docs/coffee-range-system-skill.md`
+- [x] `src/lib/skill-reference.ts`
+- [x] Canonical order locked: `docs/coffee-range-system-skill.md` → `coffee-recipe-generator/references/*.md` → `src/lib/skill-reference.ts`.
 - [ ] Do you want strict parity always-on in production now, or behind a rollout flag per user cohort?
 - [ ] Should origin token offsets (e.g., Brazil/Ethiopia keyword mapping) remain, or be folded into density-only logic to match the skill framework more strictly?
+- [x] Saved recipes policy locked: immutable (no re-derive/migration of existing saved recipe grind fields).
 
 ## Reverse-Engineered Current App Logic (for replication)
 - [x] Start with method base from `getMethodGrindBase(method, strictParityMode)`.

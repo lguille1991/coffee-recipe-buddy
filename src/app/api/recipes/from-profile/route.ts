@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { generateRecipeWithRetries } from '@/lib/recipe-generation'
 import { saveRecipeWithSnapshot } from '@/lib/save-recipe'
+import { buildIdempotencyKey, runIdempotent } from '@/lib/request-idempotency'
 import { createClient } from '@/lib/supabase/server'
 import { buildAuthenticatedOpenRouterUserId, createOpenRouterClient } from '@/lib/openrouter'
 import { GenerateFromProfileRequestSchema, GenerationContextSchema } from '@/types/coffee-profile'
@@ -64,51 +65,81 @@ export async function POST(request: NextRequest) {
     const client = createOpenRouterClient(request)
     const openRouterUser = buildAuthenticatedOpenRouterUserId(user)
     const strictParityMode = process.env.STRICT_GRINDER_TABLE_PARITY === '1'
+    const grindParityMode = process.env.SKILL_GRIND_PARITY_MODE === 'skill_v2' ? 'skill_v2' : 'legacy'
+    const includeDebugParity = process.env.DEBUG_RECIPE_PARITY === '1'
 
-    const generatedRecipe = await generateRecipeWithRetries({
-      client,
-      openRouterUser,
+    const idempotencyKey = buildIdempotencyKey('recipes.from-profile', {
+      user_id: user.id,
+      coffee_profile_id: profile.id,
       method,
-      bean: beanParsed.data,
-      targetVolumeMl,
-      recipeMode: recipe_mode,
-      strictParityMode,
-    })
-
-    const goalLine = `Target goal: ${goal}.`
-    const goalAppliedRecipe = {
-      ...generatedRecipe,
-      objective: `${generatedRecipe.objective} ${goalLine}`.trim(),
-    }
-
-    const generationContext = GenerationContextSchema.parse({
-      source: 'profile',
       goal,
       water_mode,
-      water_grams,
-      water_delta_grams,
-      method,
+      water_grams: water_mode === 'absolute' ? water_grams : null,
+      water_delta_grams: water_mode === 'delta' ? water_delta_grams : null,
+      recipe_mode: recipe_mode ?? 'standard',
+      target_volume_ml: targetVolumeMl,
     })
 
-    const saved = await saveRecipeWithSnapshot(supabase, {
-      userId: user.id,
-      bean_info: beanParsed.data,
-      method,
-      original_recipe_json: goalAppliedRecipe,
-      current_recipe_json: goalAppliedRecipe,
-      feedback_history: [],
-      coffee_profile_id: profile.id,
-      coffee_profile_user_id: profile.user_id,
-      generation_context: generationContext,
+    const { value, replayed } = await runIdempotent(idempotencyKey, async () => {
+      const generatedRecipe = await generateRecipeWithRetries({
+        client,
+        openRouterUser,
+        method,
+        bean: beanParsed.data,
+        targetVolumeMl,
+        recipeMode: recipe_mode,
+        strictParityMode,
+        grindParityMode,
+      })
+
+      const goalLine = `Target goal: ${goal}.`
+      const goalAppliedRecipe = {
+        ...generatedRecipe,
+        objective: `${generatedRecipe.objective} ${goalLine}`.trim(),
+      }
+
+      const generationContext = GenerationContextSchema.parse({
+        source: 'profile',
+        goal,
+        water_mode,
+        water_grams,
+        water_delta_grams,
+        method,
+      })
+
+      const saved = await saveRecipeWithSnapshot(supabase, {
+        userId: user.id,
+        bean_info: beanParsed.data,
+        method,
+        original_recipe_json: goalAppliedRecipe,
+        current_recipe_json: goalAppliedRecipe,
+        feedback_history: [],
+        coffee_profile_id: profile.id,
+        coffee_profile_user_id: profile.user_id,
+        generation_context: generationContext,
+      })
+
+      await supabase
+        .from('coffee_profiles')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('id', profile.id)
+        .eq('user_id', user.id)
+
+      return { goalAppliedRecipe, recipeId: saved.id }
     })
 
-    await supabase
-      .from('coffee_profiles')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('id', profile.id)
-      .eq('user_id', user.id)
+    const responseBody = includeDebugParity
+      ? {
+        recipe: value.goalAppliedRecipe,
+        recipeId: value.recipeId,
+        _debug: {
+          grind_parity_mode: grindParityMode,
+          strict_grinder_table_parity: strictParityMode,
+        },
+      }
+      : { recipe: value.goalAppliedRecipe, recipeId: value.recipeId }
 
-    return NextResponse.json({ recipe: goalAppliedRecipe, recipeId: saved.id }, { status: 201 })
+    return NextResponse.json(responseBody, { status: replayed ? 200 : 201 })
   } catch (error) {
     if (error instanceof Error && error.message === 'MODEL_CREDIT_LIMIT') {
       return NextResponse.json(

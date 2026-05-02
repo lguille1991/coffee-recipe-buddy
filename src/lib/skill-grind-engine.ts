@@ -91,6 +91,14 @@ function applySkillV2DensityOffset(bean: BeanProfile): { clicks: number; label: 
   return { clicks: single, label: `${single >= 0 ? '+' : ''}${single} (single density factor)` }
 }
 
+function applyPriorityDelta(current: number, delta: number): number {
+  if (delta === 0 || current === 0) return current + delta
+  if (Math.sign(current) === Math.sign(delta)) return current + delta
+  // Lower-priority deltas are allowed to moderate, but not invert, higher-priority direction.
+  if (Math.abs(delta) >= Math.abs(current)) return 0
+  return current + delta
+}
+
 export function applySkillGrindSettings(
   recipe: Recipe,
   bean: BeanProfile,
@@ -124,7 +132,10 @@ export function applySkillGrindSettings(
     })()
 
     const floralGuardrail = isWashedFloral ? -1 : 0
-    const totalDelta = processDelta + roastDelta + freshnessDelta + density.clicks + floralGuardrail
+    const densityDelta = density.clicks + floralGuardrail
+    const processAndFreshness = applyPriorityDelta(processDelta, freshnessDelta)
+    const withRoast = applyPriorityDelta(processAndFreshness, roastDelta)
+    const totalDelta = applyPriorityDelta(withRoast, densityDelta)
 
     const rawLow = clampClicks(methodBase.low + totalDelta)
     const rawHigh = clampClicks(methodBase.high + totalDelta)

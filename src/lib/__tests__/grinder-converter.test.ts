@@ -84,6 +84,18 @@ describe('kUltraRangeToQAir', () => {
     const coarseR = parseInt(coarse.starting_point.split('.')[0])
     expect(fineR).toBeLessThan(coarseR)
   })
+
+  it('is monotonic for starting_point across increasing K-Ultra clicks', () => {
+    const starts = [60, 65, 70, 75, 80, 85, 90].map(clicks => {
+      const v = kUltraRangeToQAir(clicks, clicks + 2, clicks + 1).starting_point
+      const [r, c, m] = v.split('.').map(Number)
+      return r * 30 + c * 3 + m
+    })
+
+    for (let i = 1; i < starts.length; i++) {
+      expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1])
+    }
+  })
 })
 
 // ─── kUltraRangeToBaratza ────────────────────────────────────────────────────
@@ -115,6 +127,17 @@ describe('kUltraRangeToBaratza', () => {
     const result = kUltraRangeToBaratza(80, 86, 82, 'v60')
     expect(result.range).toMatch(/^clicks \d+–\d+$/)
   })
+
+  it('is monotonic for non-pour-over methods across increasing K-Ultra clicks', () => {
+    const starts = [50, 60, 70, 80, 90].map(clicks =>
+      parseInt(kUltraRangeToBaratza(clicks, clicks + 2, clicks + 1, 'aeropress').starting_point, 10),
+    )
+
+    for (let i = 1; i < starts.length; i++) {
+      expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1])
+      expect(starts[i] - starts[i - 1]).toBeLessThanOrEqual(6)
+    }
+  })
 })
 
 // ─── kUltraRangeToTimemoreC2 ─────────────────────────────────────────────────
@@ -138,6 +161,17 @@ describe('kUltraRangeToTimemoreC2', () => {
     const result = kUltraRangeToTimemoreC2(40, 45, 42, 'aeropress')
     expect(result.note).not.toContain('boundary')
     expect(result.note).not.toContain('pour-over zone')
+  })
+
+  it('is monotonic for non-pour-over methods across increasing K-Ultra clicks', () => {
+    const starts = [50, 60, 70, 80, 90].map(clicks =>
+      parseInt(kUltraRangeToTimemoreC2(clicks, clicks + 2, clicks + 1, 'aeropress').starting_point, 10),
+    )
+
+    for (let i = 1; i < starts.length; i++) {
+      expect(starts[i]).toBeGreaterThanOrEqual(starts[i - 1])
+      expect(starts[i] - starts[i - 1]).toBeLessThanOrEqual(5)
+    }
   })
 })
 

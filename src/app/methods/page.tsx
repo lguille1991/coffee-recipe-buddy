@@ -107,6 +107,7 @@ export default function MethodsPage() {
 
     try {
       let recipePayload: unknown
+      let savedRecipeId: string | null = null
       if (selectedCoffeeProfileId) {
         const res = await fetch('/api/recipes/from-profile', {
           method: 'POST',
@@ -125,8 +126,9 @@ export default function MethodsPage() {
           throw new Error(data.error || 'Recipe generation failed')
         }
 
-        const data = await res.json() as { recipe?: unknown }
+        const data = await res.json() as { recipe?: unknown; recipeId?: string }
         recipePayload = data.recipe
+        savedRecipeId = data.recipeId ?? null
       } else {
         const res = await fetch('/api/generate-recipe', {
           method: 'POST',
@@ -143,17 +145,23 @@ export default function MethodsPage() {
       }
 
       const recipe = recipePayload as RecipeWithAdjustment
-      recipeSessionStorage.setRecipe(recipe)
-      recipeSessionStorage.setRecipeFlowSource('generated')
-      recipeSessionStorage.clearManualRecipeDraft()
-      recipeSessionStorage.clearRecipeOriginal()
-      recipeSessionStorage.clearFeedbackRound()
-      recipeSessionStorage.clearAdjustmentHistory()
-      recipeSessionStorage.setSelectedMethod(selectedMethod)
-      recipeSessionStorage.setRestoreMethodSelection(true)
-      recipeSessionStorage.clearSelectedCoffeeProfileId()
-      recipeSessionStorage.clearSelectedBrewGoal()
-      router.push('/recipe')
+      if (savedRecipeId) {
+        recipeSessionStorage.clearSelectedCoffeeProfileId()
+        recipeSessionStorage.clearSelectedBrewGoal()
+        router.push(`/recipes/${savedRecipeId}`)
+      } else {
+        recipeSessionStorage.setRecipe(recipe)
+        recipeSessionStorage.setRecipeFlowSource('generated')
+        recipeSessionStorage.clearManualRecipeDraft()
+        recipeSessionStorage.clearRecipeOriginal()
+        recipeSessionStorage.clearFeedbackRound()
+        recipeSessionStorage.clearAdjustmentHistory()
+        recipeSessionStorage.setSelectedMethod(selectedMethod)
+        recipeSessionStorage.setRestoreMethodSelection(true)
+        recipeSessionStorage.clearSelectedCoffeeProfileId()
+        recipeSessionStorage.clearSelectedBrewGoal()
+        router.push('/recipe')
+      }
     } catch (err) {
       console.error(err)
       setSelecting(null)
