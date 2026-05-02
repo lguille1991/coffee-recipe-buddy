@@ -41,8 +41,8 @@ describe('applySkillGrindSettings', () => {
     }
 
     const result = applySkillGrindSettings(withMethod('v60'), bean)
-    expect(result.grind.k_ultra.starting_point).toBe('0.7.8')
-    expect(result.grind.k_ultra.range).toBe('73–83 clicks')
+    expect(result.grind.k_ultra.starting_point).toBe('0.7.7')
+    expect(result.grind.k_ultra.range).toBe('72–82 clicks')
     expect(result.range_logic.process_offset).toContain('natural')
   })
 
@@ -107,5 +107,64 @@ describe('applySkillGrindSettings', () => {
 
     expect(strict.range_logic.base_range).toContain('STRICT Chemex table base')
     expect(strict.grind.k_ultra.starting_point).not.toBe(fallback.grind.k_ultra.starting_point)
+  })
+
+  it('applies skill_v2 method base ranges and density alignment', () => {
+    const bean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'medium',
+      altitude_masl: 1500,
+      variety: 'Gesha',
+      tasting_notes: ['bergamot'],
+    }
+
+    const result = applySkillGrindSettings(withMethod('v60'), bean, {
+      now: new Date('2026-05-01T12:00:00Z'),
+      parityMode: 'skill_v2',
+    })
+
+    expect(result.range_logic.base_range).toContain('72–79 clicks (Skill v2 V60 base)')
+    expect(result.range_logic.density_offset).toContain('-1 (aligned altitude+variety)')
+    expect(result.grind.k_ultra.range).toBe('70–77 clicks')
+    expect(result.grind.k_ultra.starting_point).toBe('0.7.4')
+  })
+
+  it('applies washed floral guardrail in skill_v2 mode', () => {
+    const bean: BeanProfile = {
+      process: 'washed',
+      roast_level: 'light',
+      altitude_masl: 1450,
+      roast_date: '2026-04-25',
+      tasting_notes: ['jasmine', 'citrus zest'],
+      variety: 'Bourbon',
+    }
+
+    const result = applySkillGrindSettings(withMethod('v60'), bean, {
+      now: new Date('2026-05-01T12:00:00Z'),
+      parityMode: 'skill_v2',
+    })
+
+    expect(result.range_logic.freshness_offset).toContain('+1 clicks')
+    expect(result.grind.k_ultra.range).toBe('69–76 clicks')
+    expect(result.grind.k_ultra.starting_point).toBe('0.7.3')
+  })
+
+  it('prioritizes process and freshness over roast/density in skill_v2 conflict cases', () => {
+    const bean: BeanProfile = {
+      process: 'natural',
+      roast_level: 'light',
+      altitude_masl: 1800,
+      roast_date: '2026-04-30',
+      variety: 'Gesha',
+      tasting_notes: ['tea-like', 'citrus'],
+    }
+
+    const result = applySkillGrindSettings(withMethod('v60'), bean, {
+      now: new Date('2026-05-01T12:00:00Z'),
+      parityMode: 'skill_v2',
+    })
+
+    expect(result.grind.k_ultra.range).toBe('74–81 clicks')
+    expect(result.grind.k_ultra.starting_point).toBe('0.7.8')
   })
 })

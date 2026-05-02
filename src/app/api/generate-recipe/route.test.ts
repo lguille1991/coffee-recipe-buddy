@@ -167,4 +167,37 @@ describe('POST /api/generate-recipe', () => {
     expect(body.error).toBe('Deterministic grind override failed validation')
     expect(body.validationErrors).toContain('range_logic.final_operating_range invalid')
   })
+
+  it('includes debug parity metadata when DEBUG_RECIPE_PARITY=1', async () => {
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
+    })
+
+    vi.stubEnv('DEBUG_RECIPE_PARITY', '1')
+    vi.stubEnv('SKILL_GRIND_PARITY_MODE', 'skill_v2')
+    vi.stubEnv('STRICT_GRINDER_TABLE_PARITY', '1')
+
+    const request = new Request('http://localhost/api/generate-recipe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        method: 'v60',
+        bean: {
+          process: 'washed',
+          roast_level: 'medium-light',
+        },
+      }),
+    })
+
+    const response = await POST(request as never)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body._debug).toEqual({
+      grind_parity_mode: 'skill_v2',
+      strict_grinder_table_parity: true,
+    })
+
+    vi.unstubAllEnvs()
+  })
 })

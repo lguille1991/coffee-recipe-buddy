@@ -2,6 +2,36 @@
 
 All notable product-facing changes are documented here.
 
+## [1.18.4] - 2026-05-02
+
+- Changed saved-coffee profile generation flow in Methods so `/api/recipes/from-profile` results now navigate directly to `/recipes/:id` using returned `recipeId` instead of entering the unsaved `/recipe` session flow.
+- This prevents creating an unintended second recipe record when users press Save after profile-based generation, since the profile path already persists a recipe row server-side.
+
+## [1.18.3] - 2026-05-02
+
+- Added idempotent recipe-create dedupe for both `POST /api/recipes/from-profile` and `POST /api/recipes` so concurrent identical requests return the same existing recipe result (`201` for first create, `200` for replay) instead of creating duplicate recipe rows.
+- Added a shared request-idempotency helper with stable payload keying and short replay TTL for duplicate suppression during rapid retries/double-submits.
+- Added regression coverage for concurrent duplicate create attempts on profile-based and manual recipe save paths, asserting single persistence call and shared recipe identity.
+
+## [1.18.2] - 2026-05-02
+
+- Added parity debug metadata (`_debug.grind_parity_mode`, `_debug.strict_grinder_table_parity`) to `POST /api/recipes/from-profile` responses behind `DEBUG_RECIPE_PARITY=1` so coffee-profile generation paths can be validated locally with the same visibility as direct recipe generation.
+- Wired profile-based recipe generation to pass `SKILL_GRIND_PARITY_MODE` through to deterministic grind calculation.
+- Added route test coverage for profile-path debug parity metadata.
+
+## [1.18.1] - 2026-05-02
+
+- Added optional recipe-generation debug metadata (`_debug.grind_parity_mode`, `_debug.strict_grinder_table_parity`) behind `DEBUG_RECIPE_PARITY=1` to make local parity-mode verification explicit before production rollout.
+- Added API route test coverage for debug parity metadata response behavior.
+
+## [1.18.0] - 2026-05-02
+
+- Added `SKILL_GRIND_PARITY_MODE=skill_v2` deterministic grind mode to replicate tighter skill-style method base ranges (for V60, Chemex, AeroPress, and other supported methods) while keeping legacy behavior as default rollout-safe fallback.
+- Added skill_v2 density alignment logic (altitude + variety) to avoid over-stacking opposing micro-adjustments and better match skill parity behavior.
+- Added washed/floral guardrail behavior in skill_v2 mode to prevent over-coarsening for high-altitude light-profile coffees by capping freshness coarsening and biasing finer grind selection.
+- Removed legacy deterministic origin-token click offsets from the grind engine so parity logic is driven by process, roast, freshness, and density factors.
+- Expanded deterministic grind tests with new skill_v2 parity coverage and updated legacy expectations after removing origin-token offsets.
+
 ## [1.17.0] - 2026-05-01
 
 - Added active-profile duplicate prevention for coffee profile creation using normalized fingerprint matching across label, roaster, bean name, origin, process, and roast level.

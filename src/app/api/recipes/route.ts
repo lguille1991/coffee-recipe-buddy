@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { uploadBagPhotoFromDataUrl } from '@/lib/bag-photo-storage'
+import { buildIdempotencyKey, runIdempotent } from '@/lib/request-idempotency'
 import { saveRecipeWithSnapshot } from '@/lib/save-recipe'
 import { listRecipesForUser } from '@/lib/recipe-list'
 import { createClient } from '@/lib/supabase/server'
@@ -25,7 +26,19 @@ export async function POST(request: Request) {
     : null
 
   try {
-    const saved = await saveRecipeWithSnapshot(supabase, {
+    const idempotencyKey = buildIdempotencyKey('recipes.save', {
+      user_id: user.id,
+      method,
+      bean_info,
+      original_recipe_json,
+      current_recipe_json,
+      feedback_history: feedback_history ?? [],
+      parent_recipe_id: parent_recipe_id ?? null,
+      scale_factor: scale_factor ?? null,
+      image_url: image_url ?? null,
+    })
+
+    const { value: saved, replayed } = await runIdempotent(idempotencyKey, () => saveRecipeWithSnapshot(supabase, {
       userId: user.id,
       bean_info,
       method,
@@ -35,9 +48,9 @@ export async function POST(request: Request) {
       image_url,
       parent_recipe_id: parent_recipe_id ?? null,
       scale_factor: scale_factor ?? null,
-    })
+    }))
 
-    return NextResponse.json(saved, { status: 201 })
+    return NextResponse.json(saved, { status: replayed ? 200 : 201 })
   } catch (snapshotError) {
     return NextResponse.json({
       error: snapshotError instanceof Error ? snapshotError.message : 'Failed to create recipe snapshot',

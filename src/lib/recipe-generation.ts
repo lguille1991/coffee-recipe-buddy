@@ -32,6 +32,7 @@ export async function generateRecipeWithRetries({
   targetVolumeMl,
   recipeMode,
   strictParityMode,
+  grindParityMode,
 }: {
   client: OpenAI
   openRouterUser: string
@@ -40,6 +41,7 @@ export async function generateRecipeWithRetries({
   targetVolumeMl?: number
   recipeMode?: 'standard' | 'four_six'
   strictParityMode?: boolean
+  grindParityMode?: 'legacy' | 'skill_v2'
 }) {
   const { system, user: userPrompt } = buildRecipePrompt(bean, method, targetVolumeMl)
 
@@ -111,6 +113,7 @@ export async function generateRecipeWithRetries({
         : applySkillTemperatureSettings(brewAdjusted, bean)
       const recipe = applySkillGrindSettings(temperatureAdjusted, bean, {
         strictParityMode: strictParityMode ?? false,
+        parityMode: grindParityMode ?? 'legacy',
       })
 
       const deterministicValidation = validateRecipe(recipe, bean, method)

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BASE_RECIPE, WASHED_LIGHT_BEAN } from '@/lib/__tests__/fixtures'
+import { resetIdempotencyStateForTests } from '@/lib/request-idempotency'
 
 const {
   createClientMock,
@@ -84,6 +85,7 @@ function createSupabaseClient(options?: { archived?: boolean; notFound?: boolean
 
 describe('POST /api/recipes/from-profile', () => {
   beforeEach(() => {
+    resetIdempotencyStateForTests()
     createClientMock.mockReset()
     createOpenRouterClientMock.mockReset()
     buildAuthenticatedOpenRouterUserIdMock.mockReset()
@@ -235,5 +237,58 @@ describe('POST /api/recipes/from-profile', () => {
         method: 'v60',
       }),
     }))
+  })
+
+  it('includes debug parity metadata when DEBUG_RECIPE_PARITY=1', async () => {
+    vi.stubEnv('DEBUG_RECIPE_PARITY', '1')
+    vi.stubEnv('SKILL_GRIND_PARITY_MODE', 'skill_v2')
+    vi.stubEnv('STRICT_GRINDER_TABLE_PARITY', '1')
+
+    const response = await POST(new Request('http://localhost/api/recipes/from-profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        coffee_profile_id: '11111111-1111-1111-1111-111111111111',
+        method: 'v60',
+        goal: 'balanced',
+        water_mode: 'absolute',
+        water_grams: 250,
+      }),
+    }) as never)
+
+    const body = await response.json()
+    expect(response.status).toBe(201)
+    expect(body._debug).toEqual({
+      grind_parity_mode: 'skill_v2',
+      strict_grinder_table_parity: true,
+    })
+
+    vi.unstubAllEnvs()
+  })
+
+  it('prevents duplicate recipe saves for concurrent identical requests', async () => {
+    const body = JSON.stringify({
+      coffee_profile_id: '11111111-1111-1111-1111-111111111111',
+      method: 'v60',
+      goal: 'balanced',
+      water_mode: 'absolute',
+      water_grams: 250,
+    })
+
+    const [resA, resB] = await Promise.all([
+      POST(new Request('http://localhost/api/recipes/from-profile', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      }) as never),
+      POST(new Request('http://localhost/api/recipes/from-profile', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      }) as never),
+    ])
+
+    expect(new Set([resA.status, resB.status])).toEqual(new Set([200, 201]))
+    expect(saveRecipeWithSnapshotMock).toHaveBeenCalledTimes(1)
   })
 })

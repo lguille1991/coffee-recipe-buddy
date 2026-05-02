@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
     }
 
     const strictParityMode = process.env.STRICT_GRINDER_TABLE_PARITY === '1'
+    const grindParityMode = process.env.SKILL_GRIND_PARITY_MODE === 'skill_v2' ? 'skill_v2' : 'legacy'
+    const includeDebugParity = process.env.DEBUG_RECIPE_PARITY === '1'
     const recipe = await generateRecipeWithRetries({
       client,
       openRouterUser,
@@ -43,10 +45,21 @@ export async function POST(req: NextRequest) {
       targetVolumeMl,
       recipeMode: recipe_mode === 'four_six' ? 'four_six' : 'standard',
       strictParityMode,
+      grindParityMode,
     })
 
+    const responseBody = includeDebugParity
+      ? {
+        ...recipe,
+        _debug: {
+          grind_parity_mode: grindParityMode,
+          strict_grinder_table_parity: strictParityMode,
+        },
+      }
+      : recipe
+
     return attachGuestOpenRouterCookie(
-      NextResponse.json(recipe),
+      NextResponse.json(responseBody),
       guestTracking?.newGuestId ?? null,
     )
   } catch (err) {
