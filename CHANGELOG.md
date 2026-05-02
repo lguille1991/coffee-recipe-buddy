@@ -2,6 +2,14 @@
 
 All notable product-facing changes are documented here.
 
+## [1.18.0] - 2026-05-02
+
+- Added `SKILL_GRIND_PARITY_MODE=skill_v2` deterministic grind mode to replicate tighter skill-style method base ranges (for V60, Chemex, AeroPress, and other supported methods) while keeping legacy behavior as default rollout-safe fallback.
+- Added skill_v2 density alignment logic (altitude + variety) to avoid over-stacking opposing micro-adjustments and better match skill parity behavior.
+- Added washed/floral guardrail behavior in skill_v2 mode to prevent over-coarsening for high-altitude light-profile coffees by capping freshness coarsening and biasing finer grind selection.
+- Removed legacy deterministic origin-token click offsets from the grind engine so parity logic is driven by process, roast, freshness, and density factors.
+- Expanded deterministic grind tests with new skill_v2 parity coverage and updated legacy expectations after removing origin-token offsets.
+
 ## [1.17.0] - 2026-05-01
 
 - Added active-profile duplicate prevention for coffee profile creation using normalized fingerprint matching across label, roaster, bean name, origin, process, and roast level.
