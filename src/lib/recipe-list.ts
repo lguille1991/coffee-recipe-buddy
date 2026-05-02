@@ -25,6 +25,7 @@ type ListUserRecipesParams = {
   userId: string
   method?: string
   q?: string
+  archived?: boolean
   page?: number
   limit?: number
   cumulative?: boolean
@@ -68,6 +69,7 @@ export async function listRecipesForUser(
     userId,
     method,
     q,
+    archived = false,
     page = 1,
     limit = 20,
     cumulative = false,
@@ -83,7 +85,7 @@ export async function listRecipesForUser(
     .from('recipes')
     .select('id, method, bean_info, image_url, created_at, schema_version, current_recipe_json, feedback_history, parent_recipe_id')
     .eq('user_id', userId)
-    .eq('archived', false)
+    .eq('archived', archived)
     .order('created_at', { ascending: false })
     .range(from, to)
 

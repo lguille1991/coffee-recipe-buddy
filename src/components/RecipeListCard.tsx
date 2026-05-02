@@ -63,7 +63,21 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
   )
 })
 
-const RecipeListCard = memo(function RecipeListCard({ recipe }: { recipe: RecipeListItem }) {
+const RecipeListCard = memo(function RecipeListCard({
+  recipe,
+  disableLink = false,
+}: {
+  recipe: RecipeListItem
+  disableLink?: boolean
+}) {
+  if (disableLink) {
+    return (
+      <div className="ui-card-interactive group flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3">
+        <RecipeCardContent recipe={recipe} />
+      </div>
+    )
+  }
+
   return (
     <Link
       href={`/recipes/${recipe.id}`}

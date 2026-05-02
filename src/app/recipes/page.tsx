@@ -8,6 +8,7 @@ type RecipesPageProps = {
     page?: string | string[]
     method?: string | string[]
     q?: string | string[]
+    archived?: string | string[]
   }>
 }
 
@@ -20,6 +21,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const page = Math.max(1, parseInt(getSingleValue(params.page) || '1', 10) || 1)
   const method = getSingleValue(params.method)
   const q = getSingleValue(params.q)
+  const archived = getSingleValue(params.archived) === 'true'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,6 +36,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     limit: 20,
     method: method || undefined,
     q: q || undefined,
+    archived,
     cumulative: true,
   })
 
@@ -43,6 +46,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       initialPage={page}
       initialMethod={method}
       initialQuery={q}
+      initialArchived={archived}
       initialHasMore={result.hasMore}
     />
   )

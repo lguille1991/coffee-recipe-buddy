@@ -200,18 +200,23 @@ export async function GET(request: Request) {
   const limit = Math.min(Math.max(Number.parseInt(searchParams.get('limit') ?? `${DEFAULT_LIMIT}`, 10), 1), 50)
   const archived = searchParams.get('archived') === 'true'
 
-  const { data, error } = await supabase
+  let listQuery = supabase
     .from('coffee_profiles')
     .select('id, user_id, bean_profile_json, label, scan_source, created_at, updated_at, last_used_at, archived_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(limit)
+
+  listQuery = archived
+    ? listQuery.not('archived_at', 'is', null)
+    : listQuery.is('archived_at', null)
+
+  const { data, error } = await listQuery.limit(limit)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const filtered = ((data ?? []) as ProfileRow[]).filter(row => archived ? row.archived_at !== null : row.archived_at === null)
+  const filtered = (data ?? []) as ProfileRow[]
 
   const profileIds = filtered.map(row => row.id)
   const { data: images, error: imagesError } = profileIds.length === 0
