@@ -120,6 +120,7 @@ describe('RecipesClient bulk selection mode', () => {
           initialPage={1}
           initialMethod=""
           initialQuery=""
+          initialArchived={false}
           initialHasMore
         />,
       )
@@ -158,6 +159,7 @@ describe('RecipesClient bulk selection mode', () => {
           initialPage={1}
           initialMethod=""
           initialQuery=""
+          initialArchived={false}
           initialHasMore={false}
         />,
       )
@@ -192,6 +194,7 @@ describe('RecipesClient bulk selection mode', () => {
           initialPage={1}
           initialMethod=""
           initialQuery=""
+          initialArchived={false}
           initialHasMore={false}
         />,
       )
@@ -214,6 +217,52 @@ describe('RecipesClient bulk selection mode', () => {
     })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/recipes/bulk-delete', expect.objectContaining({ method: 'POST' }))
+    expect(container.textContent).not.toContain('Bean A')
+    expect(container.textContent).toContain('Bean B')
+    expect(routerRefreshMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores selected archived recipes using bulk-restore and refreshes', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch' as never).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        restored_ids: ['11111111-1111-1111-1111-111111111111'],
+      }),
+    } as Response)
+
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[
+            sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A'),
+            sampleRecipe('22222222-2222-2222-2222-222222222222', 'Bean B'),
+          ]}
+          initialPage={1}
+          initialMethod=""
+          initialQuery=""
+          initialArchived={true}
+          initialHasMore={false}
+        />,
+      )
+    })
+
+    await act(async () => {
+      clickButtonByText(container, 'Select')
+    })
+
+    await act(async () => {
+      clickButtonByText(container, 'Select all visible')
+    })
+
+    await act(async () => {
+      clickButtonByPrefix(container, 'Restore (')
+    })
+
+    await act(async () => {
+      clickButtonByText(container, 'Restore 2')
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/recipes/bulk-restore', expect.objectContaining({ method: 'POST' }))
     expect(container.textContent).not.toContain('Bean A')
     expect(container.textContent).toContain('Bean B')
     expect(routerRefreshMock).toHaveBeenCalledTimes(1)

@@ -2,6 +2,28 @@
 
 All notable product-facing changes are documented here.
 
+## [1.21.0] - 2026-05-02
+
+- Replaced per-recipe restore CTAs on archived recipes with bulk selection restore on `/recipes?archived=true` to reduce restore request volume and improve performance for large archived sets.
+- Added `POST /api/recipes/bulk-restore` for authenticated, user-scoped batch recipe restore with deduplicated IDs and reconciliation payload (`restored_ids`, counts).
+- Added conflict handling in bulk restore when selected recipes are linked to archived coffee profiles, returning `409` with blocked recipe IDs.
+- Updated archived recipes selection-mode UX to mirror bulk delete behavior (select, select all visible, confirm, bulk action).
+- Added tests for the bulk restore API route and archived selection-mode bulk restore flow.
+
+## [1.20.0] - 2026-05-02
+
+- Fixed coffee-profile archive guard to only block when linked **active** recipes exist, so users can archive profiles after soft-deleting linked recipes.
+- Added DB migration `docs/migration_011_archive_active_link_guard.sql` to align trigger enforcement with active-only recipe linkage checks.
+- Added recipe restore flow with archived recipe listing support:
+- `POST /api/recipes/:id/restore` restores soft-deleted recipes.
+- `GET /api/recipes?archived=true` lists archived recipes for recovery.
+- Added profile restore flow with archived profile listing support:
+- `POST /api/coffee-profiles/:id/restore` restores archived profiles.
+- `GET /api/coffee-profiles?archived=true` now applies archive filtering in SQL before limit for complete archived results.
+- Added restore UI controls and archived/active toggles in Recipes and Saved Coffees screens.
+- Added restore safety: recipe restore returns `409` when its linked coffee profile is archived, requiring profile restore first.
+- Added/expanded route and client tests for archive, archived listing, and restore flows.
+
 ## [1.19.1] - 2026-05-02
 
 - Centered the saved coffee bag image on large screens in `/coffees/[id]` while preserving current mobile/tablet layout behavior.

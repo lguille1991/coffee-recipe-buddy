@@ -125,6 +125,22 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
     }
   }
 
+  async function handleRestore() {
+    try {
+      const response = await fetch(`/api/coffee-profiles/${profileId}/restore`, {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Failed to restore profile')
+      }
+      setDetail(prev => prev ? { ...prev, profile: { ...prev.profile, archived_at: null } } : prev)
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore profile')
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen relative">
       <div className="h-12" />
@@ -201,9 +217,15 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
               {saving ? 'Generating...' : 'Generate Recipe'}
             </button>
 
-            <button onClick={handleArchive} disabled={archived} className="ui-button-secondary">
-              {archived ? 'Archived' : 'Archive Profile'}
-            </button>
+            {archived ? (
+              <button onClick={handleRestore} className="ui-button-secondary">
+                Restore Profile
+              </button>
+            ) : (
+              <button onClick={handleArchive} className="ui-button-secondary">
+                Archive Profile
+              </button>
+            )}
           </div>
         </div>
       )}

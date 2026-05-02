@@ -10,23 +10,29 @@ vi.mock('@/lib/supabase/server', () => ({
 
 import { POST } from './route'
 
+const ACTIVE_LINKED_RECIPES_ERROR = 'Cannot archive coffee profile while it is linked to existing active recipes'
+
 function createRecipesCountQuery(result: { count: number | null; error: { message: string } | null }) {
-  let eqCalls = 0
   const chain = {
     select: vi.fn(() => chain),
-    eq: vi.fn(() => {
-      eqCalls += 1
-      if (eqCalls >= 2) {
-        return Promise.resolve(result)
-      }
-      return chain
-    }),
+    eq: vi.fn(() => chain),
+    then: undefined,
   }
+
+  chain.eq.mockImplementation((column: string) => {
+    if (column === 'archived') {
+      return Promise.resolve(result)
+    }
+    return chain
+  })
 
   return chain
 }
 
-function createArchiveUpdateQuery(result: { data: { id: string; archived_at: string } | null; error: { message: string } | null }) {
+function createArchiveUpdateQuery(result: {
+  data: { id: string; archived_at: string } | null
+  error: { code?: string; message: string } | null
+}) {
   const chain = {
     update: vi.fn(() => chain),
     eq: vi.fn(() => chain),
@@ -43,7 +49,42 @@ describe('POST /api/coffee-profiles/[id]/archive', () => {
     process.env.NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES = 'true'
   })
 
-  it('returns 409 when profile is linked to any recipes', async () => {
+  it('returns 404 when feature flag is disabled', async () => {
+    process.env.NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES = 'false'
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles/profile-1/archive', { method: 'POST' }), {
+      params: Promise.resolve({ id: 'profile-1' }),
+    })
+
+    expect(response.status).toBe(404)
+  })
+
+  it('returns 401 when unauthenticated', async () => {
+    createClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+    })
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles/profile-1/archive', { method: 'POST' }), {
+      params: Promise.resolve({ id: 'profile-1' }),
+    })
+
+    expect(response.status).toBe(401)
+  })
+
+  it('returns 500 when count query fails', async () => {
+    createClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+      from: vi.fn(() => createRecipesCountQuery({ count: null, error: { message: 'count-failed' } })),
+    })
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles/profile-1/archive', { method: 'POST' }), {
+      params: Promise.resolve({ id: 'profile-1' }),
+    })
+
+    expect(response.status).toBe(500)
+  })
+
+  it('returns 409 when profile is linked to active recipes', async () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
       from: vi.fn((table: string) => {
@@ -64,15 +105,58 @@ describe('POST /api/coffee-profiles/[id]/archive', () => {
 
     const body = await response.json()
     expect(response.status).toBe(409)
-    expect(body.error).toBe('Cannot archive coffee profile while it is linked to existing recipes')
+    expect(body.error).toBe(ACTIVE_LINKED_RECIPES_ERROR)
   })
 
-  it('archives when there are no linked recipes', async () => {
+  it('maps trigger conflict error to 409', async () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
       from: vi.fn((table: string) => {
         if (table === 'recipes') {
           return createRecipesCountQuery({ count: 0, error: null })
+        }
+
+        return createArchiveUpdateQuery({
+          data: null,
+          error: { code: 'P0001', message: ACTIVE_LINKED_RECIPES_ERROR },
+        })
+      }),
+    })
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles/profile-1/archive', { method: 'POST' }), {
+      params: Promise.resolve({ id: 'profile-1' }),
+    })
+
+    expect(response.status).toBe(409)
+  })
+
+  it('returns 404 when profile is already archived or missing', async () => {
+    createClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+      from: vi.fn((table: string) => {
+        if (table === 'recipes') {
+          return createRecipesCountQuery({ count: 0, error: null })
+        }
+
+        return createArchiveUpdateQuery({ data: null, error: null })
+      }),
+    })
+
+    const response = await POST(new Request('http://localhost/api/coffee-profiles/profile-1/archive', { method: 'POST' }), {
+      params: Promise.resolve({ id: 'profile-1' }),
+    })
+
+    expect(response.status).toBe(404)
+  })
+
+  it('archives when there are no linked active recipes', async () => {
+    const recipesQuery = createRecipesCountQuery({ count: 0, error: null })
+
+    createClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+      from: vi.fn((table: string) => {
+        if (table === 'recipes') {
+          return recipesQuery
         }
 
         return createArchiveUpdateQuery({
@@ -87,5 +171,6 @@ describe('POST /api/coffee-profiles/[id]/archive', () => {
     })
 
     expect(response.status).toBe(200)
+    expect(recipesQuery.eq).toHaveBeenNthCalledWith(3, 'archived', false)
   })
 })

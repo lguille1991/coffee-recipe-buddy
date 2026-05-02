@@ -68,6 +68,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const method = searchParams.get('method')
   const q = searchParams.get('q')
+  const archived = searchParams.get('archived') === 'true'
   const page = parseInt(searchParams.get('page') ?? '1', 10)
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50)
   try {
@@ -75,6 +76,7 @@ export async function GET(request: Request) {
       userId: user.id,
       method: method ?? undefined,
       q: q ?? undefined,
+      archived,
       page,
       limit,
     })

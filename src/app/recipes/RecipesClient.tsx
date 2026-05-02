@@ -19,6 +19,7 @@ type RecipesClientProps = {
   initialPage: number
   initialMethod: string
   initialQuery: string
+  initialArchived: boolean
   initialHasMore: boolean
 }
 
@@ -27,6 +28,7 @@ export default function RecipesClient({
   initialPage,
   initialMethod,
   initialQuery,
+  initialArchived,
   initialHasMore,
 }: RecipesClientProps) {
   const router = useRouter()
@@ -39,10 +41,11 @@ export default function RecipesClient({
   const [page, setPage] = useState(initialPage)
   const [method, setMethod] = useState(initialMethod)
   const [q, setQ] = useState(initialQuery)
+  const [archived, setArchived] = useState(initialArchived)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [showActionConfirm, setShowActionConfirm] = useState(false)
+  const [bulkMutating, setBulkMutating] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -52,7 +55,8 @@ export default function RecipesClient({
     setPage(initialPage)
     setMethod(initialMethod)
     setQ(initialQuery)
-  }, [initialHasMore, initialMethod, initialPage, initialQuery, initialRecipes])
+    setArchived(initialArchived)
+  }, [initialArchived, initialHasMore, initialMethod, initialPage, initialQuery, initialRecipes])
 
   useEffect(() => {
     return () => {
@@ -62,7 +66,7 @@ export default function RecipesClient({
     }
   }, [])
 
-  function updateUrl(next: { method?: string; q?: string; page?: number }) {
+  function updateUrl(next: { method?: string; q?: string; page?: number; archived?: boolean }) {
     const params = new URLSearchParams(searchParams.toString())
 
     if (next.method !== undefined) {
@@ -80,10 +84,23 @@ export default function RecipesClient({
       else params.delete('page')
     }
 
+    if (next.archived !== undefined) {
+      if (next.archived) params.set('archived', 'true')
+      else params.delete('archived')
+    }
+
     const query = params.toString()
     startTransition(() => {
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
     })
+  }
+
+  function handleArchivedToggle(nextArchived: boolean) {
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+    setActionError(null)
+    setArchived(nextArchived)
+    updateUrl({ archived: nextArchived, page: 1 })
   }
 
   function handleMethodChange(nextMethod: string) {
@@ -117,6 +134,7 @@ export default function RecipesClient({
       })
       if (method) params.set('method', method)
       if (q.trim()) params.set('q', q.trim())
+      if (archived) params.set('archived', 'true')
 
       const response = await fetch(`/api/recipes?${params}`, { cache: 'no-store' })
       if (!response.ok) {
@@ -160,7 +178,7 @@ export default function RecipesClient({
   async function confirmBulkDelete() {
     if (selectedIds.size === 0) return
 
-    setBulkDeleting(true)
+    setBulkMutating(true)
     setActionError(null)
     await runClientMutation({
       execute: async () => {
@@ -177,12 +195,41 @@ export default function RecipesClient({
         setRecipes(prev => prev.filter(recipe => !archivedIds.has(recipe.id)))
         setSelectionMode(false)
         setSelectedIds(new Set())
-        setShowDeleteConfirm(false)
+        setShowActionConfirm(false)
         router.refresh()
       },
       onError: setActionError,
-      onSettled: () => setBulkDeleting(false),
+      onSettled: () => setBulkMutating(false),
       errorMessage: 'Failed to delete selected recipes. Please try again.',
+    })
+  }
+
+  async function confirmBulkRestore() {
+    if (selectedIds.size === 0) return
+
+    setBulkMutating(true)
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch('/api/recipes/bulk-restore', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ recipe_ids: Array.from(selectedIds) }),
+        })
+        await expectOk(response, 'Failed to restore selected recipes')
+        return response.json() as Promise<{ restored_ids?: string[] }>
+      },
+      onSuccess: async (result) => {
+        const restoredIds = new Set(result.restored_ids ?? [])
+        setRecipes(prev => prev.filter(recipe => !restoredIds.has(recipe.id)))
+        setSelectionMode(false)
+        setSelectedIds(new Set())
+        setShowActionConfirm(false)
+        router.refresh()
+      },
+      onError: setActionError,
+      onSettled: () => setBulkMutating(false),
+      errorMessage: 'Failed to restore selected recipes. Please try again.',
     })
   }
 
@@ -209,6 +256,25 @@ export default function RecipesClient({
             className="ui-button-secondary px-4 py-2 text-sm"
           >
             {selectionMode ? 'Done' : 'Select'}
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 sm:px-6 mb-4">
+        <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
+          <button
+            type="button"
+            className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+            onClick={() => handleArchivedToggle(false)}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+            onClick={() => handleArchivedToggle(true)}
+          >
+            Archived
           </button>
         </div>
       </div>
@@ -297,7 +363,9 @@ export default function RecipesClient({
                       onToggle={toggleRecipeSelected}
                     />
                   )
-                  : <RecipeListCard key={recipe.id} recipe={recipe} />
+                  : (
+                    <RecipeListCard key={recipe.id} recipe={recipe} disableLink={archived} />
+                  )
               ))}
             </div>
             {(fetchingMore || isPending) && (
@@ -323,16 +391,16 @@ export default function RecipesClient({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={selectedIds.size === 0 || bulkDeleting}
-                className="ui-button-danger-solid w-full disabled:opacity-40"
+                onClick={() => setShowActionConfirm(true)}
+                disabled={selectedIds.size === 0 || bulkMutating}
+                className={`${archived ? 'ui-button-primary' : 'ui-button-danger-solid'} w-full disabled:opacity-40`}
               >
-                Delete ({selectedIds.size})
+                {archived ? `Restore (${selectedIds.size})` : `Delete (${selectedIds.size})`}
               </button>
               <button
                 type="button"
                 onClick={toggleSelectionMode}
-                disabled={bulkDeleting}
+                disabled={bulkMutating}
                 className="ui-button-secondary w-full"
               >
                 Cancel
@@ -343,14 +411,18 @@ export default function RecipesClient({
       )}
 
       <ConfirmSheet
-        open={showDeleteConfirm}
-        title={`Delete ${selectedIds.size} recipe${selectedIds.size === 1 ? '' : 's'}?`}
-        message="This will archive them and hide them from your recipe list."
-        confirmLabel={`Delete ${selectedIds.size}`}
-        destructive
-        loading={bulkDeleting}
-        onConfirm={confirmBulkDelete}
-        onCancel={() => setShowDeleteConfirm(false)}
+        open={showActionConfirm}
+        title={archived
+          ? `Restore ${selectedIds.size} recipe${selectedIds.size === 1 ? '' : 's'}?`
+          : `Delete ${selectedIds.size} recipe${selectedIds.size === 1 ? '' : 's'}?`}
+        message={archived
+          ? 'This will restore selected recipes back to your active recipe list.'
+          : 'This will archive them and hide them from your recipe list.'}
+        confirmLabel={archived ? `Restore ${selectedIds.size}` : `Delete ${selectedIds.size}`}
+        destructive={!archived}
+        loading={bulkMutating}
+        onConfirm={archived ? confirmBulkRestore : confirmBulkDelete}
+        onCancel={() => setShowActionConfirm(false)}
       />
 
       <div className="h-24" />
