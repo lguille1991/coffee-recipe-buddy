@@ -150,7 +150,7 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
             </p>
           </div>
 
-          <div className="w-full max-w-2xl rounded-2xl overflow-hidden bg-[var(--surface-strong)]">
+          <div className="w-full max-w-2xl rounded-2xl overflow-hidden bg-[var(--surface-strong)] lg:mx-auto">
             {detail.primary_image?.signed_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={detail.primary_image.signed_url} alt={detail.profile.label} className="w-full h-auto object-cover" />

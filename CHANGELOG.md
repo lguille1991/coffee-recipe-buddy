@@ -2,6 +2,10 @@
 
 All notable product-facing changes are documented here.
 
+## [1.19.1] - 2026-05-02
+
+- Centered the saved coffee bag image on large screens in `/coffees/[id]` while preserving current mobile/tablet layout behavior.
+
 ## [1.19.0] - 2026-05-02
 
 - Added bulk recipe deletion on `/recipes` with multi-select mode, `Select all visible`, confirmation, and batch archive action.
