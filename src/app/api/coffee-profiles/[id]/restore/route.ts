@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { buildDuplicateFingerprint, sortDuplicateCandidates, type DuplicateCandidate } from '@/lib/coffee-profile-duplicates'
 import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
+import type { BeanProfile } from '@/types/recipe'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -18,6 +19,39 @@ type ProfileRow = {
   }
   archived_at: string | null
   duplicate_fingerprint: string | null
+}
+
+const PROCESS_VALUES: ReadonlySet<BeanProfile['process']> = new Set([
+  'washed',
+  'natural',
+  'honey',
+  'anaerobic',
+  'carbonic',
+  'thermal_shock',
+  'experimental',
+  'unknown',
+])
+
+const ROAST_VALUES: ReadonlySet<BeanProfile['roast_level']> = new Set([
+  'light',
+  'medium-light',
+  'medium',
+  'medium-dark',
+  'dark',
+])
+
+function normalizeProcess(value: string | null | undefined): BeanProfile['process'] {
+  if (value && PROCESS_VALUES.has(value as BeanProfile['process'])) {
+    return value as BeanProfile['process']
+  }
+  return 'unknown'
+}
+
+function normalizeRoastLevel(value: string | null | undefined): BeanProfile['roast_level'] {
+  if (value && ROAST_VALUES.has(value as BeanProfile['roast_level'])) {
+    return value as BeanProfile['roast_level']
+  }
+  return 'medium'
 }
 
 export async function POST(_request: Request, { params }: Params) {
@@ -51,8 +85,8 @@ export async function POST(_request: Request, { params }: Params) {
       roaster: profile.bean_profile_json.roaster,
       bean_name: profile.bean_profile_json.bean_name,
       origin: profile.bean_profile_json.origin,
-      process: profile.bean_profile_json.process ?? 'unknown',
-      roast_level: profile.bean_profile_json.roast_level ?? 'medium',
+      process: normalizeProcess(profile.bean_profile_json.process),
+      roast_level: normalizeRoastLevel(profile.bean_profile_json.roast_level),
     },
   })
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { buildDuplicateFingerprint } from '@/lib/coffee-profile-duplicates'
 import { assertSavedCoffeeProfilesEnabled } from '@/lib/feature-flags'
 import { createClient } from '@/lib/supabase/server'
+import type { BeanProfile } from '@/types/recipe'
 
 const BulkRestoreProfilesRequestSchema = z.object({
   profile_ids: z.array(z.string().uuid()).min(1).max(2000),
@@ -20,6 +21,39 @@ type ProfileRow = {
     process?: string | null
     roast_level?: string | null
   }
+}
+
+const PROCESS_VALUES: ReadonlySet<BeanProfile['process']> = new Set([
+  'washed',
+  'natural',
+  'honey',
+  'anaerobic',
+  'carbonic',
+  'thermal_shock',
+  'experimental',
+  'unknown',
+])
+
+const ROAST_VALUES: ReadonlySet<BeanProfile['roast_level']> = new Set([
+  'light',
+  'medium-light',
+  'medium',
+  'medium-dark',
+  'dark',
+])
+
+function normalizeProcess(value: string | null | undefined): BeanProfile['process'] {
+  if (value && PROCESS_VALUES.has(value as BeanProfile['process'])) {
+    return value as BeanProfile['process']
+  }
+  return 'unknown'
+}
+
+function normalizeRoastLevel(value: string | null | undefined): BeanProfile['roast_level'] {
+  if (value && ROAST_VALUES.has(value as BeanProfile['roast_level'])) {
+    return value as BeanProfile['roast_level']
+  }
+  return 'medium'
 }
 
 export async function POST(request: Request) {
@@ -59,8 +93,8 @@ export async function POST(request: Request) {
         roaster: row.bean_profile_json.roaster,
         bean_name: row.bean_profile_json.bean_name,
         origin: row.bean_profile_json.origin,
-        process: row.bean_profile_json.process ?? 'unknown',
-        roast_level: row.bean_profile_json.roast_level ?? 'medium',
+        process: normalizeProcess(row.bean_profile_json.process),
+        roast_level: normalizeRoastLevel(row.bean_profile_json.roast_level),
       },
     })
   })))
@@ -92,8 +126,8 @@ export async function POST(request: Request) {
           roaster: row.bean_profile_json.roaster,
           bean_name: row.bean_profile_json.bean_name,
           origin: row.bean_profile_json.origin,
-          process: row.bean_profile_json.process ?? 'unknown',
-          roast_level: row.bean_profile_json.roast_level ?? 'medium',
+          process: normalizeProcess(row.bean_profile_json.process),
+          roast_level: normalizeRoastLevel(row.bean_profile_json.roast_level),
         },
       })
       return activeFingerprintSet.has(fp)
