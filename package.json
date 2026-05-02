@@ -1,6 +1,6 @@
 {
   "name": "crp",
-  "version": "1.18.4",
+  "version": "1.19.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -30,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^6.1.1",

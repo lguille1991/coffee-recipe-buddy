@@ -27,7 +27,7 @@ vi.mock('@/lib/recipe-snapshots', () => ({
   mirrorRecipeLiveSnapshot: mirrorRecipeLiveSnapshotMock,
 }))
 
-import { PATCH } from './route'
+import { DELETE, PATCH } from './route'
 
 const BASE_DETAIL: SavedRecipeDetail = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -170,5 +170,43 @@ describe('PATCH /api/recipes/[id]', () => {
       currentRecipeJson: BASE_RECIPE,
       feedbackHistory: [],
     }))
+  })
+})
+
+describe('DELETE /api/recipes/[id]', () => {
+  beforeEach(() => {
+    createClientMock.mockReset()
+  })
+
+  it('scopes archive update to recipe id, user id, and non-archived rows', async () => {
+    const eq = vi.fn()
+    const update = vi.fn(() => ({ eq }))
+    eq
+      .mockReturnValueOnce({ eq })
+      .mockReturnValueOnce({ eq })
+      .mockResolvedValueOnce({ error: null })
+
+    createClientMock.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: BASE_DETAIL.user_id } },
+        }),
+      },
+      from: vi.fn(() => ({ update })),
+    })
+
+    const response = await DELETE(new Request('http://localhost/api/recipes/111', {
+      method: 'DELETE',
+    }), {
+      params: Promise.resolve({ id: BASE_DETAIL.id }),
+    })
+
+    const payload = await response.json()
+    expect(response.status).toBe(200)
+    expect(payload.success).toBe(true)
+    expect(update).toHaveBeenCalledWith({ archived: true })
+    expect(eq).toHaveBeenNthCalledWith(1, 'id', BASE_DETAIL.id)
+    expect(eq).toHaveBeenNthCalledWith(2, 'user_id', BASE_DETAIL.user_id)
+    expect(eq).toHaveBeenNthCalledWith(3, 'archived', false)
   })
 })

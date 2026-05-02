@@ -2,6 +2,13 @@
 
 All notable product-facing changes are documented here.
 
+## [1.19.0] - 2026-05-02
+
+- Added bulk recipe deletion on `/recipes` with multi-select mode, `Select all visible`, confirmation, and batch archive action.
+- Added `POST /api/recipes/bulk-delete` with authenticated, user-scoped soft-archive behavior and explicit reconciliation payload (`archived_ids`, counts).
+- Hardened `DELETE /api/recipes/:id` to scope archive updates by authenticated user and active rows only.
+- Updated recipes list behavior so bulk-delete removal is reflected immediately in UI and then refreshed from the server for pagination consistency.
+
 ## [1.18.4] - 2026-05-02
 
 - Changed saved-coffee profile generation flow in Methods so `/api/recipes/from-profile` results now navigate directly to `/recipes/:id` using returned `recipeId` instead of entering the unsaved `/recipe` session flow.
