@@ -2,6 +2,14 @@
 
 All notable product-facing changes are documented here.
 
+## [1.22.0] - 2026-05-02
+
+- Added bulk coffee-bag actions on `/coffees` for both active and archived views using selection mode with confirmation.
+- Added `POST /api/coffee-profiles/bulk-archive` for user-scoped batch archiving, including blocked profile reporting when active linked recipes prevent archive.
+- Added `POST /api/coffee-profiles/bulk-restore` for user-scoped batch restore, including blocked profile reporting when active duplicate fingerprints prevent restore.
+- Updated `/coffees` UI to support select mode, `Select all visible`, and one-shot archive/restore actions instead of per-item archived restore buttons.
+- Added tests for both new bulk coffee-profile API routes.
+
 ## [1.21.0] - 2026-05-02
 
 - Replaced per-recipe restore CTAs on archived recipes with bulk selection restore on `/recipes?archived=true` to reduce restore request volume and improve performance for large archived sets.
