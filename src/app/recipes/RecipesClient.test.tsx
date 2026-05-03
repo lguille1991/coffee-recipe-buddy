@@ -9,6 +9,7 @@ import type { RecipeListItem } from '@/types/recipe'
 const routerReplaceMock = vi.fn()
 const routerRefreshMock = vi.fn()
 let searchParamsValue = ''
+let viewportResizeHandler: (() => void) | null = null
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: routerReplaceMock, refresh: routerRefreshMock }),
@@ -93,6 +94,10 @@ function expectRouterReplacePathAndParams(
   expect(Object.fromEntries(params.entries())).toEqual(expectedParams)
 }
 
+function setViewportHeight(height: number) {
+  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: height })
+}
+
 describe('RecipesClient bulk selection mode', () => {
   let container: HTMLDivElement
   let root: Root
@@ -102,6 +107,23 @@ describe('RecipesClient bulk selection mode', () => {
     routerRefreshMock.mockReset()
     searchParamsValue = ''
     vi.restoreAllMocks()
+    viewportResizeHandler = null
+    setViewportHeight(900)
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: {
+        get height() {
+          return this._height
+        },
+        _height: 900,
+        addEventListener: (_event: string, handler: () => void) => {
+          viewportResizeHandler = handler
+        },
+        removeEventListener: () => {
+          viewportResizeHandler = null
+        },
+      },
+    })
     ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
     document.body.innerHTML = ''
@@ -257,5 +279,65 @@ describe('RecipesClient bulk selection mode', () => {
     expect(findButtonByPrefix(container, 'Delete (')).toBeFalsy()
     expect(findButtonByPrefix(container, 'Select all visible')).toBeFalsy()
     expect(findButtonByPrefix(container, 'Select')).toBeFalsy()
+  })
+
+  it('hides bulk action bar when the mobile keyboard opens and restores it when closed', async () => {
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A')]}
+          initialPage={1}
+          initialMethod=""
+          initialQuery=""
+          initialArchived={false}
+          initialSection="my"
+          initialTotalPages={1}
+        />,
+      )
+    })
+
+    await act(async () => { clickButtonByText(container, 'Select') })
+    await act(async () => { clickButtonByText(container, 'Select all visible') })
+    expect(findButtonByPrefix(container, 'Delete (1)')).toBeTruthy()
+
+    await act(async () => {
+      setViewportHeight(900)
+      ;(window.visualViewport as { _height: number })._height = 700
+      viewportResizeHandler?.()
+    })
+    expect(findButtonByPrefix(container, 'Delete (1)')).toBeFalsy()
+
+    await act(async () => {
+      ;(window.visualViewport as { _height: number })._height = 900
+      viewportResizeHandler?.()
+    })
+    expect(findButtonByPrefix(container, 'Delete (1)')).toBeTruthy()
+  })
+
+  it('still hides bulk action bar when keyboard open also shrinks window.innerHeight', async () => {
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A')]}
+          initialPage={1}
+          initialMethod=""
+          initialQuery=""
+          initialArchived={false}
+          initialSection="my"
+          initialTotalPages={1}
+        />,
+      )
+    })
+
+    await act(async () => { clickButtonByText(container, 'Select') })
+    await act(async () => { clickButtonByText(container, 'Select all visible') })
+    expect(findButtonByPrefix(container, 'Delete (1)')).toBeTruthy()
+
+    await act(async () => {
+      setViewportHeight(760)
+      ;(window.visualViewport as { _height: number })._height = 760
+      viewportResizeHandler?.()
+    })
+    expect(findButtonByPrefix(container, 'Delete (1)')).toBeFalsy()
   })
 })

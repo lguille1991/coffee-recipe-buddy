@@ -31,6 +31,10 @@
   --card-shadow-press: 0 4px 12px rgba(15, 23, 42, 0.08);
   --surface-strong: color-mix(in srgb, var(--foreground) 4%, var(--card));
   --surface-overlay: color-mix(in srgb, var(--foreground) 8%, var(--background));
+  --mobile-top-spacer: 3rem;
+  --mobile-nav-safe-gap: calc(env(safe-area-inset-bottom) + 0.5rem);
+  --mobile-nav-reserved-space: calc(var(--mobile-nav-safe-gap) + 5rem);
+  --mobile-floating-offset: calc(var(--mobile-nav-safe-gap) + 4.5rem);
 }
 
 .dark {
@@ -71,7 +75,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
@@ -114,7 +118,7 @@ select {
 }
 
 @utility ui-icon-button {
-  @apply ui-focus-ring ui-pressable inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl text-[var(--foreground)] hover:bg-[var(--surface-strong)] active:bg-[var(--surface-overlay)];
+  @apply ui-focus-ring ui-pressable inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[var(--foreground)] hover:bg-[var(--surface-strong)] active:bg-[var(--surface-overlay)];
 }
 
 @utility ui-card-interactive {
@@ -135,6 +139,22 @@ select {
 
 @utility ui-sticky-footer {
   @apply bg-[color:color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-xl border-t border-[color:color-mix(in_srgb,var(--border)_72%,transparent)] shadow-[0_-8px_24px_rgba(15,23,42,0.06)];
+}
+
+@utility ui-page-shell {
+  @apply flex min-h-screen flex-col;
+}
+
+@utility ui-top-spacer {
+  @apply h-[var(--mobile-top-spacer)];
+}
+
+@utility ui-bottom-spacer {
+  @apply h-[var(--mobile-nav-reserved-space)] lg:h-0;
+}
+
+@utility ui-floating-safe-bottom {
+  @apply bottom-[var(--mobile-floating-offset)] lg:bottom-6;
 }
 
 @utility ui-animate-enter {
@@ -222,7 +242,7 @@ select {
 }
 
 @utility ui-chip {
-  @apply ui-focus-ring ui-pressable min-h-8 rounded-full px-3 py-1.5 text-xs font-medium hover:-translate-y-0;
+  @apply ui-focus-ring ui-pressable min-h-11 rounded-full px-3.5 py-2 text-sm font-medium hover:-translate-y-0;
 }
 
 @utility ui-chip-selected {
