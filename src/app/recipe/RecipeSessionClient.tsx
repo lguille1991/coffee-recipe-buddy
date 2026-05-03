@@ -178,15 +178,15 @@ export default function RecipeSessionClient() {
   const isValid = isManualMode ? validation.valid : true
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="h-12" />
+    <div className="ui-page-shell">
+      <div className="ui-top-spacer" />
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 sm:px-6 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={handleBack}
-            className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center"
+            className="ui-icon-button -ml-2"
           >
             <ArrowLeft className="ui-icon-action" />
           </button>
@@ -198,7 +198,7 @@ export default function RecipeSessionClient() {
         <button
           onClick={handleSave}
           disabled={isSaving || (isManualMode && !isValid)}
-          className="min-h-10 min-w-10 p-2 text-[var(--foreground)] disabled:opacity-50 relative flex items-center justify-center"
+          className="ui-icon-button text-[var(--foreground)] disabled:opacity-50 relative"
           aria-label="Save recipe"
           title={isManualMode && !isValid ? (validation.error ?? 'Complete the recipe before saving') : 'Save recipe'}
         >
@@ -272,6 +272,8 @@ export default function RecipeSessionClient() {
         }}
         onCancel={() => setShowResetConfirm(false)}
       />
+
+      <div className="ui-bottom-spacer" />
     </div>
   )
 }

@@ -50,7 +50,7 @@ export function FeedbackAdjustmentPanel({
   onSwitchMethod,
 }: FeedbackAdjustmentPanelProps) {
   return (
-    <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-24 overflow-y-auto">
+    <div className="flex-1 px-4 sm:px-6 flex flex-col gap-5 pb-6 overflow-y-auto">
       {adjustment && (
         <div className="ui-alert-warning flex flex-col gap-1">
           <div className="flex items-center justify-between">

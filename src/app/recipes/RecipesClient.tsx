@@ -55,6 +55,8 @@ export default function RecipesClient({
   const [showActionConfirm, setShowActionConfirm] = useState(false)
   const [bulkMutating, setBulkMutating] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  const initialViewportHeightRef = useRef<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -63,6 +65,26 @@ export default function RecipesClient({
         clearTimeout(debounceRef.current)
       }
     }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return
+    const viewport = window.visualViewport
+
+    if (initialViewportHeightRef.current === null) {
+      initialViewportHeightRef.current = viewport.height
+    }
+
+    const handleViewportResize = () => {
+      const baselineHeight = initialViewportHeightRef.current ?? viewport.height
+      const open = baselineHeight - viewport.height > 120
+      setKeyboardOpen(open)
+    }
+
+    viewport.addEventListener('resize', handleViewportResize)
+    handleViewportResize()
+
+    return () => viewport.removeEventListener('resize', handleViewportResize)
   }, [])
 
   function updateUrl(next: { method?: string; q?: string; page?: number; archived?: boolean; section?: string }) {
@@ -249,8 +271,8 @@ export default function RecipesClient({
   }
 
   return (
-    <div className="flex flex-col min-h-screen relative">
-      <div className="h-12" />
+    <div className="ui-page-shell">
+      <div className="ui-top-spacer" />
 
       <div className="px-4 sm:px-6 pb-4">
         <div className="flex items-center justify-between gap-3">
@@ -276,7 +298,7 @@ export default function RecipesClient({
                 key={tab.id}
                 type="button"
                 data-testid={`recipe-section-${tab.id}`}
-                className={`px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+              className={`min-h-11 px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleSectionChange(tab.id)}
                 aria-pressed={section === tab.id}
               >
@@ -290,7 +312,7 @@ export default function RecipesClient({
               <button
                 type="button"
                 data-testid="recipe-status-active"
-                className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+                className={`min-h-11 px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleArchivedToggle(false)}
                 aria-pressed={!archived}
               >
@@ -299,7 +321,7 @@ export default function RecipesClient({
               <button
                 type="button"
                 data-testid="recipe-status-archived"
-                className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+                className={`min-h-11 px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleArchivedToggle(true)}
                 aria-pressed={archived}
               >
@@ -414,8 +436,8 @@ export default function RecipesClient({
         )}
       </div>
 
-      {selectionMode && recipes.length > 0 && (
-        <div className="fixed inset-x-0 bottom-16 z-20 px-4 sm:px-6 lg:pl-56 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+      {selectionMode && recipes.length > 0 && !keyboardOpen && (
+        <div className="ui-floating-safe-bottom fixed inset-x-0 z-20 px-4 sm:px-6 lg:pl-56">
           <div className="mx-auto max-w-3xl rounded-2xl border border-[var(--border)] bg-[var(--background)] p-3 shadow-lg">
             <div className="flex flex-col gap-2">
               <button
@@ -448,7 +470,7 @@ export default function RecipesClient({
         onCancel={() => setShowActionConfirm(false)}
       />
 
-      <div className="h-24" />
+      <div className="ui-bottom-spacer" />
     </div>
   )
 }

@@ -1,3 +1,12 @@
+## 1.23.8 - 2026-05-03
+
+- Modernized mobile shell behavior on Home, Recipes, Saved Coffees, and Recipe Session with shared top/bottom spacing utilities and safe-area-aware bottom contracts.
+- Wired `Geist` via `next/font` and removed layout-level inline font overrides for consistent typography.
+- Increased mobile navigation/filter ergonomics with larger tap targets and improved inactive-state readability.
+- Updated selection-mode floating action bars to use shared mobile offsets and auto-hide while the software keyboard is open.
+- Improved manual recipe form mobile readability (single-column on narrow screens) and aligned generated-flow spacing in Recipe Session.
+- Reworked `/recipes` loading skeleton structure to better mirror the loaded layout and reduce perceived spacing jumps.
+
 ## 1.23.7 - 2026-05-03
 
 - Completed `data-testid` coverage for additional recipe and coffee list/detail/session surfaces that were previously untagged.

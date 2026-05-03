@@ -28,9 +28,8 @@ export default async function HomePage() {
     : 'Hey there, what coffee beans do you need a recipe for today?'
 
   return (
-    <div className="flex flex-col min-h-screen relative">
-      {/* Status bar spacer */}
-      <div className="h-12" />
+    <div className="ui-page-shell">
+      <div className="ui-top-spacer" />
 
       <div className="px-4 sm:px-6 pb-4">
         <h1 className="ui-page-title-hero">Coffee Recipe Buddy</h1>
@@ -103,8 +102,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Bottom nav spacer */}
-      <div className="h-24" />
+      <div className="ui-bottom-spacer" />
     </div>
   )
 }

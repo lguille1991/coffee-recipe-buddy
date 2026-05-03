@@ -83,7 +83,7 @@ export default function ManualRecipeForm({
   onStepReorder,
 }: ManualRecipeFormProps) {
   return (
-    <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-24 overflow-y-auto">
+    <div className="flex-1 px-4 sm:px-6 flex flex-col gap-5 pb-6 overflow-y-auto">
       <div>
         <h1 className="ui-page-title-hero">{manualDraft.display_name}</h1>
         <p className="ui-body-muted mt-0.5" data-testid="coffee-name">
@@ -106,7 +106,7 @@ export default function ManualRecipeForm({
 
       <div>
         <h3 className="ui-overline mb-2">Parameters</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="flex flex-col gap-1">
             <span className="ui-overline">Temp (°{tempUnit}) <span className="ui-text-danger">*</span></span>
             <input
