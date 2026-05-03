@@ -278,6 +278,7 @@ export const SavedRecipeSchema = z.object({
   parent_recipe_id: z.string().uuid().nullable().optional(),
   scale_factor: z.number().nullable().optional(),
   coffee_profile_id: z.string().uuid().nullable().optional(),
+  is_favorite: z.boolean().default(false),
 })
 
 export type SavedRecipe = z.infer<typeof SavedRecipeSchema>
@@ -305,11 +306,18 @@ export type SaveRecipeRequest = z.infer<typeof SaveRecipeRequestSchema>
 
 export const RecipeListItemSchema = z.object({
   id: z.string().uuid(),
+  owner_user_id: z.string().uuid(),
   method: z.string(),
   bean_info: BeanProfileSchema,
   image_url: z.string().nullable().optional(),
   created_at: z.string(),
   schema_version: z.number().int(),
+  archived: z.boolean().default(false),
+  is_favorite: z.boolean().default(false),
+  source: z.enum(['owned', 'shared']).default('owned'),
+  can_delete: z.boolean().default(true),
+  can_archive: z.boolean().default(true),
+  can_remove_from_list: z.boolean().default(false),
   is_manual_created: z.boolean().default(false),
   has_manual_edits: z.boolean().default(false),
   has_feedback_adjustments: z.boolean().default(false),

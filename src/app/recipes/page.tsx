@@ -9,6 +9,7 @@ type RecipesPageProps = {
     method?: string | string[]
     q?: string | string[]
     archived?: string | string[]
+    section?: string | string[]
   }>
 }
 
@@ -22,6 +23,8 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const method = getSingleValue(params.method)
   const q = getSingleValue(params.q)
   const archived = getSingleValue(params.archived) === 'true'
+  const sectionParam = getSingleValue(params.section)
+  const section = sectionParam === 'favorites' || sectionParam === 'shared' ? sectionParam : 'my'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -32,22 +35,24 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
   const result = await listRecipesForUser(supabase, {
     userId: user.id,
+    section,
     page,
-    limit: 20,
+    limit: 10,
     method: method || undefined,
     q: q || undefined,
     archived,
-    cumulative: true,
   })
 
   return (
     <RecipesClient
+      key={`${section}:${archived ? 'archived' : 'active'}:${method}:${q}:${result.page}`}
       initialRecipes={result.recipes}
       initialPage={page}
       initialMethod={method}
       initialQuery={q}
       initialArchived={archived}
-      initialHasMore={result.hasMore}
+      initialSection={section}
+      initialTotalPages={result.totalPages}
     />
   )
 }

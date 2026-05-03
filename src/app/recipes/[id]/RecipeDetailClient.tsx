@@ -48,6 +48,7 @@ export default function RecipeDetailClient({
   // Core recipe state
   const [recipe, setRecipe] = useState<SavedRecipeDetail>(initialRecipe)
   const [deleting, setDeleting] = useState(false)
+  const [favoriteMutating, setFavoriteMutating] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -142,6 +143,29 @@ export default function RecipeDetailClient({
     })
   }
 
+  async function handleToggleFavorite() {
+    const nextFavorite = !recipe.is_favorite
+    setFavoriteMutating(true)
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/recipes/${id}/favorite`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ favorite: nextFavorite }),
+        })
+        await expectOk(response, 'Failed to update favorite')
+      },
+      onSuccess: async () => {
+        setRecipe(prev => ({ ...prev, is_favorite: nextFavorite }))
+        router.refresh()
+      },
+      onError: setActionError,
+      onSettled: () => setFavoriteMutating(false),
+      errorMessage: 'Failed to update favorite. Please try again.',
+    })
+  }
+
   function handleOpenBrewMode() {
     router.push(`/recipes/${id}/brew`)
   }
@@ -196,14 +220,30 @@ export default function RecipeDetailClient({
               )}
             </button>
             <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="ui-icon-button ui-text-danger"
-              aria-label="Delete recipe"
+              onClick={handleToggleFavorite}
+              disabled={favoriteMutating}
+              className={`ui-icon-button disabled:opacity-40 ${recipe.is_favorite ? 'text-amber-500' : 'text-[var(--muted-foreground)]'}`}
+              aria-label={recipe.is_favorite ? 'Unfavorite recipe' : 'Favorite recipe'}
             >
-              <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
-                <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {favoriteMutating ? (
+                <div className="w-[18px] h-[18px] border-2 border-[var(--muted-foreground)] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="ui-icon-action" viewBox="0 0 18 18" fill={recipe.is_favorite ? 'currentColor' : 'none'}>
+                  <path d="M9 2.7L10.9 6.5L15.1 7.1L12.1 10L12.8 14.2L9 12.2L5.2 14.2L5.9 10L2.9 7.1L7.1 6.5L9 2.7Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+                </svg>
+              )}
             </button>
+            {!recipe.is_favorite && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="ui-icon-button ui-text-danger"
+                aria-label="Delete recipe"
+              >
+                <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
       </div>

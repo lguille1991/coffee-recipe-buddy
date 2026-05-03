@@ -1,3 +1,28 @@
+## 1.23.4 - 2026-05-02
+
+- Fixed Vercel TypeScript build error in shared recipe query typing by normalizing Supabase relation payloads where `recipe` may be an object or array.
+
+## 1.23.3 - 2026-05-02
+
+- Moved favorite/unfavorite interaction to recipe detail only and added a star icon inline with share/delete controls.
+- Removed favorite toggle actions from the `/recipes` list view while preserving shared-recipes remove-from-list actions.
+
+## 1.23.2 - 2026-05-02
+
+- Added defensive fallbacks when `recipe_user_favorites` or `recipe_share_memberships` tables are missing so list/detail pages do not crash before DB migrations are applied.
+
+## 1.23.1 - 2026-05-02
+
+- Fixed Next.js 16/Turbopack startup error by removing inline `<script>` from root layout and moving theme initialization to a client-side initializer component.
+
+## 1.23.0 - 2026-05-02
+
+- Added Recipes tabs for `Favorites`, `My Recipes`, and `Shared Recipes` with server-driven numbered pagination (10 per page).
+- Added per-user recipe favorites with star indicators, pinned ordering, and favorite/unfavorite actions across owned and shared lists.
+- Added recipient shared-membership support and a `Remove from my list` action for shared recipes.
+- Blocked favorite recipe deletion server-side and hid delete actions for favorites in recipe detail/list flows.
+- Added new route handlers for favorite toggling and shared-membership removal, plus migration for favorites/memberships tables and RLS.
+
 # Changelog
 
 All notable product-facing changes are documented here.

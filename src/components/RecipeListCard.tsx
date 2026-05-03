@@ -54,6 +54,13 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
         </div>
       </div>
       <div className="text-right shrink-0">
+        {recipe.is_favorite && (
+          <div className="flex justify-end mb-1 text-amber-500" aria-label="Favorite recipe">
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 2.6L12.4 7.4L17.7 8.1L13.9 11.8L14.8 17.1L10 14.5L5.2 17.1L6.1 11.8L2.3 8.1L7.6 7.4L10 2.6Z" />
+            </svg>
+          </div>
+        )}
         <p className="ui-meta">{date}</p>
         <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)] transition-transform duration-200 ease-out group-hover:translate-x-0.5" viewBox="0 0 14 14" fill="none">
           <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

@@ -69,19 +69,22 @@ export async function GET(request: Request) {
   const method = searchParams.get('method')
   const q = searchParams.get('q')
   const archived = searchParams.get('archived') === 'true'
+  const sectionParam = searchParams.get('section')
+  const section = sectionParam === 'favorites' || sectionParam === 'shared' ? sectionParam : 'my'
   const page = parseInt(searchParams.get('page') ?? '1', 10)
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '10', 10), 50)
   try {
-    const { recipes } = await listRecipesForUser(supabase, {
+    const { recipes, totalCount, totalPages } = await listRecipesForUser(supabase, {
       userId: user.id,
+      section,
       method: method ?? undefined,
       q: q ?? undefined,
-      archived,
+      archived: section === 'my' ? archived : false,
       page,
       limit,
     })
 
-    return NextResponse.json({ recipes, page, limit }, {
+    return NextResponse.json({ recipes, page, limit, totalCount, totalPages }, {
       headers: { 'Cache-Control': 'private, no-store' },
     })
   } catch (error) {

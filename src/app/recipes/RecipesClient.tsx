@@ -14,13 +14,20 @@ const METHOD_FILTERS: { id: string; label: string }[] = [
   ...Object.entries(METHOD_DISPLAY_NAMES).map(([id, label]) => ({ id, label })),
 ]
 
+const SECTION_TABS: Array<{ id: 'favorites' | 'my' | 'shared'; label: string }> = [
+  { id: 'favorites', label: 'Favorites' },
+  { id: 'my', label: 'My Recipes' },
+  { id: 'shared', label: 'Shared Recipes' },
+]
+
 type RecipesClientProps = {
   initialRecipes: RecipeListItem[]
   initialPage: number
   initialMethod: string
   initialQuery: string
   initialArchived: boolean
-  initialHasMore: boolean
+  initialSection: 'favorites' | 'my' | 'shared'
+  initialTotalPages: number
 }
 
 export default function RecipesClient({
@@ -29,34 +36,26 @@ export default function RecipesClient({
   initialMethod,
   initialQuery,
   initialArchived,
-  initialHasMore,
+  initialSection,
+  initialTotalPages,
 }: RecipesClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [recipes, setRecipes] = useState(initialRecipes)
-  const [fetchingMore, setFetchingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(initialHasMore)
-  const [page, setPage] = useState(initialPage)
+  const [page] = useState(initialPage)
   const [method, setMethod] = useState(initialMethod)
   const [q, setQ] = useState(initialQuery)
   const [archived, setArchived] = useState(initialArchived)
+  const [section, setSection] = useState(initialSection)
+  const [totalPages] = useState(initialTotalPages)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showActionConfirm, setShowActionConfirm] = useState(false)
   const [bulkMutating, setBulkMutating] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    setRecipes(initialRecipes)
-    setHasMore(initialHasMore)
-    setPage(initialPage)
-    setMethod(initialMethod)
-    setQ(initialQuery)
-    setArchived(initialArchived)
-  }, [initialArchived, initialHasMore, initialMethod, initialPage, initialQuery, initialRecipes])
 
   useEffect(() => {
     return () => {
@@ -66,7 +65,7 @@ export default function RecipesClient({
     }
   }, [])
 
-  function updateUrl(next: { method?: string; q?: string; page?: number; archived?: boolean }) {
+  function updateUrl(next: { method?: string; q?: string; page?: number; archived?: boolean; section?: string }) {
     const params = new URLSearchParams(searchParams.toString())
 
     if (next.method !== undefined) {
@@ -89,30 +88,44 @@ export default function RecipesClient({
       else params.delete('archived')
     }
 
+    if (next.section !== undefined) {
+      if (next.section && next.section !== 'my') params.set('section', next.section)
+      else params.delete('section')
+    }
+
     const query = params.toString()
     startTransition(() => {
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
     })
   }
 
-  function handleArchivedToggle(nextArchived: boolean) {
+  function resetSelectionState() {
     setSelectionMode(false)
     setSelectedIds(new Set())
     setActionError(null)
+  }
+
+  function handleArchivedToggle(nextArchived: boolean) {
+    resetSelectionState()
     setArchived(nextArchived)
     updateUrl({ archived: nextArchived, page: 1 })
   }
 
+  function handleSectionChange(nextSection: 'favorites' | 'my' | 'shared') {
+    resetSelectionState()
+    setSection(nextSection)
+    if (nextSection !== 'my') setArchived(false)
+    updateUrl({ section: nextSection, archived: nextSection === 'my' ? archived : false, page: 1 })
+  }
+
   function handleMethodChange(nextMethod: string) {
-    setSelectionMode(false)
-    setSelectedIds(new Set())
+    resetSelectionState()
     setMethod(nextMethod)
     updateUrl({ method: nextMethod, page: 1 })
   }
 
   function handleSearchChange(value: string) {
-    setSelectionMode(false)
-    setSelectedIds(new Set())
+    resetSelectionState()
     setQ(value)
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -121,38 +134,12 @@ export default function RecipesClient({
     }, 400)
   }
 
-  async function handleLoadMore() {
-    if (selectionMode || fetchingMore || !hasMore) return
-
-    const nextPage = page + 1
-    setFetchingMore(true)
-
-    try {
-      const params = new URLSearchParams({
-        page: String(nextPage),
-        limit: '20',
-      })
-      if (method) params.set('method', method)
-      if (q.trim()) params.set('q', q.trim())
-      if (archived) params.set('archived', 'true')
-
-      const response = await fetch(`/api/recipes?${params}`, { cache: 'no-store' })
-      if (!response.ok) {
-        throw new Error('Failed to load more recipes')
-      }
-
-      const data = await response.json()
-      const nextRecipes = (data.recipes ?? []) as RecipeListItem[]
-      setRecipes(prev => [...prev, ...nextRecipes])
-      setHasMore(nextRecipes.length === 20)
-      setPage(nextPage)
-      updateUrl({ page: nextPage })
-    } finally {
-      setFetchingMore(false)
-    }
+  function goToPage(nextPage: number) {
+    updateUrl({ page: nextPage })
   }
 
   function toggleSelectionMode() {
+    if (section !== 'my') return
     setSelectionMode(prev => !prev)
     setSelectedIds(new Set())
     setActionError(null)
@@ -168,11 +155,30 @@ export default function RecipesClient({
   }
 
   function selectVisible() {
-    setSelectedIds(new Set(recipes.map(recipe => recipe.id)))
+    const selectableIds = recipes.filter(recipe => recipe.can_archive || archived).map(recipe => recipe.id)
+    setSelectedIds(new Set(selectableIds))
   }
 
   function clearSelection() {
     setSelectedIds(new Set())
+  }
+
+  async function handleRemoveFromMyList(recipeId: string) {
+    setActionError(null)
+    await runClientMutation({
+      execute: async () => {
+        const response = await fetch(`/api/recipes/${recipeId}/shared-membership`, {
+          method: 'DELETE',
+        })
+        await expectOk(response, 'Failed to remove shared recipe')
+      },
+      onSuccess: async () => {
+        setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId))
+        router.refresh()
+      },
+      onError: setActionError,
+      errorMessage: 'Failed to remove shared recipe from your list. Please try again.',
+    })
   }
 
   async function confirmBulkDelete() {
@@ -193,8 +199,7 @@ export default function RecipesClient({
       onSuccess: async (result) => {
         const archivedIds = new Set(result.archived_ids ?? [])
         setRecipes(prev => prev.filter(recipe => !archivedIds.has(recipe.id)))
-        setSelectionMode(false)
-        setSelectedIds(new Set())
+        resetSelectionState()
         setShowActionConfirm(false)
         router.refresh()
       },
@@ -222,8 +227,7 @@ export default function RecipesClient({
       onSuccess: async (result) => {
         const restoredIds = new Set(result.restored_ids ?? [])
         setRecipes(prev => prev.filter(recipe => !restoredIds.has(recipe.id)))
-        setSelectionMode(false)
-        setSelectedIds(new Set())
+        resetSelectionState()
         setShowActionConfirm(false)
         router.refresh()
       },
@@ -234,6 +238,7 @@ export default function RecipesClient({
   }
 
   const showInitialLoading = isPending && recipes.length === 0
+  const canSelect = section === 'my'
 
   if (showInitialLoading) {
     return (
@@ -249,35 +254,54 @@ export default function RecipesClient({
 
       <div className="px-4 sm:px-6 pb-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="ui-page-title">My Recipes</h1>
-          <button
-            type="button"
-            onClick={toggleSelectionMode}
-            className="ui-button-secondary px-4 py-2 text-sm"
-          >
-            {selectionMode ? 'Done' : 'Select'}
-          </button>
+          <h1 className="ui-page-title">Recipes</h1>
+          {canSelect && (
+            <button
+              type="button"
+              onClick={toggleSelectionMode}
+              className="ui-button-secondary px-4 py-2 text-sm"
+            >
+              {selectionMode ? 'Done' : 'Select'}
+            </button>
+          )}
         </div>
       </div>
 
       <div className="px-4 sm:px-6 mb-4">
         <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
-            onClick={() => handleArchivedToggle(false)}
-          >
-            Active
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
-            onClick={() => handleArchivedToggle(true)}
-          >
-            Archived
-          </button>
+          {SECTION_TABS.map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+              onClick={() => handleSectionChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
+
+      {section === 'my' && (
+        <div className="px-4 sm:px-6 mb-4">
+          <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+              onClick={() => handleArchivedToggle(false)}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+              onClick={() => handleArchivedToggle(true)}
+            >
+              Archived
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 sm:px-6 mb-3">
         <div className="relative">
@@ -315,73 +339,66 @@ export default function RecipesClient({
 
       {selectionMode && recipes.length > 0 && (
         <div className="px-4 sm:px-6 mb-3 flex items-center justify-between">
-          <div className="ui-meta">
-            {selectedIds.size} selected
-          </div>
+          <div className="ui-meta">{selectedIds.size} selected</div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={selectVisible}
-              className="ui-button-secondary px-3 py-1.5 text-sm"
-            >
-              Select all visible
-            </button>
-            <button
-              type="button"
-              onClick={clearSelection}
-              className="ui-button-secondary px-3 py-1.5 text-sm"
-            >
-              Clear
-            </button>
+            <button type="button" onClick={selectVisible} className="ui-button-secondary px-3 py-1.5 text-sm">Select all visible</button>
+            <button type="button" onClick={clearSelection} className="ui-button-secondary px-3 py-1.5 text-sm">Clear</button>
           </div>
         </div>
       )}
 
       <div className={`flex-1 px-4 sm:px-6 flex flex-col gap-2 md:gap-3 ${selectionMode ? 'pb-44' : 'pb-8'}`}>
-        {actionError && (
-          <div className="ui-alert-danger text-sm">
-            {actionError}
-          </div>
-        )}
+        {actionError && <div className="ui-alert-danger text-sm">{actionError}</div>}
         {!isPending && recipes.length === 0 ? (
           <div className="bg-[var(--card)] rounded-2xl p-8 text-center mt-4">
             <p className="ui-body-muted">No recipes found.</p>
-            <Link href="/scan" className="ui-meta text-[var(--foreground)] font-medium underline mt-2 block">
-              Scan your first bag
-            </Link>
+            <Link href="/scan" className="ui-meta text-[var(--foreground)] font-medium underline mt-2 block">Scan your first bag</Link>
           </div>
         ) : (
-          <>
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
-              {recipes.map(recipe => (
-                selectionMode
-                  ? (
-                    <SelectableRecipeListCard
-                      key={recipe.id}
-                      recipe={recipe}
-                      selected={selectedIds.has(recipe.id)}
-                      onToggle={toggleRecipeSelected}
-                    />
-                  )
-                  : (
-                    <RecipeListCard key={recipe.id} recipe={recipe} disableLink={archived} />
-                  )
-              ))}
-            </div>
-            {(fetchingMore || isPending) && (
-              <div className="flex justify-center py-6">
-                <div className="w-6 h-6 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
+            {recipes.map(recipe => (
+              <div key={recipe.id} className="space-y-1.5">
+                {selectionMode
+                  ? <SelectableRecipeListCard recipe={recipe} selected={selectedIds.has(recipe.id)} onToggle={toggleRecipeSelected} />
+                  : <RecipeListCard recipe={recipe} disableLink={section === 'my' && archived} />}
+                {!selectionMode && (
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {recipe.can_remove_from_list && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFromMyList(recipe.id)}
+                        className="ui-button-secondary px-3 py-1.5 text-xs"
+                      >
+                        Remove from my list
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            {!selectionMode && !fetchingMore && !isPending && hasMore && (
-              <button
-                onClick={handleLoadMore}
-                className="ui-button-secondary w-full text-[var(--muted-foreground)]"
-              >
-                Load more
-              </button>
-            )}
-          </>
+            ))}
+          </div>
+        )}
+
+        {!selectionMode && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <button
+              type="button"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1 || isPending}
+              className="ui-button-secondary px-3 py-1.5 text-sm disabled:opacity-40"
+            >
+              Prev
+            </button>
+            <p className="ui-meta">Page {page} of {totalPages}</p>
+            <button
+              type="button"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages || isPending}
+              className="ui-button-secondary px-3 py-1.5 text-sm disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
 
@@ -397,14 +414,7 @@ export default function RecipesClient({
               >
                 {archived ? `Restore (${selectedIds.size})` : `Delete (${selectedIds.size})`}
               </button>
-              <button
-                type="button"
-                onClick={toggleSelectionMode}
-                disabled={bulkMutating}
-                className="ui-button-secondary w-full"
-              >
-                Cancel
-              </button>
+              <button type="button" onClick={toggleSelectionMode} disabled={bulkMutating} className="ui-button-secondary w-full">Cancel</button>
             </div>
           </div>
         </div>

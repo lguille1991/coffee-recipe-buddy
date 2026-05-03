@@ -179,6 +179,11 @@ describe('DELETE /api/recipes/[id]', () => {
   })
 
   it('scopes archive update to recipe id, user id, and non-archived rows', async () => {
+    const favoriteMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    const favoriteEqSecond = vi.fn(() => ({ maybeSingle: favoriteMaybeSingle }))
+    const favoriteEqFirst = vi.fn(() => ({ eq: favoriteEqSecond }))
+    const favoriteSelect = vi.fn(() => ({ eq: favoriteEqFirst }))
+
     const eq = vi.fn()
     const update = vi.fn(() => ({ eq }))
     eq
@@ -192,7 +197,10 @@ describe('DELETE /api/recipes/[id]', () => {
           data: { user: { id: BASE_DETAIL.user_id } },
         }),
       },
-      from: vi.fn(() => ({ update })),
+      from: vi.fn((table: string) => {
+        if (table === 'recipe_user_favorites') return { select: favoriteSelect }
+        return { update }
+      }),
     })
 
     const response = await DELETE(new Request('http://localhost/api/recipes/111', {
