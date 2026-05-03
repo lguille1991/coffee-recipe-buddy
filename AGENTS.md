@@ -1,73 +1,76 @@
-# AI Coding Guidelines — READ FIRST
+# AI Coding Rules (Repo Entry Point)
 
-**ALWAYS read `.agents/docs/REACT_BEST_PRACTICES.md` before making any code changes.** This document contains mandatory standards for React, Next.js, TypeScript, and Tailwind CSS that supersede general training knowledge.
+This file is the policy entrypoint for AI agents in this repo.
 
-## Quick Compliance Checklist
+## Precedence
+- Read `.agents/docs/REACT_BEST_PRACTICES.md` before any code change.
+- That doc is authoritative for React/Next.js/TypeScript/Tailwind implementation practices.
+- If a repo-specific rule in this file conflicts with generic framework guidance, this file wins for this repository.
 
-Before writing or modifying code, verify:
-- [ ] Read `.agents/docs/REACT_BEST_PRACTICES.md` — Performance, architecture, and code quality standards
-- [ ] No async waterfalls — use `Promise.all()` for independent operations
-- [ ] No boolean prop proliferation — use composition instead
-- [ ] No components defined inside components
-- [ ] Server Actions have auth checks
-- [ ] Bump `package.json` version following SemVer (see below)
+## Repo Invariants
+- Next.js guidance can differ from training data. Check relevant docs in `node_modules/next/dist/docs/` when behavior or APIs are uncertain.
+- Supabase SSR only:
+  - Browser: `src/lib/supabase/client.ts`
+  - Server/API/RSC: `src/lib/supabase/server.ts`
+  - Do not use `@supabase/auth-helpers-nextjs`.
+- Auth profile sync invariant:
+  - Keep `profiles.display_name` synced from Supabase auth metadata when blank, including Google OAuth flows (`src/lib/auth-profile.ts`).
+- OpenRouter invariant:
+  - Use shared setup in `src/lib/openrouter.ts`; do not create ad hoc clients in route handlers.
+  - Preserve tracking ID format:
+    - Authenticated: `crp:<display-slug>:<short-user-id>` or `crp:<short-user-id>`
+    - Guest: `guest:<persistent-cookie-id>`
+- Route handler params are async in this app shape. Always `await params` before destructuring.
 
----
+## Change Hygiene
+- Bump `package.json` version for code changes using SemVer:
+  - MAJOR: breaking changes
+  - MINOR: new features
+  - PATCH: fixes/refinements
+- Skip version bump for docs-only changes, test-only changes, and dependency updates with no behavior/API impact.
+- Include user-facing updates in `CHANGELOG.md` when applicable.
 
-# This is NOT the Next.js you know
+## Handoff Requirements
+- Include at least one concise suggested commit message in final handoff when code changes are made.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+## Plan Output Requirement
+- When asked to create a plan (or operating in plan mode), store it as checklist-style markdown in `.claude/plans/`.
 
-# Supabase SSR
-
-This project uses `@supabase/ssr`. Do **not** use `@supabase/auth-helpers-nextjs` (deprecated). Always import from:
-- `src/lib/supabase/client.ts` for browser components
-- `src/lib/supabase/server.ts` for API routes and Server Components
-
-Google OAuth names should be preserved through `src/lib/auth-profile.ts`. If you touch profile bootstrap or auth callback flows, keep `profiles.display_name` synced from Supabase auth metadata when it is blank.
-
-# OpenRouter
-
-OpenRouter request setup is centralized in `src/lib/openrouter.ts`. Do not instantiate ad hoc OpenRouter clients in route handlers.
-
-Use the shared helper so requests consistently include:
-- app attribution headers (`HTTP-Referer`, `X-Title`)
-- authenticated tracking IDs as readable, stable identifiers for operator cost attribution:
-  `crp:<display-slug>:<short-user-id>` when a display name exists, otherwise `crp:<short-user-id>`
-- guest tracking IDs as `guest:<persistent-cookie-id>`
-
-This readable authenticated tracking ID format is intentional in this repo. Do not "fix" it back to a raw Supabase user ID unless the product requirement changes.
-
-Route handlers receive `params` as a `Promise` — always `await params` before destructuring.
-
-# Route handler params
-
-```ts
-// Correct
-type Params = { params: Promise<{ id: string }> }
-export async function GET(_req: Request, { params }: Params) {
-  const { id } = await params
-}
-```
-
-# Version Bumping
-
-**ALWAYS bump `package.json` version when introducing code changes.** Follow SemVer logic:
-
-- **MAJOR (X.0.0)**: Breaking changes — API route removals, breaking DB migrations, auth flow changes, feature removals
-- **MINOR (0.X.0)**: New features — new API endpoints, new components/flows, new brew methods, new user-facing options
-- **PATCH (0.0.X)**: Fixes/refinements — bug fixes, typos, styling adjustments, performance improvements, pure refactors
-
-**Process**: Read `package.json` → determine bump level based on change type → update `"version"` field → include in the same commit as the code changes.
-
-**Skip for**: Docs-only updates, test additions, dependency bumps with no API changes.
-
-# Commit Message Suggestion
-
-When an AI agent finishes implementing a plan that involves code changes:
-- It MUST always include at least one concise suggested commit message in its final handoff.
-- Add user facing changelog to the CHAGELOG.md file.
-
-# Plan Mode Output
-
-When operating in **plan mode** OR when users request to create a plan, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` and directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.
+## Code Change Workflow
+- Scope:
+  - Applies to requested code changes (app/runtime code, tests, configs, scripts, dependency-impacting edits).
+  - Does not apply to docs-only changes unless the user explicitly asks to use this workflow.
+- Step 1: Plan first, then wait.
+  - Provide a detailed implementation plan and prefer the simplest viable approach.
+  - Wait for explicit user approval before implementation, even outside plan mode.
+  - Save the plan as checklist markdown in `.claude/plans/`.
+  - Record baseline metadata in the plan before coding:
+    - pre-existing dirty files,
+    - task-owned files.
+- Step 2: Implement after approval.
+  - Implement only after approval.
+  - Mark completed checklist items in the written plan.
+  - Apply release hygiene before review when required (`package.json` SemVer and `CHANGELOG.md` updates).
+- Step 3: Review immediately after implementation.
+  - Run `review-recent-changes` (prefer skill/agent; fallback to manual findings-first review).
+  - Deterministic fallback scope:
+    - clean baseline: review full working-tree diff,
+    - dirty baseline + task-owned file clean at baseline: review task-owned file diff only,
+    - dirty baseline + task-owned file already dirty: review full current diff for that file and explicitly label mixed provenance.
+  - Report findings and wait before further fixes.
+- Step 4: Commit-readiness checkpoint.
+  - If review has no issues, ask whether to proceed to commit-readiness validation.
+  - If user manually tests and reports issues, return to Step 2 (approval before fixes), then Step 3.
+- Step 5: Validate before commit recommendation.
+  - Run validation only after user confirms commit readiness.
+  - Prefer `test-runner` role when available in session tooling; fallback to commands.
+  - Minimum command: `npm test`.
+  - Additional repo gates: `npm run lint` and `npm run build`.
+  - If validation passes and no blocking issues remain, provide at least one recommended commit message.
+- Rework loop:
+  - If review finds issues, present findings and wait for approval before fixes.
+  - For each approved fix batch, update the plan checklist and refresh metadata if changed:
+    - task-owned file list,
+    - newly observed ambient dirty files.
+  - After fixes: rerun Step 2 release hygiene check, then Step 3 review.
+  - If Step 5 validation fails: report failures, request fix approval, apply fixes, then return to Step 3 before asking commit readiness again.
