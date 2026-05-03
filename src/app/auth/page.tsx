@@ -146,6 +146,7 @@ function AuthForm() {
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            data-testid="account-email"
             required
             autoComplete="email"
             placeholder="you@example.com"
@@ -161,6 +162,7 @@ function AuthForm() {
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            data-testid="account-password"
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder="••••••••"
@@ -171,6 +173,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
+          data-testid={mode === 'signin' ? 'sign-in-submit' : 'create-account-submit'}
           className="w-full ui-button-primary mt-1 font-semibold"
         >
           {loading ? (
@@ -188,6 +191,7 @@ function AuthForm() {
       <button
         onClick={handleGoogleOAuth}
         disabled={loading}
+        data-testid="google-auth-submit"
         className="w-full ui-button-secondary gap-2.5"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">

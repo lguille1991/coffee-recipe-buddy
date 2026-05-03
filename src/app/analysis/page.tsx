@@ -59,12 +59,14 @@ function EditableField({
   value,
   onChange,
   confidence,
+  testId,
   type = 'text',
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   confidence?: number
+  testId: string
   type?: string
 }) {
   return (
@@ -77,6 +79,7 @@ function EditableField({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
+        data-testid={testId}
         className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
       />
     </div>
@@ -420,11 +423,12 @@ export default function AnalysisPage() {
               type="text"
               value={bean.bean_name || ''}
               onChange={e => updateField('bean_name', e.target.value || undefined)}
+              data-testid="coffee-name"
               placeholder="Unknown Bean"
               className="w-full font-semibold text-[var(--foreground)] text-base bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
             />
-            <p className="ui-body-muted mt-0.5">{bean.roaster || 'Unknown Roaster'}</p>
-            <p className="ui-body-muted mt-0.5">
+            <p className="ui-body-muted mt-0.5" data-testid="roaster">{bean.roaster || 'Unknown Roaster'}</p>
+            <p className="ui-body-muted mt-0.5" data-testid="roast-level-display">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
             </p>
           </div>
@@ -439,24 +443,28 @@ export default function AnalysisPage() {
               value={bean.origin || ''}
               onChange={v => updateField('origin', v || undefined)}
               confidence={extraction.confidence.origin}
+              testId="bean-origin"
             />
             <EditableField
               label="Roast"
               value={ROAST_LABELS[bean.roast_level] || bean.roast_level}
               onChange={v => updateField('roast_level', v.toLowerCase().replace(' ', '-') as BeanProfile['roast_level'])}
               confidence={extraction.confidence.roast_level}
+              testId="roast-level-input"
             />
             <EditableField
               label="Process"
               value={PROCESS_LABELS[bean.process] || bean.process}
               onChange={v => updateField('process', v.toLowerCase() as BeanProfile['process'])}
               confidence={extraction.confidence.process}
+              testId="bean-process"
             />
             <EditableField
               label="Altitude"
               value={bean.altitude_masl ? `${bean.altitude_masl}m` : ''}
               onChange={v => updateField('altitude_masl', parseInt(v) || undefined)}
               confidence={extraction.confidence.altitude_masl}
+              testId="altitude"
             />
           </div>
         </div>
@@ -483,6 +491,7 @@ export default function AnalysisPage() {
               type="date"
               value={roastDate}
               max={new Date().toISOString().split('T')[0]}
+              data-testid="roast-date"
               onChange={e => {
                 const selected = e.target.value
                 const today = new Date().toISOString().split('T')[0]
@@ -510,6 +519,7 @@ export default function AnalysisPage() {
               inputMode="numeric"
               pattern="[0-9]*"
               value={targetVolume}
+              data-testid="target-volume"
               onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
               onChange={e => {
                 const val = e.target.value
@@ -537,6 +547,7 @@ export default function AnalysisPage() {
                 key={option.value}
                 type="button"
                 onClick={() => setBrewGoal(option.value)}
+                data-testid={`brew-goal-${option.value}`}
                 className={`rounded-xl border p-3 text-left transition-colors ${
                   brewGoal === option.value
                     ? 'border-[var(--foreground)] bg-[var(--surface-subtle)]'
@@ -560,6 +571,7 @@ export default function AnalysisPage() {
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
                   onClick={() => router.push(`/coffees/${savedProfileId}`)}
+                  data-testid="view-saved-coffee"
                   className="w-full ui-button-secondary"
                 >
                   View Saved Coffee
@@ -567,6 +579,7 @@ export default function AnalysisPage() {
                 <button
                   onClick={handleSaveAndGenerate}
                   disabled={generating}
+                  data-testid="generate-recipe-now"
                   className="w-full ui-button-primary"
                 >
                   {generating ? 'Generating...' : 'Generate Recipe Now'}
@@ -585,6 +598,7 @@ export default function AnalysisPage() {
             <button
               onClick={handleSaveProfileOnly}
               disabled={savingProfileOnly || generating}
+              data-testid="save-coffee-profile"
               className="w-full ui-button-secondary font-semibold disabled:opacity-50"
             >
               {savingProfileOnly ? 'Saving coffee...' : 'Save Coffee'}
@@ -594,6 +608,7 @@ export default function AnalysisPage() {
           <button
             onClick={handleSaveAndGenerate}
             disabled={generating || savingProfileOnly}
+            data-testid="save-and-generate-recipe"
             className="w-full ui-button-primary font-semibold disabled:opacity-50"
           >
             {generating ? (

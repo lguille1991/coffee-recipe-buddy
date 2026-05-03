@@ -86,7 +86,7 @@ export default function ManualRecipeForm({
     <div className="flex-1 px-4 sm:px-6 flex flex-col gap-4 pb-24 overflow-y-auto">
       <div>
         <h1 className="ui-page-title-hero">{manualDraft.display_name}</h1>
-        <p className="ui-body-muted mt-0.5">
+        <p className="ui-body-muted mt-0.5" data-testid="coffee-name">
           {manualDraft.bean_info.bean_name || manualDraft.bean_info.origin || 'Your Coffee'}
           {manualDraft.bean_info.roast_level ? ` · ${manualDraft.bean_info.roast_level.charAt(0).toUpperCase() + manualDraft.bean_info.roast_level.slice(1)} Roast` : ''}
         </p>
@@ -116,6 +116,7 @@ export default function ManualRecipeForm({
               max={tempUnit === 'F' ? 212 : 100}
               step={1}
               value={manualDraft.edit_draft.temperature_display}
+              data-testid="brew-temp"
               onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
               onChange={event => updateDraft(current => ({
                 ...current,
@@ -132,6 +133,7 @@ export default function ManualRecipeForm({
               inputMode="numeric"
               placeholder="e.g. 1:00-1:45"
               value={manualDraft.edit_draft.total_time}
+              data-testid="brew-time"
               onChange={event => updateDraft(current => ({
                 ...current,
                 edit_draft: { ...current.edit_draft, total_time: sanitizeManualBrewTimeInput(event.target.value) },
@@ -147,6 +149,7 @@ export default function ManualRecipeForm({
               min={1}
               step={0.1}
               value={manualDraft.edit_draft.coffee_g || ''}
+              data-testid="coffee-amount"
               onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
               onChange={event => updateDraft(current => {
                 const coffee = event.target.value === '' ? 0 : Math.max(0, parseFloat(event.target.value) || 0)
@@ -171,6 +174,7 @@ export default function ManualRecipeForm({
               min={1}
               step={0.1}
               value={manualDraft.edit_draft.water_g || ''}
+              data-testid="water-amount"
               onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
               onChange={event => updateDraft(current => {
                 const water = event.target.value === '' ? 0 : Math.max(0, parseFloat(event.target.value) || 0)

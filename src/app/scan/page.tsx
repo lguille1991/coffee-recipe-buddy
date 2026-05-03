@@ -83,6 +83,7 @@ export default function ScanPage() {
         <div
           className="flex-1 min-h-[280px] md:min-h-[320px] xl:max-w-2xl xl:mx-auto w-full border-2 border-dashed border-[var(--border)] rounded-[16px] flex flex-col items-center justify-center gap-3 bg-[var(--card)] cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
+          data-testid="coffee-photo-upload-trigger"
         >
           {loading ? (
             <>
@@ -108,6 +109,7 @@ export default function ScanPage() {
           <button
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
+            data-testid="take-photo-trigger"
             className="ui-button-primary flex-1 disabled:opacity-50"
           >
             <Camera className="ui-icon-inline" />
@@ -116,6 +118,7 @@ export default function ScanPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
+            data-testid="upload-photo-trigger"
             className="ui-button-secondary flex-1 disabled:opacity-50"
           >
             <Upload className="ui-icon-inline" />
@@ -128,8 +131,8 @@ export default function ScanPage() {
         </p>
       </div>
 
-      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFileChange} />
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFileChange} data-testid="coffee-photo-camera-input" />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} data-testid="coffee-photo-file-input" />
     </div>
   )
 }

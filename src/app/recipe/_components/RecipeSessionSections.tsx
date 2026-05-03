@@ -36,12 +36,14 @@ function ParamCard({
   changed,
   icon,
   label,
+  testId,
   value,
 }: {
   annotation?: string
   changed?: boolean
   icon: React.ReactNode
   label: string
+  testId: string
   value: string
 }) {
   return (
@@ -51,7 +53,7 @@ function ParamCard({
       }`}
     >
       <div className="text-[var(--muted-foreground)]">{icon}</div>
-      <p className="ui-card-title">{value}</p>
+      <p className="ui-card-title" data-testid={testId}>{value}</p>
       <p className="ui-overline">{label}</p>
       {changed && annotation && (
         <p className="ui-meta ui-text-warning font-medium leading-tight">{annotation}</p>
@@ -112,6 +114,7 @@ export function RecipeParametersSection({
           icon={<Droplets size={16} />}
           value={`${recipe.parameters.water_g}ml`}
           label="Water"
+          testId="water-amount"
           changed={ratioChanged}
           annotation={annotation('ratio')}
         />
@@ -119,11 +122,13 @@ export function RecipeParametersSection({
           icon={<Scale size={16} />}
           value={`${recipe.parameters.coffee_g}g`}
           label="Coffee"
+          testId="coffee-amount"
         />
         <ParamCard
           icon={<Thermometer size={16} />}
           value={`${recipe.parameters.temperature_c}°C`}
           label="Temp"
+          testId="brew-temp"
           changed={tempChanged}
           annotation={annotation('temp')}
         />
@@ -131,11 +136,13 @@ export function RecipeParametersSection({
           icon={<Timer size={16} />}
           value={recipe.parameters.total_time}
           label="Brew Time"
+          testId="brew-time"
         />
         <ParamCard
           icon={<CircleDot size={16} />}
           value={formatGrinderSettingForDisplay(preferredGrinder, recipe.grind[preferredGrinder].starting_point)}
           label="Grind"
+          testId="grind-setting"
           changed={grindChanged}
           annotation={annotation('grind')}
         />
@@ -143,6 +150,7 @@ export function RecipeParametersSection({
           icon={<Ratio size={16} />}
           value={recipe.parameters.ratio}
           label="Ratio"
+          testId="brew-ratio"
           changed={ratioChanged}
         />
       </div>
@@ -174,7 +182,7 @@ export function RecipeGrindSettingsCard({
           <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
           <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
         </div>
-        <p className="text-lg font-bold">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
+        <p className="text-lg font-bold" data-testid="grind-setting">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
         <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
         {grindChanged && adjustment && (
           <p className="ui-body-muted text-[var(--background)] mt-1 font-medium">{adjustment.previous_value} → {adjustment.new_value}</p>
@@ -218,7 +226,7 @@ export function RecipeGrindSettingsCard({
                     <p className="ui-meta mt-0.5 italic">{data.note}</p>
                   )}
                 </div>
-                <p className="ui-card-title shrink-0">{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
+                <p className="ui-card-title shrink-0" data-testid={`grind-setting-${grinder}`}>{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
               </div>
             )
           })}
@@ -268,12 +276,12 @@ function RecipeStepCards({
 
             <div className="flex-1 relative">
               <div className="flex items-center justify-between gap-2 mb-1">
-                <p className="ui-card-title">{step.time}</p>
-                <p className="ui-body-muted">
+                <p className="ui-card-title" data-testid={`brew-time-${step.step}`}>{step.time}</p>
+                <p className="ui-body-muted" data-testid={`water-amount-${step.step}`}>
                   +{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span>
                 </p>
               </div>
-              <p className="ui-body-muted leading-relaxed">{step.action}</p>
+              <p className="ui-body-muted leading-relaxed" data-testid={`brew-step-action-${step.step}`}>{step.action}</p>
             </div>
           </div>
         )
@@ -335,6 +343,7 @@ export function BrewRecipeStepsSection({
           )}
           <button
             onClick={onToggleTimer}
+            data-testid="toggle-brew-timer"
             className="w-7 h-7 rounded-full bg-[var(--foreground)] text-[var(--background)] flex items-center justify-center active:opacity-70"
             aria-label={timerRunning ? 'Stop timer' : 'Start timer'}
           >
@@ -434,13 +443,13 @@ export function RecipeFeedbackSection({
             You&apos;ve reached the 3-round adjustment limit. Sometimes the bean profile is better served by a different brewing approach.
           </p>
         </div>
-        <button onClick={onSwitchMethod} className="w-full ui-button-primary font-semibold rounded-[12px]">
+        <button onClick={onSwitchMethod} data-testid="switch-method" className="w-full ui-button-primary font-semibold rounded-[12px]">
           Try a Different Method
           <svg className="size-3.5" viewBox="0 0 14 14" fill="none">
             <path d="M3 7H11M7.5 3.5L11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <button onClick={onReset} className="ui-meta underline text-center">
+        <button onClick={onReset} data-testid="reset-recipe" className="ui-meta underline text-center">
           Reset recipe to original
         </button>
       </div>
@@ -450,7 +459,7 @@ export function RecipeFeedbackSection({
   if (!showFeedback) {
     return (
       <div className="flex flex-col gap-2">
-        <button onClick={onOpenFeedback} className="w-full ui-button-secondary">
+        <button onClick={onOpenFeedback} data-testid="open-feedback" className="w-full ui-button-secondary">
           <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
             <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="currentColor" strokeWidth="1.3" />
             <path d="M8 5V8M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -458,7 +467,7 @@ export function RecipeFeedbackSection({
           How did it taste?
         </button>
         {feedbackRound > 0 && (
-          <button onClick={onReset} className="ui-meta underline text-center">
+          <button onClick={onReset} data-testid="reset-recipe" className="ui-meta underline text-center">
             Reset to original
           </button>
         )}
@@ -478,6 +487,7 @@ export function RecipeFeedbackSection({
           <button
             key={option.value}
             onClick={() => onSelectSymptom(option.value)}
+            data-testid={`symptom-${option.value}`}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
               selectedSymptom === option.value
                 ? 'bg-[var(--foreground)] text-[var(--background)]'
@@ -497,6 +507,7 @@ export function RecipeFeedbackSection({
       <div className="flex gap-2">
         <button
           onClick={onCancelFeedback}
+          data-testid="cancel-feedback"
           className="flex-1 ui-button-secondary bg-[var(--background)] border-transparent text-[var(--muted-foreground)]"
         >
           Cancel
@@ -504,6 +515,7 @@ export function RecipeFeedbackSection({
         <button
           onClick={onAdjust}
           disabled={!selectedSymptom || adjusting}
+          data-testid="adjust-recipe"
           className="flex-1 ui-button-primary font-semibold disabled:opacity-40"
         >
           {adjusting ? (

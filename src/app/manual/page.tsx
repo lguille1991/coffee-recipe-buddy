@@ -44,6 +44,7 @@ function PickerField<T extends string>({
   onChange,
   required,
   error,
+  testIdBase,
 }: {
   label: string
   options: { value: T; label: string }[]
@@ -51,6 +52,7 @@ function PickerField<T extends string>({
   onChange: (v: T) => void
   required?: boolean
   error?: string
+  testIdBase: string
 }) {
   return (
     <div>
@@ -63,6 +65,7 @@ function PickerField<T extends string>({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
+            data-testid={`${testIdBase}-${opt.value}`}
             className={`ui-chip ${
               value === opt.value
                 ? 'ui-chip-selected'
@@ -85,6 +88,7 @@ function TextField({
   placeholder,
   type = 'text',
   inputId,
+  testId,
 }: {
   label: string
   value: string
@@ -92,6 +96,7 @@ function TextField({
   placeholder?: string
   type?: string
   inputId: string
+  testId: string
 }) {
   return (
     <div className="ui-surface-field p-3">
@@ -103,6 +108,7 @@ function TextField({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
+        data-testid={testId}
         placeholder={placeholder}
         className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
       />
@@ -248,6 +254,7 @@ export default function ManualPage() {
           onChange={v => { setProcess(v as BeanProfile['process']); setErrors(e => ({ ...e, process: undefined })) }}
           required
           error={errors.process}
+          testIdBase="bean-process"
         />
 
         {/* Required: Roast Level */}
@@ -258,13 +265,14 @@ export default function ManualPage() {
           onChange={v => { setRoastLevel(v as BeanProfile['roast_level']); setErrors(e => ({ ...e, roastLevel: undefined })) }}
           required
           error={errors.roastLevel}
+          testIdBase="roast-level"
         />
 
         <div className="flex flex-col gap-2">
           <h2 className="ui-overline">Bean Details (optional)</h2>
-          <TextField inputId="manual-roaster" label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
-          <TextField inputId="manual-bean-name" label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
-          <TextField inputId="manual-origin" label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
+          <TextField inputId="manual-roaster" testId="roaster" label="Roaster" value={roaster} onChange={setRoaster} placeholder="e.g. Square Mile" />
+          <TextField inputId="manual-bean-name" testId="coffee-name" label="Bean Name" value={beanName} onChange={setBeanName} placeholder="e.g. Red Brick" />
+          <TextField inputId="manual-origin" testId="bean-origin" label="Origin" value={origin} onChange={setOrigin} placeholder="e.g. Ethiopia, Yirgacheffe" />
         </div>
 
         <div>
@@ -275,6 +283,7 @@ export default function ManualPage() {
                 key={v}
                 type="button"
                 onClick={() => setVariety(variety === v ? '' : v)}
+                data-testid={`bean-variety-${v.toLowerCase().replace(/\s+/g, '-')}`}
                 className={`ui-chip ${
                   variety === v
                     ? 'ui-chip-selected'
@@ -294,6 +303,7 @@ export default function ManualPage() {
               type="text"
               value={variety}
               onChange={e => setVariety(e.target.value)}
+              data-testid="bean-variety"
               placeholder="e.g. Castillo, Pink Bourbon..."
               className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
             />
@@ -319,6 +329,7 @@ export default function ManualPage() {
             }}
             onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault() }}
             placeholder="e.g. 1800"
+            data-testid="altitude"
             className="ui-input min-h-0 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
           />
           {errors.altitude && <p className="ui-meta ui-text-danger mt-1">{errors.altitude}</p>}
@@ -348,6 +359,7 @@ export default function ManualPage() {
               }}
               min={50}
               max={2000}
+              data-testid="target-volume"
               className="ui-input min-h-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
               placeholder="250"
             />
@@ -363,6 +375,7 @@ export default function ManualPage() {
                 key={option.value}
                 type="button"
                 onClick={() => setBrewGoal(option.value)}
+                data-testid={`brew-goal-${option.value}`}
                 className={`rounded-xl border p-3 text-left transition-colors ${
                   brewGoal === option.value
                     ? 'border-[var(--foreground)] bg-[var(--surface-subtle)]'
@@ -385,6 +398,7 @@ export default function ManualPage() {
                   key={note}
                   type="button"
                   onClick={() => removeNote(note)}
+                  data-testid={`tasting-note-${note.toLowerCase().replace(/\s+/g, '-')}`}
                   className="ui-chip ui-chip-selected flex items-center gap-1"
                 >
                   {note}
@@ -401,6 +415,7 @@ export default function ManualPage() {
               type="text"
               value={noteInput}
               onChange={e => setNoteInput(e.target.value)}
+              data-testid="tasting-notes"
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addNote(noteInput) } }}
               placeholder="e.g. blueberry, chocolate..."
               className="ui-input min-h-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
@@ -409,6 +424,7 @@ export default function ManualPage() {
               <button
                 type="button"
                 onClick={() => addNote(noteInput)}
+                data-testid="add-tasting-note"
                 className="ui-focus-ring rounded-md px-2 py-1 text-[var(--foreground)] ui-meta font-semibold shrink-0 transition-colors duration-150 hover:bg-[var(--surface-strong)]"
               >
                 Add
@@ -425,6 +441,7 @@ export default function ManualPage() {
             id="manual-roast-date"
             type="date"
             value={roastDate}
+            data-testid="roast-date"
             max={new Date().toISOString().split('T')[0]}
             onChange={e => {
               const selected = e.target.value
@@ -456,6 +473,7 @@ export default function ManualPage() {
         <div className="w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto md:px-8 lg:max-w-3xl xl:max-w-5xl xl:px-8">
           <button
             onClick={handleSubmit}
+            data-testid="continue-to-methods"
             className={`w-full ui-button-primary font-semibold ${
               hasRequiredFields
                 ? 'bg-[var(--foreground)] text-[var(--background)]'

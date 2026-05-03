@@ -30,11 +30,11 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="ui-card-title truncate">{beanName}</p>
-        {beanProcess && <p className="ui-meta mt-0.5 truncate capitalize">{beanProcess}</p>}
-        {roaster && <p className="ui-meta truncate">{roaster}</p>}
+        <p className="ui-card-title truncate" data-testid={`coffee-name-${recipe.id}`}>{beanName}</p>
+        {beanProcess && <p className="ui-meta mt-0.5 truncate capitalize" data-testid={`bean-process-${recipe.id}`}>{beanProcess}</p>}
+        {roaster && <p className="ui-meta truncate" data-testid={`roaster-${recipe.id}`}>{roaster}</p>}
         <div className="flex items-center gap-1.5 mt-0.5">
-          <p className="ui-meta">{displayName}</p>
+          <p className="ui-meta" data-testid={`brew-method-${recipe.id}`}>{displayName}</p>
           {badges.map(badge => (
             <span
               key={badge}
@@ -61,7 +61,7 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
             </svg>
           </div>
         )}
-        <p className="ui-meta">{date}</p>
+        <p className="ui-meta" data-testid={`recipe-created-at-${recipe.id}`}>{date}</p>
         <svg className="ui-icon-inline mt-1.5 ml-auto text-[var(--muted-foreground)] transition-transform duration-200 ease-out group-hover:translate-x-0.5" viewBox="0 0 14 14" fill="none">
           <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -88,6 +88,7 @@ const RecipeListCard = memo(function RecipeListCard({
   return (
     <Link
       href={`/recipes/${recipe.id}`}
+      data-testid={`open-recipe-${recipe.id}`}
       className="ui-card-interactive group flex items-center gap-3 bg-[var(--card)] rounded-2xl p-3"
     >
       <RecipeCardContent recipe={recipe} />

@@ -128,6 +128,7 @@ export default function SavedCoffeesClient() {
           <button
             type="button"
             onClick={toggleSelectionMode}
+            data-testid="toggle-coffee-selection-mode"
             className="ui-button-secondary px-4 py-2 text-sm"
           >
             {selectionMode ? 'Done' : 'Select'}
@@ -139,6 +140,7 @@ export default function SavedCoffeesClient() {
         <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
           <button
             type="button"
+            data-testid="coffee-status-active"
             className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
             onClick={() => handleArchivedToggle(false)}
           >
@@ -146,6 +148,7 @@ export default function SavedCoffeesClient() {
           </button>
           <button
             type="button"
+            data-testid="coffee-status-archived"
             className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
             onClick={() => handleArchivedToggle(true)}
           >
@@ -187,6 +190,7 @@ export default function SavedCoffeesClient() {
                   <button
                     type="button"
                     onClick={selectVisible}
+                    data-testid="select-all-visible-coffees"
                     className="ui-button-secondary px-3 py-1.5 text-sm"
                   >
                     Select all visible
@@ -194,6 +198,7 @@ export default function SavedCoffeesClient() {
                   <button
                     type="button"
                     onClick={clearSelection}
+                    data-testid="clear-coffee-selection"
                     className="ui-button-secondary px-3 py-1.5 text-sm"
                   >
                     Clear
@@ -209,6 +214,7 @@ export default function SavedCoffeesClient() {
                   <button
                     type="button"
                     onClick={() => toggleProfileSelected(profile.id)}
+                    data-testid={`select-coffee-${profile.id}`}
                     className={`ui-card-interactive w-full rounded-2xl p-4 flex flex-col gap-3 text-left border-2 ${
                       selectedIds.has(profile.id)
                         ? 'border-[var(--foreground)] bg-[var(--card)]'
@@ -224,8 +230,8 @@ export default function SavedCoffeesClient() {
                       )}
                     </div>
                     <div>
-                      <h2 className="ui-card-title">{profile.label}</h2>
-                      <p className="ui-body-muted mt-1">
+                      <h2 className="ui-card-title" data-testid={`coffee-name-${profile.id}`}>{profile.label}</h2>
+                      <p className="ui-body-muted mt-1" data-testid={`roaster-${profile.id}`}>
                         {profile.bean_profile_json.roaster ?? 'Unknown roaster'} · {profile.bean_profile_json.roast_level ?? 'Unknown roast'}
                       </p>
                       {profile.last_used_at && (
@@ -236,6 +242,7 @@ export default function SavedCoffeesClient() {
                 ) : (
                   <Link
                     href={`/coffees/${profile.id}`}
+                    data-testid={`open-coffee-${profile.id}`}
                     className="ui-card-interactive bg-[var(--card)] rounded-2xl p-4 flex flex-col gap-3"
                   >
                     <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[var(--surface-strong)]">
@@ -247,8 +254,8 @@ export default function SavedCoffeesClient() {
                       )}
                     </div>
                     <div>
-                      <h2 className="ui-card-title">{profile.label}</h2>
-                      <p className="ui-body-muted mt-1">
+                      <h2 className="ui-card-title" data-testid={`coffee-name-${profile.id}`}>{profile.label}</h2>
+                      <p className="ui-body-muted mt-1" data-testid={`roaster-${profile.id}`}>
                         {profile.bean_profile_json.roaster ?? 'Unknown roaster'} · {profile.bean_profile_json.roast_level ?? 'Unknown roast'}
                       </p>
                       {profile.last_used_at && (
@@ -271,6 +278,7 @@ export default function SavedCoffeesClient() {
               <button
                 type="button"
                 onClick={() => setShowActionConfirm(true)}
+                data-testid="bulk-coffee-action"
                 disabled={selectedIds.size === 0 || bulkMutating}
                 className={`${archived ? 'ui-button-primary' : 'ui-button-danger-solid'} w-full disabled:opacity-40`}
               >
@@ -279,6 +287,7 @@ export default function SavedCoffeesClient() {
               <button
                 type="button"
                 onClick={toggleSelectionMode}
+                data-testid="cancel-coffee-selection-mode"
                 disabled={bulkMutating}
                 className="ui-button-secondary w-full"
               >

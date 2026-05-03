@@ -1,6 +1,6 @@
 {
   "name": "crp",
-  "version": "1.23.5",
+  "version": "1.23.7",
   "private": true,
   "scripts": {
     "dev": "next dev",

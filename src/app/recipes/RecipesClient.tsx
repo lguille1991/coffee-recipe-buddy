@@ -259,6 +259,7 @@ export default function RecipesClient({
             <button
               type="button"
               onClick={toggleSelectionMode}
+              data-testid="toggle-recipe-selection-mode"
               className="ui-button-secondary px-4 py-2 text-sm"
             >
               {selectionMode ? 'Done' : 'Select'}
@@ -274,6 +275,7 @@ export default function RecipesClient({
               <button
                 key={tab.id}
                 type="button"
+                data-testid={`recipe-section-${tab.id}`}
                 className={`px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleSectionChange(tab.id)}
                 aria-pressed={section === tab.id}
@@ -287,6 +289,7 @@ export default function RecipesClient({
             <div className="sm:ml-auto inline-flex overflow-hidden rounded-lg border border-[var(--border)]" role="group" aria-label="Recipe status">
               <button
                 type="button"
+                data-testid="recipe-status-active"
                 className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleArchivedToggle(false)}
                 aria-pressed={!archived}
@@ -295,6 +298,7 @@ export default function RecipesClient({
               </button>
               <button
                 type="button"
+                data-testid="recipe-status-archived"
                 className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
                 onClick={() => handleArchivedToggle(true)}
                 aria-pressed={archived}
@@ -317,6 +321,7 @@ export default function RecipesClient({
             placeholder="Search bean, origin, roaster..."
             value={q}
             onChange={e => handleSearchChange(e.target.value)}
+            data-testid="recipe-search"
             className="ui-input pl-9"
           />
         </div>
@@ -328,6 +333,7 @@ export default function RecipesClient({
             <button
               key={filter.id}
               onClick={() => handleMethodChange(filter.id)}
+              data-testid={`brew-method-${filter.id}`}
               className={`ui-chip shrink-0 ${
                 method === filter.id
                   ? 'ui-chip-selected'
@@ -344,8 +350,8 @@ export default function RecipesClient({
         <div className="px-4 sm:px-6 mb-3 flex items-center justify-between">
           <div className="ui-meta">{selectedIds.size} selected</div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={selectVisible} className="ui-button-secondary px-3 py-1.5 text-sm">Select all visible</button>
-            <button type="button" onClick={clearSelection} className="ui-button-secondary px-3 py-1.5 text-sm">Clear</button>
+            <button type="button" data-testid="select-all-visible-recipes" onClick={selectVisible} className="ui-button-secondary px-3 py-1.5 text-sm">Select all visible</button>
+            <button type="button" data-testid="clear-recipe-selection" onClick={clearSelection} className="ui-button-secondary px-3 py-1.5 text-sm">Clear</button>
           </div>
         </div>
       )}
@@ -370,6 +376,7 @@ export default function RecipesClient({
                       <button
                         type="button"
                         onClick={() => handleRemoveFromMyList(recipe.id)}
+                        data-testid={`remove-recipe-${recipe.id}`}
                         className="ui-button-secondary px-3 py-1.5 text-xs"
                       >
                         Remove from my list
@@ -387,6 +394,7 @@ export default function RecipesClient({
             <button
               type="button"
               onClick={() => goToPage(page - 1)}
+              data-testid="recipes-page-prev"
               disabled={page <= 1 || isPending}
               className="ui-button-secondary px-3 py-1.5 text-sm disabled:opacity-40"
             >
@@ -396,6 +404,7 @@ export default function RecipesClient({
             <button
               type="button"
               onClick={() => goToPage(page + 1)}
+              data-testid="recipes-page-next"
               disabled={page >= totalPages || isPending}
               className="ui-button-secondary px-3 py-1.5 text-sm disabled:opacity-40"
             >
@@ -412,12 +421,13 @@ export default function RecipesClient({
               <button
                 type="button"
                 onClick={() => setShowActionConfirm(true)}
+                data-testid="bulk-recipe-action"
                 disabled={selectedIds.size === 0 || bulkMutating}
                 className={`${archived ? 'ui-button-primary' : 'ui-button-danger-solid'} w-full disabled:opacity-40`}
               >
                 {archived ? `Restore (${selectedIds.size})` : `Delete (${selectedIds.size})`}
               </button>
-              <button type="button" onClick={toggleSelectionMode} disabled={bulkMutating} className="ui-button-secondary w-full">Cancel</button>
+              <button type="button" data-testid="cancel-recipe-selection-mode" onClick={toggleSelectionMode} disabled={bulkMutating} className="ui-button-secondary w-full">Cancel</button>
             </div>
           </div>
         </div>
