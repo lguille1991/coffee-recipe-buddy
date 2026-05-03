@@ -27,7 +27,7 @@ type OwnedRecipeListRow = {
 
 type SharedMembershipRow = {
   recipe_id: string
-  recipe: OwnedRecipeListRow | null
+  recipe: OwnedRecipeListRow | OwnedRecipeListRow[] | null
 }
 
 type FavoriteRow = {
@@ -126,6 +126,27 @@ function applyRecipeSearchFilter(rows: OwnedRecipeListRow[], q?: string) {
     const roaster = row.bean_info.roaster?.toLowerCase() ?? ''
     return beanName.includes(term) || origin.includes(term) || roaster.includes(term)
   })
+}
+
+function normalizeSharedMembershipRows(data: unknown): OwnedRecipeListRow[] {
+  if (!Array.isArray(data)) return []
+
+  const rows: OwnedRecipeListRow[] = []
+  for (const entry of data as SharedMembershipRow[]) {
+    const recipe = entry.recipe
+    if (!recipe) continue
+
+    if (Array.isArray(recipe)) {
+      for (const nested of recipe) {
+        if (nested && !nested.archived) rows.push(nested)
+      }
+      continue
+    }
+
+    if (!recipe.archived) rows.push(recipe)
+  }
+
+  return rows
 }
 
 function paginate<T>(rows: T[], page: number, limit: number) {
@@ -229,10 +250,7 @@ export async function listRecipesForUser(
       throw new Error(error.message)
     }
 
-    const membershipRows = (data ?? []) as SharedMembershipRow[]
-    const rows = membershipRows
-      .map(row => row.recipe)
-      .filter((row): row is OwnedRecipeListRow => Boolean(row) && !row.archived)
+    const rows = normalizeSharedMembershipRows(data ?? [])
 
     const searchedRows = applyRecipeSearchFilter(rows, q)
     const sortedRows = searchedRows.toSorted((a, b) => {
@@ -276,9 +294,7 @@ export async function listRecipesForUser(
   }
 
   const ownedRows = (ownedResponse.data ?? []) as OwnedRecipeListRow[]
-  const sharedRows = ((sharedResponse.data ?? []) as SharedMembershipRow[])
-    .map(row => row.recipe)
-    .filter((row): row is OwnedRecipeListRow => Boolean(row) && !row.archived)
+  const sharedRows = normalizeSharedMembershipRows(sharedResponse.data ?? [])
 
   const byId = new Map<string, { row: OwnedRecipeListRow; source: 'owned' | 'shared' }>()
 

@@ -1,3 +1,7 @@
+## 1.23.4 - 2026-05-02
+
+- Fixed Vercel TypeScript build error in shared recipe query typing by normalizing Supabase relation payloads where `recipe` may be an object or array.
+
 ## 1.23.3 - 2026-05-02
 
 - Moved favorite/unfavorite interaction to recipe detail only and added a star icon inline with share/delete controls.
