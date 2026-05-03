@@ -10,6 +10,12 @@ type SavedRecipeRow = SavedRecipe & {
   } | null
 }
 
+function isMissingFavoritesTableError(error: unknown) {
+  if (!error || typeof error !== 'object') return false
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+  return message.includes("Could not find the table 'public.recipe_user_favorites'")
+}
+
 export async function getSavedRecipeDetail(
   supabase: SupabaseClient,
   recipeId: string,
@@ -28,10 +34,22 @@ export async function getSavedRecipeDetail(
   }
 
   const savedRecipeRow = recipeRow as unknown as SavedRecipeRow
-  const snapshots = await listRecipeSnapshots(supabase, recipeId)
+  const [snapshots, favoriteResult] = await Promise.all([
+    listRecipeSnapshots(supabase, recipeId),
+    supabase
+      .from('recipe_user_favorites')
+      .select('recipe_id')
+      .eq('user_id', userId)
+      .eq('recipe_id', recipeId)
+      .maybeSingle(),
+  ])
   const liveSnapshot = savedRecipeRow.live_snapshot_id
     ? snapshots.find(snapshot => snapshot.id === savedRecipeRow.live_snapshot_id) ?? null
     : null
+
+  if (favoriteResult.error && !isMissingFavoritesTableError(favoriteResult.error)) {
+    throw new Error(favoriteResult.error.message)
+  }
 
   return {
     ...savedRecipeRow,
@@ -44,6 +62,7 @@ export async function getSavedRecipeDetail(
       savedRecipeRow.original_recipe_json as RecipeWithAdjustment,
       savedRecipeRow.schema_version,
     ),
+    is_favorite: Boolean(favoriteResult.data),
     snapshots: snapshots.map(snapshot => ({
       ...snapshot,
       snapshot_recipe_json: migrateRecipe(

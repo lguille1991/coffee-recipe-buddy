@@ -151,6 +151,21 @@ export async function DELETE(_request: Request, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: favoriteRow, error: favoriteLookupError } = await supabase
+    .from('recipe_user_favorites')
+    .select('recipe_id')
+    .eq('user_id', user.id)
+    .eq('recipe_id', id)
+    .maybeSingle()
+
+  if (favoriteLookupError) {
+    return NextResponse.json({ error: favoriteLookupError.message }, { status: 500 })
+  }
+
+  if (favoriteRow) {
+    return NextResponse.json({ error: 'FAVORITE_RECIPE_DELETE_BLOCKED' }, { status: 409 })
+  }
+
   const { error } = await supabase
     .from('recipes')
     .update({ archived: true })

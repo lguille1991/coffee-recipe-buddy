@@ -195,15 +195,17 @@ export default function RecipeDetailClient({
                 </svg>
               )}
             </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="ui-icon-button ui-text-danger"
-              aria-label="Delete recipe"
-            >
-              <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
-                <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {!recipe.is_favorite && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="ui-icon-button ui-text-danger"
+                aria-label="Delete recipe"
+              >
+                <svg className="ui-icon-action" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 5H15M6 5V3.5C6 3.22 6.22 3 6.5 3H11.5C11.78 3 12 3.22 12 3.5V5M7 8.5V13M11 8.5V13M4.5 5L5.5 15H12.5L13.5 5H4.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
       </div>
