@@ -268,40 +268,43 @@ export default function RecipesClient({
       </div>
 
       <div className="px-4 sm:px-6 mb-4">
-        <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
-          {SECTION_TABS.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
-              onClick={() => handleSectionChange(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5">
+          <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)]" role="group" aria-label="Recipe sections">
+            {SECTION_TABS.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`px-4 py-2 text-sm ${section === tab.id ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+                onClick={() => handleSectionChange(tab.id)}
+                aria-pressed={section === tab.id}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {section === 'my' && (
+            <div className="sm:ml-auto inline-flex overflow-hidden rounded-lg border border-[var(--border)]" role="group" aria-label="Recipe status">
+              <button
+                type="button"
+                className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+                onClick={() => handleArchivedToggle(false)}
+                aria-pressed={!archived}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
+                onClick={() => handleArchivedToggle(true)}
+                aria-pressed={archived}
+              >
+                Archived
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {section === 'my' && (
-        <div className="px-4 sm:px-6 mb-4">
-          <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden">
-            <button
-              type="button"
-              className={`px-4 py-2 text-sm ${!archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
-              onClick={() => handleArchivedToggle(false)}
-            >
-              Active
-            </button>
-            <button
-              type="button"
-              className={`px-4 py-2 text-sm ${archived ? 'bg-[var(--foreground)] text-[var(--background)]' : 'bg-[var(--card)] text-[var(--muted-foreground)]'}`}
-              onClick={() => handleArchivedToggle(true)}
-            >
-              Archived
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="px-4 sm:px-6 mb-3">
         <div className="relative">

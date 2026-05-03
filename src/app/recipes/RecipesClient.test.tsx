@@ -8,11 +8,12 @@ import type { RecipeListItem } from '@/types/recipe'
 
 const routerReplaceMock = vi.fn()
 const routerRefreshMock = vi.fn()
+let searchParamsValue = ''
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: routerReplaceMock, refresh: routerRefreshMock }),
   usePathname: () => '/recipes',
-  useSearchParams: () => new URLSearchParams(''),
+  useSearchParams: () => new URLSearchParams(searchParamsValue),
 }))
 
 vi.mock('next/link', () => ({
@@ -77,6 +78,21 @@ function clickButtonByPrefix(container: HTMLElement, prefix: string) {
   button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 }
 
+function expectRouterReplacePathAndParams(
+  mock: ReturnType<typeof vi.fn>,
+  expectedPath: string,
+  expectedParams: Record<string, string>,
+) {
+  const [url, options] = mock.mock.lastCall as [string, { scroll: boolean }]
+  expect(options).toEqual({ scroll: false })
+
+  const [path, query = ''] = url.split('?')
+  expect(path).toBe(expectedPath)
+
+  const params = new URLSearchParams(query)
+  expect(Object.fromEntries(params.entries())).toEqual(expectedParams)
+}
+
 describe('RecipesClient bulk selection mode', () => {
   let container: HTMLDivElement
   let root: Root
@@ -84,6 +100,7 @@ describe('RecipesClient bulk selection mode', () => {
   beforeEach(() => {
     routerReplaceMock.mockReset()
     routerRefreshMock.mockReset()
+    searchParamsValue = ''
     vi.restoreAllMocks()
     ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
     container = document.createElement('div')
@@ -154,5 +171,91 @@ describe('RecipesClient bulk selection mode', () => {
     expect(container.textContent).not.toContain('Bean A')
     expect(container.textContent).toContain('Bean B')
     expect(routerRefreshMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides archived controls outside my recipes and clears archived in URL on section change', async () => {
+    searchParamsValue = 'archived=true&page=3&method=v60&q=ethiopia'
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A')]}
+          initialPage={3}
+          initialMethod="v60"
+          initialQuery="ethiopia"
+          initialArchived
+          initialSection="my"
+          initialTotalPages={3}
+        />,
+      )
+    })
+
+    expect(findButtonByPrefix(container, 'Active')).toBeTruthy()
+    expect(findButtonByPrefix(container, 'Archived')).toBeTruthy()
+
+    await act(async () => {
+      clickButtonByText(container, 'Favorites')
+    })
+
+    expect(findButtonByPrefix(container, 'Active')).toBeFalsy()
+    expect(findButtonByPrefix(container, 'Archived')).toBeFalsy()
+    expect(findButtonByPrefix(container, 'Select')).toBeFalsy()
+    expectRouterReplacePathAndParams(routerReplaceMock, '/recipes', {
+      method: 'v60',
+      q: 'ethiopia',
+      section: 'favorites',
+    })
+  })
+
+  it('updates archived state for my recipes and keeps existing search filters', async () => {
+    searchParamsValue = 'method=v60&q=kenya'
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A')]}
+          initialPage={1}
+          initialMethod="v60"
+          initialQuery="kenya"
+          initialArchived={false}
+          initialSection="my"
+          initialTotalPages={1}
+        />,
+      )
+    })
+
+    await act(async () => {
+      clickButtonByText(container, 'Archived')
+    })
+
+    expectRouterReplacePathAndParams(routerReplaceMock, '/recipes', {
+      method: 'v60',
+      q: 'kenya',
+      archived: 'true',
+    })
+  })
+
+  it('resets selection mode and selected count when section changes', async () => {
+    await act(async () => {
+      root.render(
+        <RecipesClient
+          initialRecipes={[sampleRecipe('11111111-1111-1111-1111-111111111111', 'Bean A'), sampleRecipe('22222222-2222-2222-2222-222222222222', 'Bean B')]}
+          initialPage={1}
+          initialMethod=""
+          initialQuery=""
+          initialArchived={false}
+          initialSection="my"
+          initialTotalPages={1}
+        />,
+      )
+    })
+
+    await act(async () => { clickButtonByText(container, 'Select') })
+    await act(async () => { clickButtonByText(container, 'Select all visible') })
+    expect(findButtonByPrefix(container, 'Delete (2)')).toBeTruthy()
+
+    await act(async () => { clickButtonByText(container, 'Favorites') })
+
+    expect(findButtonByPrefix(container, 'Delete (')).toBeFalsy()
+    expect(findButtonByPrefix(container, 'Select all visible')).toBeFalsy()
+    expect(findButtonByPrefix(container, 'Select')).toBeFalsy()
   })
 })

@@ -1,3 +1,9 @@
+## 1.23.5 - 2026-05-03
+
+- Redesigned `/recipes` section/status controls into a single shared header controls block to remove the odd two-row tab stack.
+- Kept existing routing/query semantics intact (`section`, `archived`, `method`, `q`, `page`) while preserving `router.replace` navigation behavior.
+- Added `RecipesClient` regression coverage for section/status URL updates, archived control visibility outside `My Recipes`, and filter preservation during tab changes.
+
 ## 1.23.4 - 2026-05-02
 
 - Fixed Vercel TypeScript build error in shared recipe query typing by normalizing Supabase relation payloads where `recipe` may be an object or array.
