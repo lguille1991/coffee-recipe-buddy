@@ -60,6 +60,7 @@ const SortableStepRow = memo(function SortableStepRow({
         <button
           className="p-1 touch-none cursor-grab text-[var(--muted-foreground)] active:cursor-grabbing"
           aria-label="Drag to reorder"
+          data-testid={`brew-step-reorder-${step._dndId}`}
           {...listeners}
           {...attributes}
         >
@@ -79,6 +80,7 @@ const SortableStepRow = memo(function SortableStepRow({
             type="text"
             placeholder="0:00"
             value={step.time}
+            data-testid={`brew-time-${step._dndId}`}
             onChange={e => onUpdate(step._dndId, { time: e.target.value.replace(/[^0-9:]/g, '') })}
             className={inputClass(timeMissing, 'w-16 px-2.5 text-sm font-mono')}
           />
@@ -90,6 +92,7 @@ const SortableStepRow = memo(function SortableStepRow({
               step={0.1}
               placeholder="0"
               value={step.water_poured_g === 0 ? '' : step.water_poured_g}
+              data-testid={`water-amount-${step._dndId}`}
               onKeyDown={e => { if (e.key === '-' || e.key === 'e') e.preventDefault() }}
               onChange={e => onUpdate(step._dndId, { water_poured_g: Math.max(0, parseFloat(e.target.value) || 0) })}
               className={inputClass(waterMissing, 'w-16 pl-2.5 pr-5 text-sm font-mono')}
@@ -107,6 +110,7 @@ const SortableStepRow = memo(function SortableStepRow({
           maxLength={80}
           placeholder="Step description…"
           value={step.action}
+          data-testid={`brew-step-action-${step._dndId}`}
           onChange={e => onUpdate(step._dndId, { action: e.target.value })}
           className={inputClass(actionMissing, 'w-full px-2.5 text-base')}
         />
@@ -114,6 +118,7 @@ const SortableStepRow = memo(function SortableStepRow({
       <button
         onClick={() => onDelete(step._dndId)}
         disabled={totalSteps <= 1}
+        data-testid={`delete-step-${step._dndId}`}
         className="mt-2 p-1 ui-text-danger disabled:opacity-30 active:opacity-60"
         aria-label="Delete step"
       >
@@ -181,6 +186,7 @@ export default function SortableStepList({
       </DndContext>
       <button
         onClick={onAdd}
+        data-testid="add-step"
         className="w-full min-h-10 rounded-2xl border border-dashed border-[var(--border)] text-sm font-medium text-[var(--muted-foreground)] active:opacity-60 flex items-center justify-center gap-1.5"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

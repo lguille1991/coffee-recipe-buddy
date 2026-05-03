@@ -195,6 +195,7 @@ export default function RecipeDetailClient({
             }}
             className="ui-icon-button -ml-2"
             aria-label="Go back"
+            data-testid="go-back"
           >
             <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
               <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -208,6 +209,7 @@ export default function RecipeDetailClient({
             <button
               onClick={sharing.shareToken ? () => sharing.setShowShareSheet(true) : sharing.handleShare}
               disabled={sharing.sharing}
+              data-testid="share-recipe"
               className="ui-icon-button text-[var(--muted-foreground)] disabled:opacity-40"
               aria-label="Share recipe"
             >
@@ -222,6 +224,7 @@ export default function RecipeDetailClient({
             <button
               onClick={handleToggleFavorite}
               disabled={favoriteMutating}
+              data-testid="toggle-favorite"
               className={`ui-icon-button disabled:opacity-40 ${recipe.is_favorite ? 'text-amber-500' : 'text-[var(--muted-foreground)]'}`}
               aria-label={recipe.is_favorite ? 'Unfavorite recipe' : 'Favorite recipe'}
             >
@@ -236,6 +239,7 @@ export default function RecipeDetailClient({
             {!recipe.is_favorite && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
+                data-testid="open-delete-recipe"
                 className="ui-icon-button ui-text-danger"
                 aria-label="Delete recipe"
               >
@@ -280,7 +284,7 @@ export default function RecipeDetailClient({
                 {field.field}: {field.previous} → {field.next}
               </p>
             ))}
-            <button onClick={() => setFreshnessIgnored(true)} className="ui-focus-ring ui-pressable rounded-md ui-meta ui-text-warning underline self-start">
+            <button onClick={() => setFreshnessIgnored(true)} data-testid="keep-original-recipe" className="ui-focus-ring ui-pressable rounded-md ui-meta ui-text-warning underline self-start">
               Keep original recipe
             </button>
           </div>
@@ -354,6 +358,7 @@ export default function RecipeDetailClient({
               <textarea
                 value={notes.notes}
                 onChange={event => notes.handleNotesChange(event.target.value)}
+                data-testid="recipe-notes"
                 maxLength={1000}
                 placeholder="Add notes about this brew…"
                 rows={3}
@@ -372,7 +377,7 @@ export default function RecipeDetailClient({
         <div className="ui-sticky-footer w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-6 pt-3">
           {editing.isEditing ? (
             <div className="flex flex-col gap-2">
-              <button onClick={editing.saveEdit} disabled={editing.isSaving} className="w-full ui-button-primary font-semibold">
+              <button onClick={editing.saveEdit} disabled={editing.isSaving} data-testid="save-recipe-edit" className="w-full ui-button-primary font-semibold">
                 {editing.isSaving ? (
                   <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
                 ) : 'Save'}
@@ -386,6 +391,7 @@ export default function RecipeDetailClient({
                   editing.exitEditMode()
                 }}
                 disabled={editing.isSaving}
+                data-testid="discard-recipe-edit"
                 className="w-full ui-button-secondary text-[var(--muted-foreground)]"
               >
                 Discard
@@ -393,7 +399,7 @@ export default function RecipeDetailClient({
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <button onClick={handleOpenBrewMode} className="w-full ui-button-primary font-semibold">
+              <button onClick={handleOpenBrewMode} data-testid="open-brew-mode" className="w-full ui-button-primary font-semibold">
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                   <path d="M3 3H13L11.5 10H4.5L3 3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M4.5 10C4.5 12 5.5 13 8 13C10.5 13 11.5 12 11.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -401,7 +407,7 @@ export default function RecipeDetailClient({
                 </svg>
                 Brew
               </button>
-              <button onClick={editing.enterEditMode} className="w-full ui-button-secondary">
+              <button onClick={editing.enterEditMode} data-testid="enter-edit-recipe" className="w-full ui-button-secondary">
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
                   <path d="M2 14L5.5 13L13.5 5C14.05 4.45 14.05 3.55 13.5 3L13 2.5C12.45 1.95 11.55 1.95 11 2.5L3 10.5L2 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M10.5 3L13 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -410,6 +416,7 @@ export default function RecipeDetailClient({
               </button>
               <button
                 onClick={() => router.push(`/recipes/${id}/auto-adjust`)}
+                data-testid="open-auto-adjust"
                 className="w-full ui-button-secondary"
               >
                 <svg className="ui-icon-inline" viewBox="0 0 16 16" fill="none">
@@ -458,12 +465,12 @@ export default function RecipeDetailClient({
             <h3 className="ui-sheet-title mb-1">Delete this recipe?</h3>
             <p className="ui-sheet-body mb-6">This action cannot be undone.</p>
             <div className="flex flex-col gap-2">
-              <button onClick={handleDelete} disabled={deleting} className="w-full ui-button-danger-solid font-semibold">
+              <button onClick={handleDelete} disabled={deleting} data-testid="delete-recipe" className="w-full ui-button-danger-solid font-semibold">
                 {deleting ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : 'Delete Recipe'}
               </button>
-              <button onClick={() => setShowDeleteConfirm(false)} className="w-full ui-button-secondary bg-[var(--background)] border-transparent">
+              <button onClick={() => setShowDeleteConfirm(false)} data-testid="cancel-delete-recipe" className="w-full ui-button-secondary bg-[var(--background)] border-transparent">
                 Cancel
               </button>
             </div>

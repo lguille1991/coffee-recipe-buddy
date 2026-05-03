@@ -96,6 +96,7 @@ export default function SettingsPage() {
             type="text"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
+            data-testid="display-name"
             placeholder="Optional"
             className="ui-input"
           />
@@ -111,6 +112,7 @@ export default function SettingsPage() {
                 key={unit}
                 type="button"
                 onClick={() => setTempUnit(unit)}
+                data-testid={`temp-unit-${unit.toLowerCase()}`}
                 className={`flex-1 min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors ${
                   tempUnit === unit
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
@@ -133,6 +135,7 @@ export default function SettingsPage() {
                 key={grinder}
                 type="button"
                 onClick={() => setPreferredGrinder(grinder)}
+                data-testid={`grind-setting-${grinder}`}
                 className={`w-full min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors text-left ${
                   preferredGrinder === grinder
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
@@ -155,6 +158,7 @@ export default function SettingsPage() {
                 key={t}
                 type="button"
                 onClick={() => setTheme(t)}
+                data-testid={`theme-${t}`}
                 className={`flex-1 min-h-11 rounded-[12px] px-4 py-3 ui-button-text transition-colors ${
                   theme === t
                     ? 'bg-[var(--foreground)] text-[var(--background)]'
@@ -177,6 +181,7 @@ export default function SettingsPage() {
             pattern="[0-9]*"
             value={volumeMl}
             onChange={e => setVolumeMl(e.target.value)}
+            data-testid="target-volume"
             min={100}
             max={1000}
             step={10}
@@ -199,6 +204,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
+            data-testid="save-settings"
             className="ui-button-primary flex-1 font-semibold"
           >
             {saving ? (
@@ -209,6 +215,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleSignOut}
+            data-testid="sign-out"
             className="ui-button-danger flex-1"
           >
             Sign Out

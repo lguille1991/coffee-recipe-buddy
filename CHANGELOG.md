@@ -1,3 +1,16 @@
+## 1.23.7 - 2026-05-03
+
+- Completed `data-testid` coverage for additional recipe and coffee list/detail/session surfaces that were previously untagged.
+- Replaced fragile label-derived selectors with explicit stable IDs in shared recipe parameter cards.
+- Resolved ambiguous duplicate selector usage by splitting roast-level display/input IDs in analysis.
+- Corrected settings display-name selector naming to avoid coffee/entity semantic collision.
+
+## 1.23.6 - 2026-05-03
+
+- Added `data-testid` attributes across core user-facing data entry and data display surfaces to support upcoming Playwright UI automation.
+- Added stable `data-testid` keys for mutable/reorderable entities (recipe steps/comments) using persistent identifiers instead of index-based selectors.
+- Covered scan upload controls, analysis/manual profile fields, settings/auth inputs, saved coffee generation controls, shared recipe comments, and recipe edit/manual step fields.
+
 ## 1.23.5 - 2026-05-03
 
 - Redesigned `/recipes` section/status controls into a single shared header controls block to remove the odd two-row tab stack.

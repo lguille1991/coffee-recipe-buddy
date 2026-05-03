@@ -70,4 +70,4 @@ When an AI agent finishes implementing a plan that involves code changes:
 
 # Plan Mode Output
 
-When operating in **plan mode**, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` and directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.
+When operating in **plan mode** OR when users request to create a plan, AI coding agents MUST ALWAYS store generated output as an `.md` file in `.claude/plans/` and directory. The output MUST be in **checklist format** with actionable items that can be tracked and checked off during implementation.

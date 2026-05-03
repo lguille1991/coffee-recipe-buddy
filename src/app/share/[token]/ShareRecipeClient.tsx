@@ -139,10 +139,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
         {/* Title + sharer info */}
         <div>
-          <h1 className="ui-page-title">{displayName}</h1>
-          <p className="ui-body-muted mt-0.5">{beanName}</p>
+          <h1 className="ui-page-title" data-testid="recipe-name">{displayName}</h1>
+          <p className="ui-body-muted mt-0.5" data-testid="coffee-name">{beanName}</p>
           {snapshot.bean_info.roaster && (
-            <p className="ui-body-muted mt-0.5">{snapshot.bean_info.roaster}</p>
+            <p className="ui-body-muted mt-0.5" data-testid="roaster">{snapshot.bean_info.roaster}</p>
           )}
           <p className="ui-body-muted mt-1">
             Shared by{' '}
@@ -159,15 +159,15 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           <h3 className="ui-overline mb-2">Parameters</h3>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { value: `${r.parameters.water_g}ml`, label: 'Water' },
-              { value: `${r.parameters.coffee_g}g`, label: 'Coffee' },
-              { value: `${r.parameters.temperature_c}°C`, label: 'Temp' },
-              { value: r.parameters.total_time, label: 'Time' },
-              { value: formatGrinderSettingForDisplay(primaryGrinder, r.grind[primaryGrinder].starting_point), label: 'Grind' },
-              { value: r.parameters.ratio, label: 'Ratio' },
+              { value: `${r.parameters.water_g}ml`, label: 'Water', testId: 'water-amount' },
+              { value: `${r.parameters.coffee_g}g`, label: 'Coffee', testId: 'coffee-amount' },
+              { value: `${r.parameters.temperature_c}°C`, label: 'Temp', testId: 'brew-temp' },
+              { value: r.parameters.total_time, label: 'Time', testId: 'brew-time' },
+              { value: formatGrinderSettingForDisplay(primaryGrinder, r.grind[primaryGrinder].starting_point), label: 'Grind', testId: 'grind-setting' },
+              { value: r.parameters.ratio, label: 'Ratio', testId: 'brew-ratio' },
             ].map(p => (
               <div key={p.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
-                <p className="ui-card-title">{p.value}</p>
+                <p className="ui-card-title" data-testid={p.testId}>{p.value}</p>
                 <p className="ui-overline">{p.label}</p>
               </div>
             ))}
@@ -224,10 +224,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="ui-card-title">{step.time}</p>
-                    <p className="ui-body-muted">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+                    <p className="ui-card-title" data-testid={`brew-time-${step.step}`}>{step.time}</p>
+                    <p className="ui-body-muted" data-testid={`water-amount-${step.step}`}>+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
                   </div>
-                  <p className="ui-body-muted leading-relaxed">{step.action}</p>
+                  <p className="ui-body-muted leading-relaxed" data-testid={`brew-step-action-${step.step}`}>{step.action}</p>
                 </div>
               </div>
             ))}
@@ -238,7 +238,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         {snapshot.notes && (
           <div className="bg-[var(--card)] rounded-2xl px-4 py-3">
             <h3 className="ui-overline mb-2">Sharer&apos;s Notes</h3>
-            <p className="ui-body leading-relaxed whitespace-pre-wrap">{snapshot.notes}</p>
+            <p className="ui-body leading-relaxed whitespace-pre-wrap" data-testid="recipe-notes">{snapshot.notes}</p>
           </div>
         )}
 
@@ -269,12 +269,13 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                           {new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
-                      <p className="ui-body-muted leading-relaxed whitespace-pre-wrap">{comment.body}</p>
+                      <p className="ui-body-muted leading-relaxed whitespace-pre-wrap" data-testid={`share-comment-content-${comment.id}`}>{comment.body}</p>
                     </div>
                     {user && comment.author_id === user.id && (
                       <button
                         onClick={() => { setPendingDeleteCommentId(comment.id); setShowDeleteCommentConfirm(true) }}
                         disabled={deletingId === comment.id}
+                        data-testid={`delete-comment-${comment.id}`}
                         className="shrink-0 p-1 text-[var(--muted-foreground)] active:opacity-60 disabled:opacity-40"
                         aria-label="Delete comment"
                       >
@@ -300,6 +301,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 ref={commentInputRef}
                 value={commentBody}
                 onChange={e => setCommentBody(e.target.value)}
+                data-testid="share-comment-input"
                 maxLength={500}
                 placeholder="Add a comment…"
                 rows={2}
@@ -310,6 +312,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
                 <button
                   onClick={handlePostComment}
                   disabled={posting || !commentBody.trim()}
+                  data-testid="post-comment"
                   className="ui-button-primary min-h-9 rounded-[10px] px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
                 >
                   {posting ? (
@@ -322,6 +325,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
           ) : (
             <button
               onClick={() => router.push(`/auth?returnTo=/share/${data.shareToken}`)}
+              data-testid="sign-in-to-comment"
               className="w-full ui-button-secondary text-[var(--muted-foreground)]"
             >
               Sign in to comment
@@ -339,6 +343,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         <button
           onClick={handleClone}
           disabled={cloning || cloned}
+          data-testid="save-shared-recipe"
           className="w-full ui-button-primary font-semibold disabled:opacity-60"
         >
           {cloning ? (

@@ -65,17 +65,18 @@ export function RecipeTitleBlock({
 
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="ui-page-title">{displayName}</h1>
+          <h1 className="ui-page-title" data-testid="recipe-name">{displayName}</h1>
           {isManualCreated && (
             <button
               onClick={onOpenManualCreator}
+              data-testid="manual-creator-badge"
               className="ui-focus-ring ui-pressable ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-[var(--foreground)]/14"
             >
               manual
             </button>
           )}
           {hasManualEdits && (
-            <button onClick={onOpenEditHistory} className="ui-focus-ring ui-pressable ui-badge ui-badge-info">
+            <button onClick={onOpenEditHistory} data-testid="open-edit-history" className="ui-focus-ring ui-pressable ui-badge ui-badge-info">
               v{versionN} edited
             </button>
           )}
@@ -87,6 +88,7 @@ export function RecipeTitleBlock({
           {shareToken && !isEditing && (
             <button
               onClick={onOpenShare}
+              data-testid="open-share-sheet"
               className="ui-focus-ring ui-pressable ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-[var(--foreground)]/14"
             >
               <svg className="size-2.5" viewBox="0 0 10 10" fill="none">
@@ -99,21 +101,22 @@ export function RecipeTitleBlock({
         {recipe.coffee_profile_id ? (
           <button
             onClick={onOpenCoffeeProfile}
+            data-testid="coffee-name"
             className="ui-focus-ring ui-pressable mt-0.5 rounded-md ui-body-muted underline underline-offset-2 hover:text-[var(--foreground)]"
           >
             {beanName}
           </button>
         ) : (
-          <p className="ui-body-muted mt-0.5">{beanName}</p>
+          <p className="ui-body-muted mt-0.5" data-testid="coffee-name">{beanName}</p>
         )}
         {beanProcess && (
-          <p className="ui-body-muted mt-0.5 capitalize">{beanProcess}</p>
+          <p className="ui-body-muted mt-0.5 capitalize" data-testid="bean-process">{beanProcess}</p>
         )}
         {recipe.bean_info.roaster && (
-          <p className="ui-body-muted mt-0.5">{recipe.bean_info.roaster}</p>
+          <p className="ui-body-muted mt-0.5" data-testid="roaster">{recipe.bean_info.roaster}</p>
         )}
         {recipe.parent_recipe_id && !isEditing && (
-          <button onClick={onOpenParentRecipe} className="ui-focus-ring ui-pressable mt-1 flex items-center gap-1 rounded-md ui-body-muted hover:text-[var(--foreground)]">
+            <button onClick={onOpenParentRecipe} data-testid="open-parent-recipe" className="ui-focus-ring ui-pressable mt-1 flex items-center gap-1 rounded-md ui-body-muted hover:text-[var(--foreground)]">
             <svg className="size-3" viewBox="0 0 12 12" fill="none">
               <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -174,7 +177,14 @@ export function RecipeViewParameters({
           { value: recipe.parameters.ratio, label: 'Ratio' },
         ].map(parameter => (
           <div key={parameter.label} className="rounded-xl p-3 flex flex-col items-start gap-1 bg-[var(--background)]">
-            <p className="ui-card-title">{parameter.value}</p>
+            <p className="ui-card-title" data-testid={{
+              Water: 'water-amount',
+              Coffee: 'coffee-amount',
+              Temp: 'brew-temp',
+              Time: 'brew-time',
+              Grind: 'grind-setting',
+              Ratio: 'brew-ratio',
+            }[parameter.label]}>{parameter.value}</p>
             <p className="ui-overline">{parameter.label}</p>
           </div>
         ))}
@@ -206,7 +216,7 @@ export function RecipeViewGrindSettings({
           <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]}</span>
           <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
         </div>
-        <p className="text-lg font-bold">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
+        <p className="text-lg font-bold" data-testid="grind-setting">{formatGrinderSettingForDisplay(preferredGrinder, primaryData.starting_point)}</p>
         <p className="ui-body-muted text-[var(--background)] mt-0.5">Range: {primaryData.range}</p>
         {primaryData.description && (
           <p className="ui-body-muted text-[var(--background)] mt-1 italic">{primaryData.description}</p>
@@ -245,7 +255,7 @@ export function RecipeViewGrindSettings({
                     <p className="ui-meta mt-0.5 italic">{data.note}</p>
                   )}
                 </div>
-                <p className="ui-card-title shrink-0">{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
+                <p className="ui-card-title shrink-0" data-testid={`grind-setting-${grinder}`}>{formatGrinderSettingForDisplay(grinder, data.starting_point)}</p>
               </div>
             )
           })}
@@ -336,10 +346,10 @@ export function RecipeViewSteps({ recipe }: { recipe: RecipeWithAdjustment }) {
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <p className="ui-card-title">{step.time}</p>
-              <p className="ui-body-muted">+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
+              <p className="ui-card-title" data-testid={`brew-time-${step.step}`}>{step.time}</p>
+              <p className="ui-body-muted" data-testid={`water-amount-${step.step}`}>+{step.water_poured_g}g → <span className="font-bold">{step.water_accumulated_g}g</span></p>
             </div>
-            <p className="ui-body-muted leading-relaxed">{step.action}</p>
+            <p className="ui-body-muted leading-relaxed" data-testid={`brew-step-action-${step.step}`}>{step.action}</p>
           </div>
         </div>
       ))}
@@ -374,16 +384,16 @@ export function ShareSheet({
 
         <div className="flex items-center gap-2 bg-[var(--background)] rounded-xl px-3 py-2.5 mb-4">
           <p className="flex-1 ui-meta truncate">{shareUrl}</p>
-          <button onClick={onCopy} className="ui-focus-ring ui-pressable rounded-md px-2 py-1 ui-meta font-semibold text-[var(--foreground)] shrink-0 hover:bg-[var(--card)]">
+          <button onClick={onCopy} data-testid="copy-share-link-inline" className="ui-focus-ring ui-pressable rounded-md px-2 py-1 ui-meta font-semibold text-[var(--foreground)] shrink-0 hover:bg-[var(--card)]">
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
 
         <div className="flex flex-col gap-2">
-          <button onClick={onCopy} className="w-full ui-button-primary font-semibold">
+          <button onClick={onCopy} data-testid="copy-share-link" className="w-full ui-button-primary font-semibold">
             {copied ? 'Link Copied!' : 'Copy Link'}
           </button>
-          <button onClick={onRevoke} className="w-full ui-button-danger bg-[var(--background)]">
+          <button onClick={onRevoke} data-testid="revoke-share-link" className="w-full ui-button-danger bg-[var(--background)]">
             Revoke Link
           </button>
         </div>

@@ -140,6 +140,7 @@ export default function RecipeEditForm({
                     min={1}
                     step={0.1}
                     value={editDraft.coffee_g}
+                    data-testid="coffee-amount"
                     onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
                     onChange={event => setEditDraft(draft => draft ? { ...draft, coffee_g: Math.max(0, parseFloat(event.target.value) || draft.coffee_g) } : draft)}
                     onBlur={() => {
@@ -170,7 +171,7 @@ export default function RecipeEditForm({
                 <div className="flex flex-col gap-1">
                   <span className="ui-overline">Water (g)</span>
                   <div className="rounded-xl px-3 py-2.5 bg-[var(--background)] border border-[var(--border)]">
-                    <p className="ui-card-title">{editDraft.water_g}</p>
+                    <p className="ui-card-title" data-testid="water-amount">{editDraft.water_g}</p>
                   </div>
                 </div>
               </div>
@@ -185,6 +186,7 @@ export default function RecipeEditForm({
                     max={50}
                     step={0.1}
                     value={parseFloat(editDraft.ratio_multiplier.toFixed(1))}
+                    data-testid="brew-ratio"
                     onKeyDown={event => { if (event.key === '-' || event.key === 'e') event.preventDefault() }}
                     onChange={event => setEditDraft(draft => draft ? { ...draft, ratio_multiplier: Math.max(0, parseFloat(event.target.value) || draft.ratio_multiplier) } : draft)}
                     onBlur={() => {

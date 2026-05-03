@@ -21,6 +21,7 @@ const SelectableRecipeListCard = memo(function SelectableRecipeListCard({
     <button
       type="button"
       onClick={() => onToggle(recipe.id)}
+      data-testid={`select-recipe-${recipe.id}`}
       aria-label={`Select recipe ${beanName}`}
       aria-pressed={selected}
       className={`ui-card-interactive group flex w-full items-center gap-3 rounded-2xl p-3 text-left ${

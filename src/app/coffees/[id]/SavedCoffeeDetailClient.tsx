@@ -157,11 +157,11 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
       {!loading && detail && (
         <div className="px-4 sm:px-6 pb-8 flex flex-col gap-4">
           <div className="ui-card-interactive bg-[var(--card)] rounded-2xl p-4">
-            <h1 className="ui-page-title">{detail.profile.label}</h1>
-            <p className="ui-body-muted mt-2">
+            <h1 className="ui-page-title" data-testid="coffee-name">{detail.profile.label}</h1>
+            <p className="ui-body-muted mt-2" data-testid="roaster">
               {detail.profile.bean_profile_json.roaster ?? 'Unknown roaster'} · {detail.profile.bean_profile_json.origin ?? 'Unknown origin'}
             </p>
-            <p className="ui-body-muted mt-1">
+            <p className="ui-body-muted mt-1" data-testid="bean-process">
               {detail.profile.bean_profile_json.process ?? 'Unknown process'} · {detail.profile.bean_profile_json.roast_level ?? 'Unknown roast'}
             </p>
           </div>
@@ -179,17 +179,17 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
             <h2 className="ui-card-title">Generate New Recipe</h2>
 
             <label className="ui-meta">Method</label>
-            <select value={method} onChange={e => setMethod(e.target.value)} className="ui-input">
+            <select value={method} onChange={e => setMethod(e.target.value)} data-testid="brew-method" className="ui-input">
               {METHOD_OPTIONS.map(m => <option key={m} value={m}>{METHOD_DISPLAY_NAMES[m]}</option>)}
             </select>
 
             <label className="ui-meta">Goal</label>
-            <select value={goal} onChange={e => setGoal(e.target.value)} className="ui-input">
+            <select value={goal} onChange={e => setGoal(e.target.value)} data-testid="brew-goal" className="ui-input">
               {GOAL_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
 
             <label className="ui-meta">Water Mode</label>
-            <select value={waterMode} onChange={e => setWaterMode(e.target.value as 'absolute' | 'delta')} className="ui-input">
+            <select value={waterMode} onChange={e => setWaterMode(e.target.value as 'absolute' | 'delta')} data-testid="water-mode" className="ui-input">
               <option value="absolute">Absolute grams</option>
               <option value="delta">Delta grams</option>
             </select>
@@ -208,21 +208,22 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
                   .replace(/(?!^)-/g, '')
                 setWaterValue(normalized)
               }}
+              data-testid={waterMode === 'absolute' ? 'water-amount' : 'water-delta'}
               className="ui-input"
               inputMode="numeric"
               pattern={waterMode === 'absolute' ? '[0-9]*' : '-?[0-9]*'}
             />
 
-            <button onClick={handleGenerate} disabled={saving || archived} className="ui-button-primary">
+            <button onClick={handleGenerate} disabled={saving || archived} data-testid="generate-recipe" className="ui-button-primary">
               {saving ? 'Generating...' : 'Generate Recipe'}
             </button>
 
             {archived ? (
-              <button onClick={handleRestore} className="ui-button-secondary">
+              <button onClick={handleRestore} data-testid="restore-profile" className="ui-button-secondary">
                 Restore Profile
               </button>
             ) : (
-              <button onClick={handleArchive} className="ui-button-secondary">
+              <button onClick={handleArchive} data-testid="archive-profile" className="ui-button-secondary">
                 Archive Profile
               </button>
             )}
