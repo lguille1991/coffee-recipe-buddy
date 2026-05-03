@@ -163,41 +163,6 @@ export default function RecipesClient({
     setSelectedIds(new Set())
   }
 
-  async function handleToggleFavorite(recipeId: string, favorite: boolean) {
-    setActionError(null)
-    await runClientMutation({
-      execute: async () => {
-        const response = await fetch(`/api/recipes/${recipeId}/favorite`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ favorite }),
-        })
-        await expectOk(response, 'Failed to update favorite')
-      },
-      onSuccess: async () => {
-        setRecipes(prev => {
-          const next = prev.map(recipe => recipe.id === recipeId
-            ? {
-                ...recipe,
-                is_favorite: favorite,
-                can_delete: recipe.source === 'owned' && !favorite,
-                can_archive: recipe.source === 'owned' && !favorite,
-              }
-            : recipe)
-
-          if (section === 'favorites' && !favorite) {
-            return next.filter(recipe => recipe.id !== recipeId)
-          }
-
-          return next
-        })
-        router.refresh()
-      },
-      onError: setActionError,
-      errorMessage: 'Failed to update favorite. Please try again.',
-    })
-  }
-
   async function handleRemoveFromMyList(recipeId: string) {
     setActionError(null)
     await runClientMutation({
@@ -398,13 +363,6 @@ export default function RecipesClient({
                   : <RecipeListCard recipe={recipe} disableLink={section === 'my' && archived} />}
                 {!selectionMode && (
                   <div className="flex flex-wrap gap-2 px-1">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleFavorite(recipe.id, !recipe.is_favorite)}
-                      className="ui-button-secondary px-3 py-1.5 text-xs"
-                    >
-                      {recipe.is_favorite ? 'Unfavorite' : 'Favorite'}
-                    </button>
                     {recipe.can_remove_from_list && (
                       <button
                         type="button"

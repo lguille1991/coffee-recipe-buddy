@@ -1,3 +1,8 @@
+## 1.23.3 - 2026-05-02
+
+- Moved favorite/unfavorite interaction to recipe detail only and added a star icon inline with share/delete controls.
+- Removed favorite toggle actions from the `/recipes` list view while preserving shared-recipes remove-from-list actions.
+
 ## 1.23.2 - 2026-05-02
 
 - Added defensive fallbacks when `recipe_user_favorites` or `recipe_share_memberships` tables are missing so list/detail pages do not crash before DB migrations are applied.
