@@ -27,6 +27,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!profile) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayName(profile.display_name ?? '')
     setVolumeMl(String(profile.default_volume_ml))
     setTempUnit(profile.temp_unit)

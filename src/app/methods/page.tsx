@@ -33,6 +33,7 @@ export default function MethodsPage() {
   useEffect(() => {
     const storedRecommendations = recipeSessionStorage.getMethodRecommendations()
     if (storedRecommendations.length === 0) { router.replace('/scan'); return }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecommendations(storedRecommendations)
 
     const shouldRestoreSelection = recipeSessionStorage.shouldRestoreMethodSelection()

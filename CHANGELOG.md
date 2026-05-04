@@ -1,3 +1,10 @@
+## 1.23.10 - 2026-05-04
+
+- Updated `/coffees/[id]` recipe generation method selector to show grouped options with `Recommended methods` first and `Other` methods second.
+- Added profile-aware recommended method defaults so the initial method auto-selects the top recommendation once after profile load without overriding later user choices.
+- Standardized `/coffees/[id]` display labels to title case in UI only for bean process/roast text and brew goal option labels while preserving canonical payload values.
+- Added regression tests for method-group rendering, one-time recommendation defaulting, user-selection preservation, payload value integrity, and UI-only label formatting.
+
 ## 1.23.9 - 2026-05-04
 
 - Updated `/analysis` bean profile editing UI to make editable fields explicit via section hint text and per-field editable badges.

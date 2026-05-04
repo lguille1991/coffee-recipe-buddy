@@ -18,5 +18,5 @@ export default async function SavedCoffeeDetailPage({ params }: Params) {
     redirect(`/auth?returnTo=/coffees/${id}`)
   }
 
-  return <SavedCoffeeDetailClient profileId={id} />
+  return <SavedCoffeeDetailClient key={id} profileId={id} />
 }
