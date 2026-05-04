@@ -84,7 +84,10 @@ export function useRecipeEditing({
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const currentRecipe = recipe.current_recipe_json
-  const allHistory = (recipe.feedback_history ?? []) as AnyFeedbackRound[]
+  const allHistory = useMemo(
+    () => (recipe.feedback_history ?? []) as AnyFeedbackRound[],
+    [recipe.feedback_history],
+  )
 
   const liveGrindSettings = useMemo(() => {
     if (!isEditing || !editDraft) return null

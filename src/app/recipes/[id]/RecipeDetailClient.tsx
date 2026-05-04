@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ConfirmSheet from '@/components/ConfirmSheet'
 import { expectOk, runClientMutation } from '@/lib/client-mutation'
-import { recalculateFreshness, type FreshnessAdjustment } from '@/lib/freshness-recalculator'
+import { recalculateFreshness } from '@/lib/freshness-recalculator'
 import { useProfile } from '@/hooks/useProfile'
 import { isManualRecipeCreated } from '@/lib/recipe-origin'
 import type { SavedRecipeDetail } from '@/types/recipe'
@@ -53,7 +53,6 @@ export default function RecipeDetailClient({
   const [actionError, setActionError] = useState<string | null>(null)
 
   // Freshness state (kept inline)
-  const [freshnessAdj, setFreshnessAdj] = useState<FreshnessAdjustment | null>(null)
   const [freshnessIgnored, setFreshnessIgnored] = useState(false)
 
   // Secondary grinders accordion state
@@ -81,17 +80,12 @@ export default function RecipeDetailClient({
     return selectedSnapshot?.snapshot_index ?? snapshots.length
   }, [snapshots, liveSnapshotIndex])
 
-  // Freshness effect
-  useEffect(() => {
+  const freshnessAdj = useMemo(() => {
     const adjustment = recalculateFreshness(
       recipe.current_recipe_json,
       recipe.bean_info.roast_date ?? undefined,
     )
-    if (adjustment.adjusted) {
-      setFreshnessAdj(adjustment)
-    } else {
-      setFreshnessAdj(null)
-    }
+    return adjustment.adjusted ? adjustment : null
   }, [recipe.bean_info.roast_date, recipe.current_recipe_json])
 
   // Hooks

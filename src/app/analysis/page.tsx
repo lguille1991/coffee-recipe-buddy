@@ -26,6 +26,9 @@ const PROCESS_LABELS: Record<string, string> = {
   natural: 'Natural',
   honey: 'Honey',
   anaerobic: 'Anaerobic',
+  carbonic: 'Carbonic',
+  thermal_shock: 'Thermal Shock',
+  experimental: 'Experimental',
   unknown: 'Unknown',
 }
 
@@ -45,6 +48,37 @@ const GOAL_OPTIONS: Array<{ value: BrewGoal; label: string; description: string 
   { value: 'forgiving', label: 'Forgiving', description: 'safer starting point when the bag is tricky' },
 ]
 
+const ROAST_OPTIONS: BeanProfile['roast_level'][] = ['light', 'medium-light', 'medium', 'medium-dark', 'dark']
+const PROCESS_OPTIONS: BeanProfile['process'][] = [
+  'washed',
+  'natural',
+  'honey',
+  'anaerobic',
+  'carbonic',
+  'thermal_shock',
+  'experimental',
+  'unknown',
+]
+
+type FieldErrors = {
+  coffeeName?: string
+  origin?: string
+  altitude?: string
+}
+
+function getAltitudeError(value: string): string | undefined {
+  if (value === '') return undefined
+  if (!/^\d+$/.test(value)) return 'Enter altitude as a whole number between 300 and 3000, or leave blank.'
+  const parsed = parseInt(value, 10)
+  if (parsed < 300 || parsed > 3000) return 'Enter altitude as a whole number between 300 and 3000, or leave blank.'
+  return undefined
+}
+
+function getMaxLengthError(label: string, value: string): string | undefined {
+  if (value.length <= 150) return undefined
+  return `${label} must be 150 characters or fewer.`
+}
+
 function ConfidenceBadge({ score }: { score?: number }) {
   if (!score || score >= 0.6) return null
   return (
@@ -54,31 +88,39 @@ function ConfidenceBadge({ score }: { score?: number }) {
   )
 }
 
-function EditableField({
+function EditableBadge() {
+  return <span className="inline-block ui-badge">Editable</span>
+}
+
+function EditableTextField({
   label,
   value,
   onChange,
   confidence,
   testId,
-  type = 'text',
+  maxLength,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   confidence?: number
   testId: string
-  type?: string
+  maxLength?: number
 }) {
   return (
     <div className="bg-[var(--card)] rounded-xl p-3">
-      <div className="flex items-center justify-between mb-1">
-        <label className="ui-overline">{label}</label>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2">
+          <label className="ui-overline">{label}</label>
+          <EditableBadge />
+        </div>
         <ConfidenceBadge score={confidence} />
       </div>
       <input
-        type={type}
+        type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
+        maxLength={maxLength}
         data-testid={testId}
         className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
       />
@@ -106,6 +148,8 @@ export default function AnalysisPage() {
   const [pendingDuplicateAction, setPendingDuplicateAction] = useState<'save' | 'save_and_generate' | null>(null)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
+  const [altitudeInput, setAltitudeInput] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   useEffect(() => {
     if (profile?.default_volume_ml) {
@@ -120,9 +164,16 @@ export default function AnalysisPage() {
     if (!data) { router.replace('/scan'); return }
     const b = data.bean
     const parts = [b.variety, b.finca, b.producer].filter(Boolean)
+    const initialBean = { ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined }
     startTransition(() => {
       setExtraction(data)
-      setBean({ ...b, bean_name: parts.length ? parts.join(' · ') : b.bean_name || undefined })
+      setBean(initialBean)
+      setAltitudeInput(initialBean.altitude_masl ? String(initialBean.altitude_masl) : '')
+      setFieldErrors({
+        coffeeName: getMaxLengthError('Coffee name', initialBean.bean_name ?? ''),
+        origin: getMaxLengthError('Origin', initialBean.origin ?? ''),
+        altitude: getAltitudeError(initialBean.altitude_masl ? String(initialBean.altitude_masl) : ''),
+      })
     })
   }, [router])
 
@@ -163,8 +214,23 @@ export default function AnalysisPage() {
 
   function buildFinalBean() {
     if (!bean) return null
+    const altitudeError = getAltitudeError(altitudeInput)
+    const coffeeNameError = getMaxLengthError('Coffee name', bean.bean_name ?? '')
+    const originError = getMaxLengthError('Origin', bean.origin ?? '')
+
+    if (altitudeError || coffeeNameError || originError) {
+      setFieldErrors({
+        altitude: altitudeError,
+        coffeeName: coffeeNameError,
+        origin: originError,
+      })
+      return null
+    }
+
+    const altitude = altitudeInput === '' ? undefined : parseInt(altitudeInput, 10)
     return BeanProfileSchema.parse({
       ...bean,
+      altitude_masl: altitude,
       process: bean.process ?? 'unknown',
       roast_level: bean.roast_level ?? 'medium',
       roast_date: roastDate || undefined,
@@ -422,11 +488,17 @@ export default function AnalysisPage() {
             <input
               type="text"
               value={bean.bean_name || ''}
-              onChange={e => updateField('bean_name', e.target.value || undefined)}
+              onChange={e => {
+                const value = e.target.value
+                updateField('bean_name', value || undefined)
+                setFieldErrors(prev => ({ ...prev, coffeeName: getMaxLengthError('Coffee name', value) }))
+              }}
+              maxLength={150}
               data-testid="coffee-name"
               placeholder="Unknown Bean"
               className="w-full font-semibold text-[var(--foreground)] text-base bg-transparent outline-none placeholder:text-[var(--muted-foreground)]"
             />
+            {fieldErrors.coffeeName && <p className="ui-meta ui-text-danger mt-1">{fieldErrors.coffeeName}</p>}
             <p className="ui-body-muted mt-0.5" data-testid="roaster">{bean.roaster || 'Unknown Roaster'}</p>
             <p className="ui-body-muted mt-0.5" data-testid="roast-level-display">
               {bean.origin ? `${bean.origin} · ` : ''}{ROAST_LABELS[bean.roast_level]} Roast
@@ -437,36 +509,103 @@ export default function AnalysisPage() {
         {/* Bean profile grid */}
         <div>
           <h3 className="ui-overline px-1 mb-2">Bean Profile</h3>
+          <p className="ui-meta px-1 mb-2">Review and edit extracted values before continuing.</p>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-            <EditableField
+            <EditableTextField
               label="Origin"
               value={bean.origin || ''}
-              onChange={v => updateField('origin', v || undefined)}
+              onChange={v => {
+                updateField('origin', v || undefined)
+                setFieldErrors(prev => ({ ...prev, origin: getMaxLengthError('Origin', v) }))
+              }}
               confidence={extraction.confidence.origin}
               testId="bean-origin"
+              maxLength={150}
             />
-            <EditableField
-              label="Roast"
-              value={ROAST_LABELS[bean.roast_level] || bean.roast_level}
-              onChange={v => updateField('roast_level', v.toLowerCase().replace(' ', '-') as BeanProfile['roast_level'])}
-              confidence={extraction.confidence.roast_level}
-              testId="roast-level-input"
-            />
-            <EditableField
-              label="Process"
-              value={PROCESS_LABELS[bean.process] || bean.process}
-              onChange={v => updateField('process', v.toLowerCase() as BeanProfile['process'])}
-              confidence={extraction.confidence.process}
-              testId="bean-process"
-            />
-            <EditableField
-              label="Altitude"
-              value={bean.altitude_masl ? `${bean.altitude_masl}m` : ''}
-              onChange={v => updateField('altitude_masl', parseInt(v) || undefined)}
-              confidence={extraction.confidence.altitude_masl}
-              testId="altitude"
-            />
+            <div className="bg-[var(--card)] rounded-xl p-3">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="ui-overline">Roast</label>
+                  <EditableBadge />
+                </div>
+                <ConfidenceBadge score={extraction.confidence.roast_level} />
+              </div>
+              <select
+                value={bean.roast_level}
+                onChange={e => updateField('roast_level', e.target.value as BeanProfile['roast_level'])}
+                data-testid="roast-level-input"
+                className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+              >
+                {ROAST_OPTIONS.map(option => (
+                  <option
+                    key={option}
+                    value={option}
+                    data-testid={`roast-level-option-${option}`}
+                  >
+                    {ROAST_LABELS[option]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-[var(--card)] rounded-xl p-3">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="ui-overline">Process</label>
+                  <EditableBadge />
+                </div>
+                <ConfidenceBadge score={extraction.confidence.process} />
+              </div>
+              <select
+                value={bean.process}
+                onChange={e => updateField('process', e.target.value as BeanProfile['process'])}
+                data-testid="bean-process"
+                className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+              >
+                {PROCESS_OPTIONS.map(option => (
+                  <option
+                    key={option}
+                    value={option}
+                    data-testid={`bean-process-option-${option}`}
+                  >
+                    {PROCESS_LABELS[option]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-[var(--card)] rounded-xl p-3">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="ui-overline">Altitude (masl)</label>
+                  <EditableBadge />
+                </div>
+                <ConfidenceBadge score={extraction.confidence.altitude_masl} />
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={altitudeInput}
+                onKeyDown={e => {
+                  if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault()
+                }}
+                onChange={e => {
+                  const value = e.target.value
+                  if (!/^\d*$/.test(value)) {
+                    setAltitudeInput(value)
+                    setFieldErrors(prev => ({ ...prev, altitude: getAltitudeError(value) }))
+                    return
+                  }
+                  setAltitudeInput(value)
+                  setFieldErrors(prev => ({ ...prev, altitude: getAltitudeError(value) }))
+                }}
+                data-testid="altitude"
+                className="w-full text-base font-medium text-[var(--foreground)] bg-transparent outline-none"
+                placeholder="e.g. 1800"
+              />
+              {fieldErrors.altitude && <p className="ui-meta ui-text-danger mt-1">{fieldErrors.altitude}</p>}
+            </div>
           </div>
+          {fieldErrors.origin && <p className="ui-meta ui-text-danger mt-1 px-1">{fieldErrors.origin}</p>}
         </div>
 
         {/* Flavor notes */}
