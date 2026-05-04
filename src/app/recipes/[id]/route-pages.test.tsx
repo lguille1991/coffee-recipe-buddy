@@ -69,7 +69,7 @@ const BASE_SAVED_RECIPE: SavedRecipe = {
   scale_factor: null,
 }
 
-function createSupabaseClient(userId: string | null, recipe = BASE_SAVED_RECIPE) {
+function createSupabaseClient(userId: string | null) {
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({

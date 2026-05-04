@@ -100,6 +100,7 @@ export default function RecipeSessionClient() {
         router.replace('/methods')
         return
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlowSource('manual')
       return
     }

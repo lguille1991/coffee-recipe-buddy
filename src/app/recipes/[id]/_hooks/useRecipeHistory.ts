@@ -57,6 +57,7 @@ export function useRecipeHistory({
   // Sync selectedSnapshotIndex to liveSnapshotIndex when opening the sheet
   useEffect(() => {
     if (showEditHistorySheet) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSnapshotIndex(liveSnapshotIndex)
     }
   }, [liveSnapshotIndex, showEditHistorySheet])

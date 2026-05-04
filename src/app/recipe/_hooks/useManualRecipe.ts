@@ -46,19 +46,12 @@ export type UseManualRecipeReturn = {
 export function useManualRecipe(options: UseManualRecipeOptions): UseManualRecipeReturn {
   const { user, preferredGrinder, tempUnit, onNavigate, onSaveSuccess } = options
 
-  const [manualDraft, setManualDraft] = useState<ManualRecipeDraft | null>(null)
+  const [manualDraft, setManualDraft] = useState<ManualRecipeDraft | null>(() => recipeSessionStorage.getManualRecipeDraft())
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [stepError, setStepError] = useState<string | null>(null)
 
-  // Load draft from sessionStorage on mount
-  useEffect(() => {
-    const storedDraft = recipeSessionStorage.getManualRecipeDraft()
-    if (storedDraft) {
-      setManualDraft(storedDraft)
-    }
-  }, [])
-
+  
   // Save draft to sessionStorage when it changes
   useEffect(() => {
     if (manualDraft) {

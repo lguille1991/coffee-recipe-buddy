@@ -1,3 +1,12 @@
+## 1.23.9 - 2026-05-04
+
+- Updated `/analysis` bean profile editing UI to make editable fields explicit via section hint text and per-field editable badges.
+- Replaced free-text roast/process editing with canonical dropdowns; process now covers the full schema option set with user-friendly labels.
+- Added stricter analysis validation:
+- Altitude now accepts only whole-number `300-3000` masl (or blank), shows inline errors immediately for invalid prefilled/input values, and blocks both save actions until fixed.
+- `coffee-name` and `bean-origin` now enforce max length `150` with inline errors and submit blocking for over-limit values.
+- Added analysis page regression tests for editability cues, dropdown behavior, and submit-blocking validation paths.
+
 ## 1.23.8 - 2026-05-03
 
 - Modernized mobile shell behavior on Home, Recipes, Saved Coffees, and Recipe Session with shared top/bottom spacing utilities and safe-area-aware bottom contracts.
