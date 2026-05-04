@@ -2,19 +2,20 @@
 
 import React from 'react'
 import { act } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import type { ExtractionResponse } from '@/types/recipe'
 
 const pushMock = vi.fn()
 const replaceMock = vi.fn()
 const backMock = vi.fn()
+const routerMock = { push: pushMock, replace: replaceMock, back: backMock }
 const setGuardMock = vi.fn()
 const getExtractionResultMock = vi.fn<() => ExtractionResponse | null>()
 const featureFlagMock = vi.fn(() => true)
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: pushMock, replace: replaceMock, back: backMock }),
+  useRouter: () => routerMock,
 }))
 
 vi.mock('@/components/NavGuardContext', () => ({
@@ -114,8 +115,15 @@ describe('AnalysisPage editability and validation', () => {
     root = createRoot(container)
   })
 
-  it('renders editable cues and section hint', async () => {
-    await act(async () => {
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    vi.clearAllMocks()
+  })
+
+  it('renders editable cues and section hint', () => {
+    act(() => {
       root.render(<AnalysisPage />)
     })
 
@@ -123,8 +131,8 @@ describe('AnalysisPage editability and validation', () => {
     expect(container.textContent?.match(/Editable/g)?.length ?? 0).toBeGreaterThanOrEqual(4)
   })
 
-  it('renders full process option set with friendly labels', async () => {
-    await act(async () => {
+  it('renders full process option set with friendly labels', () => {
+    act(() => {
       root.render(<AnalysisPage />)
     })
 
@@ -143,10 +151,10 @@ describe('AnalysisPage editability and validation', () => {
     ])
   })
 
-  it('blocks both submit paths for invalid altitude and over-limit name', async () => {
+  it('blocks both submit paths for invalid altitude and over-limit name', () => {
     getExtractionResultMock.mockReturnValue(buildExtraction({ bean: { ...buildExtraction().bean, altitude_masl: 250, bean_name: 'x'.repeat(151) } }))
 
-    await act(async () => {
+    act(() => {
       root.render(<AnalysisPage />)
     })
 
@@ -156,7 +164,7 @@ describe('AnalysisPage editability and validation', () => {
     const saveCoffee = container.querySelector('[data-testid="save-coffee-profile"]') as HTMLButtonElement
     const saveGenerate = container.querySelector('[data-testid="save-and-generate-recipe"]') as HTMLButtonElement
 
-    await act(async () => {
+    act(() => {
       saveCoffee.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       saveGenerate.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
@@ -165,15 +173,15 @@ describe('AnalysisPage editability and validation', () => {
     expect(pushMock).not.toHaveBeenCalled()
   })
 
-  it('updates roast and process through dropdown values', async () => {
-    await act(async () => {
+  it('updates roast and process through dropdown values', () => {
+    act(() => {
       root.render(<AnalysisPage />)
     })
 
     const roast = container.querySelector('[data-testid="roast-level-input"]') as HTMLSelectElement
     const process = container.querySelector('[data-testid="bean-process"]') as HTMLSelectElement
 
-    await act(async () => {
+    act(() => {
       roast.value = 'medium-dark'
       roast.dispatchEvent(new Event('change', { bubbles: true }))
       process.value = 'thermal_shock'

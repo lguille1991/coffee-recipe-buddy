@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useProfile } from '@/hooks/useProfile'
-import { BrewGoalSchema, METHOD_DISPLAY_NAMES, MethodIdSchema } from '@/types/recipe'
+import { recommendMethods } from '@/lib/method-decision-engine'
+import { BeanProfile, BrewGoalSchema, METHOD_DISPLAY_NAMES, MethodIdSchema } from '@/types/recipe'
 
 type ProfileDetail = {
   id: string
@@ -35,6 +36,7 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
   const [goal, setGoal] = useState('balanced')
   const [waterMode, setWaterMode] = useState<'absolute' | 'delta'>('absolute')
   const [waterValue, setWaterValue] = useState('250')
+  const hasAutoSelectedMethod = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -59,12 +61,51 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
   }, [profileId])
 
   const archived = useMemo(() => detail?.profile.archived_at != null, [detail])
+  const beanProfileForRecommendations = useMemo<BeanProfile | null>(() => {
+    if (!detail) return null
+    const bean = detail.profile.bean_profile_json
+    const process = normalizeProcess(bean.process)
+    if (!process) return null
+
+    return {
+      process,
+      roast_level: normalizeRoastLevel(bean.roast_level) ?? 'medium',
+      roaster: bean.roaster ?? null,
+      origin: bean.origin ?? null,
+    }
+  }, [detail])
+
+  const recommendedMethods = useMemo(() => {
+    if (!beanProfileForRecommendations) return []
+    return recommendMethods(beanProfileForRecommendations, { brewGoal: goal as (typeof GOAL_OPTIONS)[number] })
+  }, [beanProfileForRecommendations, goal])
+
+  const groupedMethodOptions = useMemo(() => {
+    const recommended = recommendedMethods
+      .map(entry => entry.method)
+      .filter((value): value is (typeof METHOD_OPTIONS)[number] => METHOD_OPTIONS.includes(value as (typeof METHOD_OPTIONS)[number]))
+
+    const recommendedSet = new Set(recommended)
+    const other = METHOD_OPTIONS.filter(option => !recommendedSet.has(option))
+
+    return { recommended, other }
+  }, [recommendedMethods])
 
   useEffect(() => {
     if (!profile?.default_volume_ml) return
     if (waterMode !== 'absolute') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWaterValue(String(profile.default_volume_ml))
   }, [profile?.default_volume_ml, waterMode])
+
+  useEffect(() => {
+    if (hasAutoSelectedMethod.current) return
+    const topRecommendation = groupedMethodOptions.recommended[0]
+    if (!topRecommendation) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMethod(topRecommendation)
+    hasAutoSelectedMethod.current = true
+  }, [groupedMethodOptions.recommended])
 
   async function handleGenerate() {
     setSaving(true)
@@ -162,7 +203,7 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
               {detail.profile.bean_profile_json.roaster ?? 'Unknown roaster'} · {detail.profile.bean_profile_json.origin ?? 'Unknown origin'}
             </p>
             <p className="ui-body-muted mt-1" data-testid="bean-process">
-              {detail.profile.bean_profile_json.process ?? 'Unknown process'} · {detail.profile.bean_profile_json.roast_level ?? 'Unknown roast'}
+              {toDisplayLabel(detail.profile.bean_profile_json.process, 'Unknown process')} · {toDisplayLabel(detail.profile.bean_profile_json.roast_level, 'Unknown roast')}
             </p>
           </div>
 
@@ -180,12 +221,19 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
 
             <label className="ui-meta">Method</label>
             <select value={method} onChange={e => setMethod(e.target.value)} data-testid="brew-method" className="ui-input">
-              {METHOD_OPTIONS.map(m => <option key={m} value={m}>{METHOD_DISPLAY_NAMES[m]}</option>)}
+              {groupedMethodOptions.recommended.length > 0 && (
+                <optgroup label="Recommended methods">
+                  {groupedMethodOptions.recommended.map(m => <option key={`recommended-${m}`} value={m}>{METHOD_DISPLAY_NAMES[m]}</option>)}
+                </optgroup>
+              )}
+              <optgroup label="Other">
+                {groupedMethodOptions.other.map(m => <option key={`other-${m}`} value={m}>{METHOD_DISPLAY_NAMES[m]}</option>)}
+              </optgroup>
             </select>
 
             <label className="ui-meta">Goal</label>
             <select value={goal} onChange={e => setGoal(e.target.value)} data-testid="brew-goal" className="ui-input">
-              {GOAL_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+              {GOAL_OPTIONS.map(g => <option key={g} value={g}>{toDisplayLabel(g, g)}</option>)}
             </select>
 
             <label className="ui-meta">Water Mode</label>
@@ -245,3 +293,48 @@ export default function SavedCoffeeDetailClient({ profileId }: { profileId: stri
 }
 const METHOD_OPTIONS = MethodIdSchema.options
 const GOAL_OPTIONS = BrewGoalSchema.options
+
+function normalizeProcess(value: string | null | undefined): BeanProfile['process'] | null {
+  if (!value) return null
+  const normalized = normalizeCanonicalToken(value)
+  const matched = PROCESS_VALUES.find(option => option === normalized)
+  return matched ?? null
+}
+
+function normalizeRoastLevel(value: string | null | undefined): BeanProfile['roast_level'] | null {
+  if (!value) return null
+  const normalized = normalizeCanonicalToken(value).replace(/_/g, '-')
+  const matched = ROAST_LEVEL_VALUES.find(option => option === normalized)
+  return matched ?? null
+}
+
+function normalizeCanonicalToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+}
+
+function toDisplayLabel(value: string | null | undefined, fallback: string): string {
+  if (!value) return fallback
+  const normalized = value.replace(/[_-]+/g, ' ').trim()
+  if (!normalized) return fallback
+
+  return normalized
+    .split(/\s+/)
+    .map(token => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(' ')
+}
+
+const PROCESS_VALUES = [
+  'washed',
+  'natural',
+  'honey',
+  'anaerobic',
+  'carbonic',
+  'thermal_shock',
+  'experimental',
+  'unknown',
+] as const
+
+const ROAST_LEVEL_VALUES = ['light', 'medium-light', 'medium', 'medium-dark', 'dark'] as const

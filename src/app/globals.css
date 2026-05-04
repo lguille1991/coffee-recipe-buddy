@@ -35,6 +35,7 @@
   --mobile-nav-safe-gap: calc(env(safe-area-inset-bottom) + 0.5rem);
   --mobile-nav-reserved-space: calc(var(--mobile-nav-safe-gap) + 5rem);
   --mobile-floating-offset: calc(var(--mobile-nav-safe-gap) + 4.5rem);
+  --font-geist-sans: "Geist", "Inter", "Avenir Next", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .dark {

@@ -72,6 +72,7 @@ export function useFeedbackFlow(
     const storedRecipe = recipeSessionStorage.getRecipe()
     if (!storedRecipe) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecipe(storedRecipe)
 
     const storedOriginalRecipe = recipeSessionStorage.getRecipeOriginal()
