@@ -1,0 +1,21 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "generatedAt": "2026-05-05T01:19:48.837Z",
+  "storageState": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/auth-state.json",
+  "results": [
+    {
+      "flow": "/scan -> /analysis",
+      "status": "ok",
+      "durationMs": 139,
+      "to": "http://localhost:3000/analysis",
+      "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-scan-to-analysis-auth.trace.zip"
+    },
+    {
+      "flow": "/recipes -> /recipes/[id]",
+      "status": "blocked",
+      "reason": "no_recipe_cards_found",
+      "from": "http://localhost:3000/recipes",
+      "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-recipes-to-detail-auth.trace.zip"
+    }
+  ]
+}

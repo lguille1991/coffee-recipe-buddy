@@ -1,0 +1,28 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "generatedAt": "2026-05-05T00:21:08.353Z",
+  "results": [
+    {
+      "flow": "/scan -> /analysis",
+      "status": "blocked",
+      "reason": "redirected_to_auth",
+      "from": "http://localhost:3000/auth?returnTo=/scan",
+      "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-scan-to-analysis.trace.zip"
+    },
+    {
+      "flow": "/analysis -> /recipe",
+      "status": "ok",
+      "durationToMethodsMs": 103,
+      "durationTotalMs": 6850,
+      "to": "http://localhost:3000/recipe",
+      "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-analysis-to-recipe.trace.zip"
+    },
+    {
+      "flow": "/recipes -> /recipes/[id]",
+      "status": "blocked",
+      "reason": "redirected_to_auth",
+      "from": "http://localhost:3000/auth?returnTo=/recipes",
+      "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-recipes-to-detail.trace.zip"
+    }
+  ]
+}

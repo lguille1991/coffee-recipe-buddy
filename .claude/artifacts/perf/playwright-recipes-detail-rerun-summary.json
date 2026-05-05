@@ -1,0 +1,13 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "generatedAt": "2026-05-05T01:23:22.435Z",
+  "result": {
+    "flow": "/recipes -> /recipes/[id]",
+    "status": "ok",
+    "durationMs": 59,
+    "to": "http://localhost:3000/recipes/827c1faa-da5b-4b25-9534-90853485014a",
+    "firstCardTestId": "open-recipe-827c1faa-da5b-4b25-9534-90853485014a",
+    "cardCount": 1,
+    "tracePath": "/Users/guillermoabrego/Documents/GitHub/coffee-recipe-buddy/.claude/artifacts/perf/pw-flow-recipes-to-detail-auth-rerun.trace.zip"
+  }
+}

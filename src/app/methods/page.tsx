@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MethodRecommendation, MethodId, METHOD_DISPLAY_NAMES, RecipeWithAdjustment } from '@/types/recipe'
 import { createManualRecipeDraft } from '@/lib/manual-recipe'
@@ -22,6 +22,51 @@ const ALL_METHODS = Object.keys(METHOD_DISPLAY_NAMES) as MethodId[]
 
 const RANK_LABELS = ['Best Match', 'Great Choice', 'Also Try']
 const RANK_COLORS = ['bg-[var(--foreground)] text-[var(--background)]', 'bg-[var(--surface-subtle)] text-[var(--foreground)]', 'bg-[var(--surface-subtle)] text-[var(--foreground)]']
+const GENERATION_TIMEOUT_MS = 12000
+
+type GenerationIssue = {
+  type: 'timeout' | 'error'
+  message: string
+  canCheckRecipes: boolean
+}
+
+function emitPerfEvent(stage: string, detail: Record<string, unknown>) {
+  if (typeof window === 'undefined') return
+
+  const payload = {
+    feature: 'methods_generation',
+    stage,
+    at: Date.now(),
+    ...detail,
+  }
+
+  window.dispatchEvent(new CustomEvent('crp:perf', { detail: payload }))
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.info('[perf][methods_generation]', payload)
+  }
+}
+
+async function requestJsonWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({})) as { error?: string }
+      throw new Error(data.error || 'Recipe generation failed')
+    }
+
+    return response.json()
+  } finally {
+    clearTimeout(timeout)
+  }
+}
 
 export default function MethodsPage() {
   const router = useRouter()
@@ -29,6 +74,31 @@ export default function MethodsPage() {
   const [selectedMethod, setSelectedMethod] = useState<MethodRecommendation | null>(null)
   const [selecting, setSelecting] = useState<string | null>(null)
   const [showOthers, setShowOthers] = useState(false)
+  const [generationIssue, setGenerationIssue] = useState<GenerationIssue | null>(null)
+  const [statusTick, setStatusTick] = useState(0)
+  const requestNonceRef = useRef(0)
+
+  const isGenerating = selecting !== null
+
+  useEffect(() => {
+    requestNonceRef.current += 1
+    return () => {
+      requestNonceRef.current += 1
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setStatusTick(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setStatusTick(prev => prev + 1)
+    }, 800)
+
+    return () => clearInterval(interval)
+  }, [isGenerating])
 
   useEffect(() => {
     const storedRecommendations = recipeSessionStorage.getMethodRecommendations()
@@ -72,6 +142,7 @@ export default function MethodsPage() {
       return
     }
 
+    setGenerationIssue(null)
     setSelectedMethod(rec ?? buildManualSelection(method, displayName))
   }
 
@@ -100,17 +171,31 @@ export default function MethodsPage() {
       return
     }
 
+    const requestId = requestNonceRef.current + 1
+    requestNonceRef.current = requestId
+    setGenerationIssue(null)
     setSelecting(selectedMethod.method)
 
     const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined
     const selectedCoffeeProfileId = recipeSessionStorage.getSelectedCoffeeProfileId()
     const selectedBrewGoal = recipeSessionStorage.getSelectedBrewGoal() ?? 'balanced'
 
+    const continueStartedAt = Date.now()
+    emitPerfEvent('continue_click', {
+      method: selectedMethod.method,
+      hasCoffeeProfile: Boolean(selectedCoffeeProfileId),
+    })
+
     try {
       let recipePayload: unknown
       let savedRecipeId: string | null = null
+      emitPerfEvent('api_generation_start', {
+        method: selectedMethod.method,
+        hasCoffeeProfile: Boolean(selectedCoffeeProfileId),
+      })
+
       if (selectedCoffeeProfileId) {
-        const res = await fetch('/api/recipes/from-profile', {
+        const data = await requestJsonWithTimeout('/api/recipes/from-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -120,35 +205,36 @@ export default function MethodsPage() {
             water_mode: 'absolute',
             water_grams: targetVolumeMl ?? 250,
           }),
-        })
+        }, GENERATION_TIMEOUT_MS) as { recipe?: unknown; recipeId?: string }
 
-        if (!res.ok) {
-          const data = await res.json()
-          throw new Error(data.error || 'Recipe generation failed')
-        }
-
-        const data = await res.json() as { recipe?: unknown; recipeId?: string }
         recipePayload = data.recipe
         savedRecipeId = data.recipeId ?? null
       } else {
-        const res = await fetch('/api/generate-recipe', {
+        recipePayload = await requestJsonWithTimeout('/api/generate-recipe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ method: selectedMethod.method, bean, targetVolumeMl }),
-        })
+        }, GENERATION_TIMEOUT_MS)
+      }
 
-        if (!res.ok) {
-          const data = await res.json()
-          throw new Error(data.error || 'Recipe generation failed')
-        }
+      emitPerfEvent('api_generation_end', {
+        method: selectedMethod.method,
+        outcome: 'success',
+        durationMs: Date.now() - continueStartedAt,
+      })
 
-        recipePayload = await res.json()
+      if (requestNonceRef.current !== requestId) {
+        return
       }
 
       const recipe = recipePayload as RecipeWithAdjustment
       if (savedRecipeId) {
         recipeSessionStorage.clearSelectedCoffeeProfileId()
         recipeSessionStorage.clearSelectedBrewGoal()
+        emitPerfEvent('route_arrival_recipe', {
+          routeType: 'saved_recipe_detail',
+          durationMs: Date.now() - continueStartedAt,
+        })
         router.push(`/recipes/${savedRecipeId}`)
       } else {
         recipeSessionStorage.setRecipe(recipe)
@@ -161,12 +247,47 @@ export default function MethodsPage() {
         recipeSessionStorage.setRestoreMethodSelection(true)
         recipeSessionStorage.clearSelectedCoffeeProfileId()
         recipeSessionStorage.clearSelectedBrewGoal()
+        emitPerfEvent('route_arrival_recipe', {
+          routeType: 'generated_recipe_session',
+          durationMs: Date.now() - continueStartedAt,
+        })
         router.push('/recipe')
       }
     } catch (err) {
-      console.error(err)
+      if (requestNonceRef.current !== requestId) {
+        return
+      }
+
+      const aborted = err instanceof DOMException && err.name === 'AbortError'
+      if (aborted) {
+        emitPerfEvent('api_generation_end', {
+          method: selectedMethod.method,
+          outcome: 'timeout',
+          durationMs: Date.now() - continueStartedAt,
+        })
+
+        setGenerationIssue({
+          type: 'timeout',
+          message: selectedCoffeeProfileId
+            ? 'Recipe generation is taking longer than expected. The request may still finish in the background.'
+            : 'Recipe generation timed out before this session could load your recipe. Please retry generation.',
+          canCheckRecipes: Boolean(selectedCoffeeProfileId),
+        })
+      } else {
+        emitPerfEvent('api_generation_end', {
+          method: selectedMethod.method,
+          outcome: 'error',
+          durationMs: Date.now() - continueStartedAt,
+        })
+
+        setGenerationIssue({
+          type: 'error',
+          message: err instanceof Error ? err.message : 'Failed to generate recipe',
+          canCheckRecipes: false,
+        })
+      }
+
       setSelecting(null)
-      alert(err instanceof Error ? err.message : 'Failed to generate recipe')
     }
   }
 
@@ -183,12 +304,26 @@ export default function MethodsPage() {
   const recommendationConfidence = recommendations[0]?.confidence ?? 'high'
   const confidenceNote = recommendations[0]?.confidenceNote
 
+  const generationMessage = !isGenerating
+    ? null
+    : statusTick % 2 === 0
+      ? 'Starting recipe generation...'
+      : 'Still processing recipe generation...'
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="h-12" />
 
       <div className="flex items-center gap-3 px-4 pb-4">
-        <button onClick={() => router.back()} className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center" aria-label="Go back">
+        <button
+          onClick={() => {
+            if (isGenerating) return
+            router.back()
+          }}
+          disabled={isGenerating}
+          className="min-h-10 min-w-10 p-2 -ml-2 flex items-center justify-center disabled:opacity-50"
+          aria-label="Go back"
+        >
           <svg className="ui-icon-action" viewBox="0 0 20 20" fill="none">
             <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -205,6 +340,42 @@ export default function MethodsPage() {
       {confidenceNote && (
         <div className="mx-4 mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
           <p className="ui-meta leading-relaxed">{confidenceNote}</p>
+        </div>
+      )}
+
+      {generationIssue && (
+        <div className="mx-4 mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3" role="status" aria-live="polite">
+          <p className="ui-body-muted">{generationIssue.message}</p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setGenerationIssue(null)
+                void continueWithSelectedMethod()
+              }}
+              className="ui-button-secondary"
+            >
+              Retry
+            </button>
+            {generationIssue.type === 'timeout' && generationIssue.canCheckRecipes && (
+              <button
+                type="button"
+                onClick={() => router.push('/recipes')}
+                className="ui-button-primary"
+              >
+                Check Recipes
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isGenerating && (
+        <div className="mx-4 mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3" role="status" aria-live="polite" data-testid="generation-status">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
+            <p className="ui-body-muted">{generationMessage}</p>
+          </div>
         </div>
       )}
 
@@ -267,7 +438,6 @@ export default function MethodsPage() {
           </button>
         ))}
 
-        {/* Other Methods */}
         <button
           type="button"
           onClick={() => setShowOthers(v => !v)}
