@@ -6,7 +6,7 @@ import { getAuthUserDisplayName } from '@/lib/auth-profile'
 
 const OPENROUTER_GUEST_COOKIE = 'crp_openrouter_guest_id'
 const OPENROUTER_APP_TITLE = 'Coffee Recipe Buddy'
-const OPENROUTER_TIMEOUT_MS = 45_000
+const OPENROUTER_TIMEOUT_MS = 8_000
 
 function getAppUrl(request: Request): string {
   return (
