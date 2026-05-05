@@ -5,11 +5,9 @@ import type { SavedRecipe } from '@/types/recipe'
 const {
   createClientMock,
   createCompletionMock,
-  warnMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   createCompletionMock: vi.fn(),
-  warnMock: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -83,11 +81,6 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
   beforeEach(() => {
     createClientMock.mockReset()
     createCompletionMock.mockReset()
-    warnMock.mockReset()
-    vi.stubGlobal('console', {
-      ...console,
-      warn: warnMock,
-    })
 
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
   })
@@ -106,7 +99,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(body.recipe.grind.k_ultra.starting_point).toBe('0.8.4')
   })
 
-  it('falls back to GPT-5 Nano after Gemma exhausts invalid JSON retries', async () => {
+  it('retries with Gemini after invalid JSON responses', async () => {
     createCompletionMock
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 2' } }] })
@@ -121,11 +114,10 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
 
     expect(response.status).toBe(200)
     expect(models).toEqual([
-      'google/gemma-4-31b-it:free',
-      'google/gemma-4-31b-it:free',
-      'openai/gpt-5-nano',
+      'google/gemini-2.0-flash-001',
+      'google/gemini-2.0-flash-001',
+      'google/gemini-2.0-flash-001',
     ])
-    expect(warnMock).toHaveBeenCalledTimes(1)
     expect(body.recipe.display_name).toBe(BASE_RECIPE.display_name)
   })
 
@@ -175,12 +167,11 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(body.recipe.adjustment_applied.variable_changed).toBe('grind')
   })
 
-  it('returns 422 when both models fail after retries', async () => {
+  it('returns 422 when Gemini fails after retries', async () => {
     createCompletionMock
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad primary 1' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad primary 2' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad fallback 1' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad fallback 2' } }] })
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad 1' } }] })
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad 2' } }] })
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad 3' } }] })
 
     const response = await POST(buildRequest({ scale_factor: 1.0, intent: 'make it brighter' }), {
       params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
@@ -189,7 +180,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     const body = await response.json()
 
     expect(response.status).toBe(422)
-    expect(createCompletionMock).toHaveBeenCalledTimes(4)
+    expect(createCompletionMock).toHaveBeenCalledTimes(3)
     expect(body.error).toBe('Auto-adjust failed after retries')
     expect(body.validationErrors[0]).toContain('JSON parse error')
   })
