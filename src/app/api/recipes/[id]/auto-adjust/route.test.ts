@@ -110,7 +110,6 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     createCompletionMock
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 2' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 3' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }] })
 
     const response = await POST(buildRequest({ scale_factor: 1.25, intent: 'make it sweeter' }), {
@@ -122,7 +121,6 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
 
     expect(response.status).toBe(200)
     expect(models).toEqual([
-      'google/gemma-4-31b-it:free',
       'google/gemma-4-31b-it:free',
       'google/gemma-4-31b-it:free',
       'openai/gpt-5-nano',
@@ -181,10 +179,8 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     createCompletionMock
       .mockResolvedValueOnce({ choices: [{ message: { content: 'bad primary 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'bad primary 2' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad primary 3' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'bad fallback 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'bad fallback 2' } }] })
-      .mockResolvedValueOnce({ choices: [{ message: { content: 'bad fallback 3' } }] })
 
     const response = await POST(buildRequest({ scale_factor: 1.0, intent: 'make it brighter' }), {
       params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
@@ -193,7 +189,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     const body = await response.json()
 
     expect(response.status).toBe(422)
-    expect(createCompletionMock).toHaveBeenCalledTimes(6)
+    expect(createCompletionMock).toHaveBeenCalledTimes(4)
     expect(body.error).toBe('Auto-adjust failed after retries')
     expect(body.validationErrors[0]).toContain('JSON parse error')
   })

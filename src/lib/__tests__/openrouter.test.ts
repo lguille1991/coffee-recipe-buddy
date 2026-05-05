@@ -26,7 +26,7 @@ describe('openrouter client', () => {
     expect(openAIConstructorMock).toHaveBeenCalledWith(
       expect.objectContaining({
         baseURL: 'https://openrouter.ai/api/v1',
-        timeout: 45_000,
+        timeout: 8_000,
       }),
     )
   })

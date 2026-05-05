@@ -16,7 +16,9 @@ import {
 } from '@/lib/grinder-converter'
 import { z } from 'zod'
 
-const MAX_RETRIES = 2
+export const maxDuration = 10
+
+const MAX_RETRIES = 1
 const PRIMARY_MODEL = 'google/gemma-4-31b-it:free'
 const FALLBACK_MODEL = 'openai/gpt-5-nano'
 const MAX_INTENT_WORDS = 80
