@@ -1,3 +1,11 @@
+## 1.23.11 - 2026-05-04
+
+- Improved `/methods` generation UX for long-running recipe creation with immediate in-flight status messaging and accessible `aria-live` progress updates.
+- Added consistent timeout handling and recovery actions for both generation branches (`/api/recipes/from-profile` and `/api/generate-recipe`).
+- Added timeout-safe messaging that treats request outcome as unknown, including a direct `Check Recipes` recovery path.
+- Prevented stale async completions from redirecting users after route exit by adding in-flight request guards.
+- Added methods flow regression tests covering endpoint-branch parity, timeout recovery UX, and in-flight back-navigation behavior.
+
 ## 1.23.10 - 2026-05-04
 
 - Updated `/coffees/[id]` recipe generation method selector to show grouped options with `Recommended methods` first and `Other` methods second.

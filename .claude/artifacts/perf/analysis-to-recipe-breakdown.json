@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-05-05T01:25:51.645Z",
+  "flow": "/analysis -> /recipe",
+  "totalMs": 8935,
+  "analysisToMethodsMs": 698,
+  "methodsSelectionToRecipeMs": 8194,
+  "apiTimings": [
+    {
+      "url": "http://localhost:3000/api/profile",
+      "method": "GET",
+      "status": 200,
+      "durationMs": null
+    },
+    {
+      "url": "http://localhost:3000/api/profile",
+      "method": "GET",
+      "status": 200,
+      "durationMs": null
+    },
+    {
+      "url": "http://localhost:3000/api/profile",
+      "method": "GET",
+      "status": 200,
+      "durationMs": null
+    },
+    {
+      "url": "http://localhost:3000/api/coffee-profiles",
+      "method": "POST",
+      "status": 201,
+      "durationMs": null
+    },
+    {
+      "url": "http://localhost:3000/api/recipes/from-profile",
+      "method": "POST",
+      "status": 201,
+      "durationMs": null
+    }
+  ],
+  "finalUrl": "http://localhost:3000/recipes/09926cd7-d599-4c47-87c5-78f9f00d2133"
+}
