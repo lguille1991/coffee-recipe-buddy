@@ -88,10 +88,7 @@ export default function MethodsPage() {
   }, [])
 
   useEffect(() => {
-    if (!isGenerating) {
-      setStatusTick(0)
-      return
-    }
+    if (!isGenerating) return
 
     const interval = setInterval(() => {
       setStatusTick(prev => prev + 1)
@@ -174,6 +171,7 @@ export default function MethodsPage() {
     const requestId = requestNonceRef.current + 1
     requestNonceRef.current = requestId
     setGenerationIssue(null)
+    setStatusTick(0)
     setSelecting(selectedMethod.method)
 
     const targetVolumeMl = recipeSessionStorage.getTargetVolumeMl() ?? undefined

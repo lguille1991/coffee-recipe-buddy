@@ -6,48 +6,66 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import type { MethodRecommendation } from '@/types/recipe'
 
-const pushMock = vi.fn()
-const replaceMock = vi.fn()
-const backMock = vi.fn()
-const routerMock = { push: pushMock, replace: replaceMock, back: backMock }
+const {
+  pushMock,
+  replaceMock,
+  backMock,
+  routerMock,
+  sampleRecs,
+  storageMock,
+} = vi.hoisted(() => {
+  const pushMock = vi.fn()
+  const replaceMock = vi.fn()
+  const backMock = vi.fn()
+  const routerMock = { push: pushMock, replace: replaceMock, back: backMock }
 
-const sampleRecs: MethodRecommendation[] = [
-  {
-    method: 'v60',
-    displayName: 'V60',
-    rank: 1,
-    score: 0.9,
-    rationale: 'Balanced extraction',
-    reasonBadges: ['clarity'],
-    confidence: 'high',
-    confidenceNote: 'Good pick',
-  },
-]
+  const sampleRecs: MethodRecommendation[] = [
+    {
+      method: 'v60',
+      displayName: 'V60',
+      rank: 1,
+      score: 0.9,
+      rationale: 'Balanced extraction',
+      reasonBadges: ['clarity'],
+      confidence: 'high',
+      confidenceNote: 'Good pick',
+    },
+  ]
 
-const storageMock = {
-  getMethodRecommendations: vi.fn(() => sampleRecs),
-  shouldRestoreMethodSelection: vi.fn(() => false),
-  clearRestoreMethodSelection: vi.fn(),
-  getSelectedMethod: vi.fn(() => null),
-  getRecipeFlowSource: vi.fn(() => 'generated' as const),
-  getConfirmedBean: vi.fn(() => ({ bean_name: 'Bean', process: 'washed', roast_level: 'light' })),
-  getTargetVolumeMl: vi.fn(() => 250),
-  getSelectedCoffeeProfileId: vi.fn(() => 'profile-1'),
-  getSelectedBrewGoal: vi.fn(() => 'balanced' as const),
-  setRecipe: vi.fn(),
-  setRecipeFlowSource: vi.fn(),
-  clearManualRecipeDraft: vi.fn(),
-  clearRecipeOriginal: vi.fn(),
-  clearFeedbackRound: vi.fn(),
-  clearAdjustmentHistory: vi.fn(),
-  setSelectedMethod: vi.fn(),
-  setRestoreMethodSelection: vi.fn(),
-  clearSelectedCoffeeProfileId: vi.fn(),
-  clearSelectedBrewGoal: vi.fn(),
-  setManualRecipeDraft: vi.fn(),
-  clearRecipe: vi.fn(),
-  clearManualEditHistory: vi.fn(),
-}
+  const storageMock = {
+    getMethodRecommendations: vi.fn(() => sampleRecs),
+    shouldRestoreMethodSelection: vi.fn(() => false),
+    clearRestoreMethodSelection: vi.fn(),
+    getSelectedMethod: vi.fn(() => null),
+    getRecipeFlowSource: vi.fn(() => 'generated' as const),
+    getConfirmedBean: vi.fn(() => ({ bean_name: 'Bean', process: 'washed', roast_level: 'light' })),
+    getTargetVolumeMl: vi.fn(() => 250),
+    getSelectedCoffeeProfileId: vi.fn(() => 'profile-1'),
+    getSelectedBrewGoal: vi.fn(() => 'balanced' as const),
+    setRecipe: vi.fn(),
+    setRecipeFlowSource: vi.fn(),
+    clearManualRecipeDraft: vi.fn(),
+    clearRecipeOriginal: vi.fn(),
+    clearFeedbackRound: vi.fn(),
+    clearAdjustmentHistory: vi.fn(),
+    setSelectedMethod: vi.fn(),
+    setRestoreMethodSelection: vi.fn(),
+    clearSelectedCoffeeProfileId: vi.fn(),
+    clearSelectedBrewGoal: vi.fn(),
+    setManualRecipeDraft: vi.fn(),
+    clearRecipe: vi.fn(),
+    clearManualEditHistory: vi.fn(),
+  }
+
+  return {
+    pushMock,
+    replaceMock,
+    backMock,
+    routerMock,
+    sampleRecs,
+    storageMock,
+  }
+})
 
 vi.mock('next/navigation', () => ({
   useRouter: () => routerMock,

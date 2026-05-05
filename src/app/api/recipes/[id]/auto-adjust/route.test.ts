@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BASE_RECIPE, WASHED_LIGHT_BEAN } from '@/lib/__tests__/fixtures'
 import type { SavedRecipe } from '@/types/recipe'
 
@@ -90,6 +90,10 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     })
 
     createClientMock.mockResolvedValue(createSupabaseClient(BASE_SAVED_RECIPE.user_id))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('skips the LLM path for deterministic scaling with empty intent', async () => {
@@ -196,5 +200,52 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
     expect(createCompletionMock).toHaveBeenCalledTimes(6)
     expect(body.error).toBe('Auto-adjust failed after retries')
     expect(body.validationErrors[0]).toContain('JSON parse error')
+  })
+
+  it('returns 503 timeout contract when model calls do not settle within budget', async () => {
+    vi.useFakeTimers()
+    createCompletionMock.mockImplementation((_body, options?: { signal?: AbortSignal }) => new Promise((_resolve, reject) => {
+      options?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+    }))
+
+    const responsePromise = POST(buildRequest({ scale_factor: 1.0, intent: 'make it sweeter and clearer' }), {
+      params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
+    })
+
+    await vi.advanceTimersByTimeAsync(120_000)
+    const response = await responsePromise
+    const body = await response.json()
+
+    expect(response.status).toBe(503)
+    expect(body).toEqual({
+      error: 'Auto-adjust timed out',
+      code: 'AUTO_ADJUST_TIMEOUT',
+      retryable: true,
+    })
+    expect(createCompletionMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('returns 499 and skips model calls when request is already aborted', async () => {
+    const abortController = new AbortController()
+    abortController.abort()
+    const request = new Request('http://localhost/api/recipes/11111111-1111-1111-1111-111111111111/auto-adjust', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ scale_factor: 1.0, intent: 'make it sweeter' }),
+      signal: abortController.signal,
+    })
+
+    const response = await POST(request, {
+      params: Promise.resolve({ id: BASE_SAVED_RECIPE.id }),
+    })
+    const body = await response.json()
+
+    expect(response.status).toBe(499)
+    expect(createCompletionMock).not.toHaveBeenCalled()
+    expect(body).toEqual({
+      error: 'Request cancelled',
+      code: 'AUTO_ADJUST_CANCELLED',
+      retryable: false,
+    })
   })
 })

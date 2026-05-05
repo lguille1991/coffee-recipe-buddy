@@ -16,6 +16,37 @@ const SCALE_OPTIONS: { value: number; label: string }[] = [
   { value: 1.5, label: '1.5x' },
   { value: 2.0, label: '2x' },
 ]
+const AUTO_ADJUST_CLIENT_TIMEOUT_MS = 120_000
+
+function isAbortLikeError(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    return error.name === 'AbortError'
+  }
+  if (error instanceof Error) {
+    return error.name === 'AbortError' || error.message.toLowerCase().includes('aborted')
+  }
+  return false
+}
+
+async function parseResponsePayload(res: Response): Promise<{ error?: string, recipe?: Recipe }> {
+  const contentType = res.headers.get('content-type') ?? ''
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return {}
+  }
+
+  try {
+    const parsed = await res.json()
+    if (parsed && typeof parsed === 'object') {
+      return parsed as { error?: string, recipe?: Recipe }
+    }
+    return {}
+  } catch (error) {
+    if (isAbortLikeError(error)) {
+      throw error
+    }
+    return {}
+  }
+}
 
 type AutoAdjustClientProps = {
   id: string
@@ -60,20 +91,32 @@ export default function AutoAdjustClient({ id, sourceRecipe }: AutoAdjustClientP
     setGenerating(true)
     setGenError(null)
     setResult(null)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), AUTO_ADJUST_CLIENT_TIMEOUT_MS)
     try {
       const res = await fetch(`/api/recipes/${id}/auto-adjust`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scale_factor: scaleFactor, intent: intent.trim() }),
+        signal: controller.signal,
       })
-      const data = await res.json()
+      const data = await parseResponsePayload(res)
       if (!res.ok) {
-        throw new Error(data.error ?? 'Generation failed')
+        throw new Error(data.error ?? 'Generation failed. Please try again.')
+      }
+      if (!data.recipe) {
+        throw new Error('Generation failed. Please try again.')
       }
       setResult(data.recipe)
     } catch (err) {
-      setGenError(err instanceof Error ? err.message : 'Something went wrong')
+      const aborted = isAbortLikeError(err)
+      if (aborted) {
+        setGenError('Auto-adjust timed out. Please try again.')
+      } else {
+        setGenError(err instanceof Error ? err.message : 'Something went wrong')
+      }
     } finally {
+      clearTimeout(timeout)
       setGenerating(false)
     }
   }

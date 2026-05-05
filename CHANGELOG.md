@@ -1,3 +1,10 @@
+## 1.23.12 - 2026-05-05
+
+- Hardened `/api/recipes/[id]/auto-adjust` against long-running upstream model delays by enforcing per-attempt and total LLM time budgets to avoid Vercel function timeout hangs.
+- Added explicit retryable timeout contract for auto-adjust exhaustion responses: `503` with `code: AUTO_ADJUST_TIMEOUT`.
+- Updated auto-adjust client generation flow to abort stalled requests and show a clear timeout error instead of indefinite loading.
+- Added route-level regression coverage for model-call timeout budget exhaustion.
+
 ## 1.23.11 - 2026-05-04
 
 - Improved `/methods` generation UX for long-running recipe creation with immediate in-flight status messaging and accessible `aria-live` progress updates.
