@@ -1,0 +1,17 @@
+- [x] Resolve applicable instructions for the target area.
+- [x] Inspect the shared recipe CTA container and compare it with the desktop footer width contract used on `/recipes/[id]`.
+- [x] Record baseline metadata.
+  - Pre-existing dirty files: `CHANGELOG.md`, `package.json`, `src/app/share/[token]/ShareRecipeClient.tsx`
+  - Pre-existing untracked files: `.claude/plans/2026-05-14-shared-cta-safe-bottom-fix.md`, `src/app/share/[token]/ShareRecipeClient.test.tsx`
+  - Task-owned files: `src/app/share/[token]/ShareRecipeClient.tsx`, `src/app/share/[token]/ShareRecipeClient.test.tsx`, `package.json`, `CHANGELOG.md`
+- [x] Confirm the current behavior with focused evidence.
+  - `src/app/recipes/[id]/RecipeDetailClient.tsx` uses a desktop footer shell with `md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8`, so Brew/Edit Recipe/Auto Adjust expand with the main content width on larger screens.
+  - `src/app/share/[token]/ShareRecipeClient.tsx` currently wraps the save CTA in `mx-auto w-full max-w-sm`, which keeps it narrow even on desktop.
+- [x] After approval, add or update the smallest regression test feasible for the shared page CTA width contract on larger breakpoints.
+  - Likely target: extend `ShareRecipeClient.test.tsx` to assert the CTA shell carries the same desktop max-width classes as the recipe detail footer contract.
+- [x] After approval, update the shared recipe CTA shell to match the recipe detail desktop width behavior while preserving the mobile-safe bottom offset fix.
+- [x] After approval, apply release hygiene if the change is user-facing.
+  - Bump `package.json` patch version.
+  - Add a concise `CHANGELOG.md` entry.
+- [x] After approval, run immediate review on the resulting diff.
+- [ ] After approval and review sign-off, ask whether to proceed to commit-readiness validation.

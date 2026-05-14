@@ -112,8 +112,8 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="h-12" />
+    <div className="ui-page-shell">
+      <div className="ui-top-spacer" />
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-4">
@@ -125,7 +125,10 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
         <h2 className="ui-section-title">Shared Recipe</h2>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-4 pb-28 overflow-y-auto">
+      <div
+        data-testid="share-recipe-scroll-region"
+        className="flex-1 w-full px-4 flex flex-col gap-4 pb-[calc(var(--mobile-nav-reserved-space)+5.5rem)] md:max-w-2xl md:mx-auto lg:max-w-3xl lg:pb-32 xl:max-w-5xl xl:px-8 overflow-y-auto"
+      >
 
         {/* Bag photo */}
         {snapshot.image_url && (
@@ -336,31 +339,36 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
       </div>
 
       {/* Sticky Clone CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 pb-8 pt-3 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/90 to-transparent">
-        {cloneError && (
-          <p className="ui-meta ui-text-danger text-center mb-2">{cloneError}</p>
-        )}
-        <button
-          onClick={handleClone}
-          disabled={cloning || cloned}
-          data-testid="save-shared-recipe"
-          className="w-full ui-button-primary font-semibold disabled:opacity-60"
+      <div data-testid="share-recipe-cta-wrapper" className="fixed bottom-0 left-0 right-0 z-20 lg:left-56">
+        <div
+          data-testid="share-recipe-cta-shell"
+          className="ui-sticky-footer w-full px-4 sm:px-6 md:max-w-2xl md:mx-auto lg:max-w-3xl xl:max-w-5xl xl:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-6 pt-3"
         >
-          {cloning ? (
-            <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
-          ) : cloned ? (
-            'Added to your library!'
-          ) : user ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M5.5 2H10.5C10.78 2 11 2.22 11 2.5V4H5V2.5C5 2.22 5.22 2 5.5 2ZM3 4V13.5C3 13.78 3.22 14 3.5 14H12.5C12.78 14 13 13.78 13 13.5V4H3ZM8 6.5V11.5M5.5 9H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Save to My Library
-            </>
-          ) : (
-            'Sign in to Save'
+          {cloneError && (
+            <p className="ui-meta ui-text-danger text-center mb-2">{cloneError}</p>
           )}
-        </button>
+          <button
+            onClick={handleClone}
+            disabled={cloning || cloned}
+            data-testid="save-shared-recipe"
+            className="w-full ui-button-primary font-semibold disabled:opacity-60"
+          >
+            {cloning ? (
+              <div className="w-4 h-4 border-2 border-[var(--background)] border-t-transparent rounded-full animate-spin" />
+            ) : cloned ? (
+              'Added to your library!'
+            ) : user ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M5.5 2H10.5C10.78 2 11 2.22 11 2.5V4H5V2.5C5 2.22 5.22 2 5.5 2ZM3 4V13.5C3 13.78 3.22 14 3.5 14H12.5C12.78 14 13 13.78 13 13.5V4H3ZM8 6.5V11.5M5.5 9H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Save to My Library
+              </>
+            ) : (
+              'Sign in to Save'
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Case D: delete comment confirmation */}
