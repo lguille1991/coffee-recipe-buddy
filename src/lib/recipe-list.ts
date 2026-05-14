@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RecipeListItem } from '@/types/recipe'
+import { extractPersistedRecipeGoal } from '@/lib/recipe-goal'
 import { isManualRecipeCreated } from '@/lib/recipe-origin'
 
 type FeedbackHistoryRow = Array<{ type?: string }>
@@ -23,6 +24,9 @@ type OwnedRecipeListRow = {
   }
   feedback_history?: FeedbackHistoryRow
   parent_recipe_id?: string | null
+  generation_context?: {
+    goal?: RecipeListItem['goal']
+  } | null
 }
 
 type SharedMembershipRow = {
@@ -96,6 +100,10 @@ function mapRecipeListItem(
     has_manual_edits,
     has_feedback_adjustments,
     is_scaled,
+    goal: extractPersistedRecipeGoal(
+      row.generation_context?.goal,
+      row.current_recipe_json.objective,
+    ),
   }
 }
 
@@ -183,7 +191,7 @@ export async function listRecipesForUser(
   if (section === 'my') {
     let query = supabase
       .from('recipes')
-      .select('id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id')
+      .select('id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id, generation_context')
       .eq('user_id', userId)
       .eq('archived', archived)
       .order('created_at', { ascending: false })
@@ -236,7 +244,7 @@ export async function listRecipesForUser(
   if (section === 'shared') {
     let sharedQuery = supabase
       .from('recipe_share_memberships')
-      .select('recipe_id, recipe:recipes!recipe_share_memberships_recipe_id_fkey(id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id)')
+      .select('recipe_id, recipe:recipes!recipe_share_memberships_recipe_id_fkey(id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id, generation_context)')
       .eq('recipient_id', userId)
       .is('hidden_at', null)
 
@@ -274,13 +282,13 @@ export async function listRecipesForUser(
     favoriteIdsPromise,
     supabase
       .from('recipes')
-      .select('id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id')
+      .select('id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id, generation_context')
       .eq('user_id', userId)
       .eq('archived', false)
       .order('created_at', { ascending: false }),
     supabase
       .from('recipe_share_memberships')
-      .select('recipe_id, recipe:recipes!recipe_share_memberships_recipe_id_fkey(id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id)')
+      .select('recipe_id, recipe:recipes!recipe_share_memberships_recipe_id_fkey(id, user_id, method, bean_info, image_url, created_at, schema_version, archived, current_recipe_json, feedback_history, parent_recipe_id, generation_context)')
       .eq('recipient_id', userId)
       .is('hidden_at', null),
   ])

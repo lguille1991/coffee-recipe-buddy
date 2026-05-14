@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { BREW_GOAL_DISPLAY_NAMES, RecipeListItem, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
 import MethodIcon from '@/components/MethodIcon'
 
 export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { recipe: RecipeListItem }) {
@@ -12,8 +12,10 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
   const beanProcess = recipe.bean_info.process?.trim()
   const roaster = recipe.bean_info.roaster
   const date = new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const goalLabel = recipe.goal ? BREW_GOAL_DISPLAY_NAMES[recipe.goal] : null
 
   const badges = [
+    goalLabel,
     recipe.is_manual_created ? 'manual' : null,
     recipe.has_manual_edits ? 'edited' : null,
     recipe.has_feedback_adjustments ? 'auto-adjusted' : null,
@@ -39,7 +41,9 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
             <span
               key={badge}
               className={`ui-meta font-medium px-2 py-1 rounded-full ${
-                badge === 'edited'
+                badge === goalLabel
+                  ? 'bg-[var(--foreground)]/10 text-[var(--foreground)]'
+                  : badge === 'edited'
                   ? 'ui-badge-info'
                   : badge === 'scaled'
                     ? 'ui-badge-neutral'
@@ -47,6 +51,7 @@ export const RecipeCardContent = memo(function RecipeCardContent({ recipe }: { r
                       ? 'bg-[var(--foreground)]/10 text-[var(--foreground)]'
                       : 'ui-badge-warning'
               }`}
+              data-testid={badge === goalLabel ? `recipe-goal-${recipe.id}` : undefined}
             >
               {badge}
             </span>

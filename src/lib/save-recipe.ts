@@ -1,8 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createRecipeSnapshot, mirrorRecipeLiveSnapshot } from '@/lib/recipe-snapshots'
 import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
-import type { AnyFeedbackRound, BeanProfile, Recipe, RecipeWithAdjustment } from '@/types/recipe'
+import type { AnyFeedbackRound, BeanProfile, BrewGoal, Recipe, RecipeWithAdjustment } from '@/types/recipe'
 import type { GenerationContext } from '@/types/coffee-profile'
+
+type PersistedRecipeGenerationContext = GenerationContext | {
+  goal?: BrewGoal
+  [key: string]: unknown
+}
 
 export type SaveRecipeInput = {
   userId: string
@@ -17,7 +22,7 @@ export type SaveRecipeInput = {
   scale_factor?: number | null
   coffee_profile_id?: string | null
   coffee_profile_user_id?: string | null
-  generation_context?: GenerationContext | null
+  generation_context?: PersistedRecipeGenerationContext | null
 }
 
 export async function saveRecipeWithSnapshot(

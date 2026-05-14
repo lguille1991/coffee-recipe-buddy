@@ -19,7 +19,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { bean_info, method, original_recipe_json, current_recipe_json, feedback_history, image_data_url, parent_recipe_id, scale_factor } = parsed.data
+  const {
+    bean_info,
+    method,
+    original_recipe_json,
+    current_recipe_json,
+    feedback_history,
+    image_data_url,
+    parent_recipe_id,
+    scale_factor,
+    goal,
+  } = parsed.data
 
   const image_url = image_data_url
     ? await uploadBagPhotoFromDataUrl(supabase, user.id, image_data_url)
@@ -35,6 +45,7 @@ export async function POST(request: Request) {
       feedback_history: feedback_history ?? [],
       parent_recipe_id: parent_recipe_id ?? null,
       scale_factor: scale_factor ?? null,
+      goal: goal ?? null,
       image_url: image_url ?? null,
     })
 
@@ -48,6 +59,7 @@ export async function POST(request: Request) {
       image_url,
       parent_recipe_id: parent_recipe_id ?? null,
       scale_factor: scale_factor ?? null,
+      generation_context: goal ? { goal } : null,
     }))
 
     return NextResponse.json(saved, { status: replayed ? 200 : 201 })

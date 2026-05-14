@@ -60,6 +60,14 @@ export const BrewGoalSchema = z.enum([
 
 export type BrewGoal = z.infer<typeof BrewGoalSchema>
 
+export const BREW_GOAL_DISPLAY_NAMES: Record<BrewGoal, string> = {
+  clarity: 'Clarity',
+  balanced: 'Balanced',
+  sweetness: 'Sweetness',
+  body: 'Body',
+  forgiving: 'Forgiving',
+}
+
 export const METHOD_DISPLAY_NAMES: Record<MethodId, string> = {
   v60: 'Hario V60',
   origami: 'Origami Air M',
@@ -278,6 +286,7 @@ export const SavedRecipeSchema = z.object({
   parent_recipe_id: z.string().uuid().nullable().optional(),
   scale_factor: z.number().nullable().optional(),
   coffee_profile_id: z.string().uuid().nullable().optional(),
+  goal: BrewGoalSchema.optional(),
   is_favorite: z.boolean().default(false),
 })
 
@@ -300,6 +309,7 @@ export const SaveRecipeRequestSchema = z.object({
   image_data_url: z.string().optional(), // base64 data URL — uploaded server-side
   parent_recipe_id: z.string().uuid().nullable().optional(),
   scale_factor: z.number().nullable().optional(),
+  goal: BrewGoalSchema.optional(),
 })
 
 export type SaveRecipeRequest = z.infer<typeof SaveRecipeRequestSchema>
@@ -322,6 +332,7 @@ export const RecipeListItemSchema = z.object({
   has_manual_edits: z.boolean().default(false),
   has_feedback_adjustments: z.boolean().default(false),
   is_scaled: z.boolean().default(false),
+  goal: BrewGoalSchema.optional(),
 })
 
 export type RecipeListItem = z.infer<typeof RecipeListItemSchema>

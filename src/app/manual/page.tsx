@@ -198,8 +198,8 @@ export default function ManualPage() {
     recipeSessionStorage.clearAdjustmentHistory()
     recipeSessionStorage.clearManualEditHistory()
     recipeSessionStorage.clearSelectedCoffeeProfileId()
-    recipeSessionStorage.clearSelectedBrewGoal()
     recipeSessionStorage.clearSelectedMethod()
+    recipeSessionStorage.setSelectedBrewGoal(brewGoal)
     recipeSessionStorage.setRecipeFlowSource('manual')
 
     const vol = parseInt(targetVolume, 10)

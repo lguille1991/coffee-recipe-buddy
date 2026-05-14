@@ -1,12 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { extractPersistedRecipeGoal } from '@/lib/recipe-goal'
 import { migrateRecipe } from '@/lib/recipe-migrations'
 import { SAVED_RECIPE_DETAIL_SELECT } from '@/lib/recipe-select'
 import { listRecipeSnapshots } from '@/lib/recipe-snapshots'
 import type { RecipeWithAdjustment, SavedRecipe, SavedRecipeDetail } from '@/types/recipe'
 
-type SavedRecipeRow = SavedRecipe & {
+type SavedRecipeRow = Omit<SavedRecipe, 'goal'> & {
   creator?: {
     display_name?: string | null
+  } | null
+  generation_context?: {
+    goal?: SavedRecipe['goal']
   } | null
 }
 
@@ -51,9 +55,15 @@ export async function getSavedRecipeDetail(
     throw new Error(favoriteResult.error.message)
   }
 
+  const { creator, generation_context, ...savedRecipeBase } = savedRecipeRow
+
   return {
-    ...savedRecipeRow,
-    creator_display_name: savedRecipeRow.creator?.display_name ?? null,
+    ...savedRecipeBase,
+    goal: extractPersistedRecipeGoal(
+      generation_context?.goal,
+      liveSnapshot?.snapshot_recipe_json?.objective ?? savedRecipeRow.current_recipe_json.objective,
+    ),
+    creator_display_name: creator?.display_name ?? null,
     current_recipe_json: migrateRecipe(
       liveSnapshot?.snapshot_recipe_json ?? savedRecipeRow.current_recipe_json,
       savedRecipeRow.schema_version,

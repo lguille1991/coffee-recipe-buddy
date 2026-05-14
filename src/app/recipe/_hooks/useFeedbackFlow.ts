@@ -192,6 +192,7 @@ export function useFeedbackFlow(
         original_recipe_json: originalRecipe,
         current_recipe_json: recipe,
         feedback_history: feedbackHistoryPayload,
+        goal: recipeSessionStorage.getSelectedBrewGoal() ?? undefined,
       }
 
       // If no user, store pending save and redirect to auth

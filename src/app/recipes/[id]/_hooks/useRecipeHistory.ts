@@ -95,6 +95,7 @@ export function useRecipeHistory({
             feedback_history: [],
             parent_recipe_id: recipeId,
             scale_factor: recipe.scale_factor ?? null,
+            goal: recipe.goal,
           }),
         })
 
@@ -116,7 +117,7 @@ export function useRecipeHistory({
       },
       errorMessage: 'Failed to save snapshot. Please try again.',
     })
-  }, [selectedSnapshot, recipe.bean_info, recipe.scale_factor, recipeId, router])
+  }, [selectedSnapshot, recipe.bean_info, recipe.goal, recipe.scale_factor, recipeId, router])
 
   // Switch to the selected snapshot version
   const handleUseSnapshotVersion = useCallback(async () => {
