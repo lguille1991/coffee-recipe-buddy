@@ -9,7 +9,7 @@ import type {
   RecipeWithAdjustment,
   SavedRecipe,
 } from '@/types/recipe'
-import { GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
+import { BREW_GOAL_DISPLAY_NAMES, GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
 import {
   formatGrinderRangeForEdit,
   formatGrinderSettingForDisplay,
@@ -48,6 +48,7 @@ export function RecipeTitleBlock({
   const displayName = METHOD_DISPLAY_NAMES[recipe.method as MethodId] ?? recipe.method
   const beanName = recipe.bean_info.bean_name ?? recipe.bean_info.origin ?? 'Unknown bean'
   const beanProcess = recipe.bean_info.process?.trim()
+  const goalLabel = recipe.goal ? BREW_GOAL_DISPLAY_NAMES[recipe.goal] : null
 
   return (
     <>
@@ -83,6 +84,14 @@ export function RecipeTitleBlock({
           {hasFeedbackAdjustments && (
             <span className="ui-badge ui-badge-warning">
               auto-adjusted
+            </span>
+          )}
+          {goalLabel && (
+            <span
+              className="ui-badge bg-[var(--foreground)]/10 text-[var(--foreground)]"
+              data-testid="recipe-goal"
+            >
+              {goalLabel}
             </span>
           )}
           {shareToken && !isEditing && (

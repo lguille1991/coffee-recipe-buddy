@@ -4,6 +4,10 @@ Domain language for generating, saving, sharing, and retrieving coffee brewing r
 
 ## Language
 
+**Goal**:
+The user’s intended cup outcome for a recipe, using the canonical values `clarity`, `balanced`, `sweetness`, `body`, or `forgiving`.
+_Avoid_: intent, target flavor mode, preference
+
 **Recipe List Endpoint**:
 The authenticated API path family used to query paginated recipe collections for a user.
 _Avoid_: recipes API, list API
@@ -166,6 +170,7 @@ _Avoid_: vague regression calls, moving-goalpost rollback
 
 ## Relationships
 
+- A **Goal** shapes recipe generation and is part of how users distinguish otherwise similar saved recipes
 - A **Recipe List Endpoint** must satisfy **Behavioral Parity** during optimization work
 - A **Backend Response Latency Target** constrains optimization choices for each **Recipe List Endpoint**
 - The **Backend Response Latency Target** is evaluated against the **Phase 1 Representative Load Profile**
@@ -208,9 +213,13 @@ _Avoid_: vague regression calls, moving-goalpost rollback
 
 ## Example dialogue
 
+> **Dev:** "Two saved recipes use the same brewer and coffee, but one aims for sweetness and one for body. Is that a different **Goal** or just different notes?"
+> **Domain expert:** "That is a different **Goal**; users should be able to see it directly without reading the full recipe."
+
 > **Dev:** "Can we skip shared recipes to hit the latency target?"
 > **Domain expert:** "No, keep **Behavioral Parity** and optimize query shape so the **Recipe List Endpoint** still returns the same visible recipes."
 
 ## Flagged ambiguities
 
+- "intent" was used to mean the saved recipe’s user-facing cup outcome choice; resolved to **Goal**.
 - "related APIs" resolved to read/list paths only (`GET /api/recipes` and list-query dependencies such as section/filter/favorites/shared retrieval); write/mutation routes are out of Phase 1 scope unless they block read/list latency.

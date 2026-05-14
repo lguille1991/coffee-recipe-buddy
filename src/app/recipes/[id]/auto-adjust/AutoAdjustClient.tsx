@@ -94,6 +94,7 @@ export default function AutoAdjustClient({ id, sourceRecipe }: AutoAdjustClientP
           feedback_history: [],
           parent_recipe_id: id,
           scale_factor: scaleFactor,
+          goal: sourceRecipe.goal,
         }),
       })
       const data = await res.json()

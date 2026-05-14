@@ -86,4 +86,28 @@ describe('POST /api/recipes', () => {
     expect(payloadA.id).toBe(payloadB.id)
     expect(saveRecipeWithSnapshotMock).toHaveBeenCalledTimes(1)
   })
+
+  it('persists goal on standard recipe saves via generation_context', async () => {
+    const response = await POST(new Request('http://localhost/api/recipes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        bean_info: WASHED_LIGHT_BEAN,
+        method: 'v60',
+        original_recipe_json: BASE_RECIPE,
+        current_recipe_json: BASE_RECIPE,
+        feedback_history: [],
+        goal: 'sweetness',
+      }),
+    }))
+
+    expect(response.status).toBe(201)
+    expect(saveRecipeWithSnapshotMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        method: 'v60',
+        generation_context: { goal: 'sweetness' },
+      }),
+    )
+  })
 })

@@ -1,3 +1,9 @@
+## 1.23.17 - 2026-05-14
+
+- Added saved-recipe `goal` visibility to `/recipes` cards so users can distinguish otherwise similar recipes by cup target such as `Sweetness` or `Body`.
+- Added the same `goal` badge to the saved recipe detail header, using the persisted recipe generation goal when available and leaving legacy/manual recipes unchanged when it is not.
+- Added regression coverage for saved recipe goal read-path mapping plus list/detail badge rendering behavior.
+
 ## 1.23.16 - 2026-05-14
 
 - Moved the shared recipe save CTA into the same footer container pattern as saved recipe detail actions so large-screen alignment matches the content column.

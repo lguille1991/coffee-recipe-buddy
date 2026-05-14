@@ -196,6 +196,7 @@ export function useManualRecipe(options: UseManualRecipeOptions): UseManualRecip
       original_recipe_json: builtRecipe,
       current_recipe_json: builtRecipe,
       feedback_history: [],
+      goal: recipeSessionStorage.getSelectedBrewGoal() ?? undefined,
     }
 
     // If no user, store pending save and redirect to auth

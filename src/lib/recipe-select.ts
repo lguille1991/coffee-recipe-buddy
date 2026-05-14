@@ -16,6 +16,7 @@ export const SAVED_RECIPE_DETAIL_SELECT = [
   'parent_recipe_id',
   'scale_factor',
   'coffee_profile_id',
+  'generation_context',
 ].join(', ')
 
 export const AUTO_ADJUST_SOURCE_SELECT = [
