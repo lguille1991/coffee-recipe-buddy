@@ -1,3 +1,8 @@
+## 1.23.12 - 2026-05-14
+
+- Fixed shared-recipe saving so recipes added from a public share link now also appear under `/recipes?section=shared`.
+- Added regression coverage for the share-clone API to ensure the shared-recipes membership state is created during save.
+
 ## 1.23.11 - 2026-05-04
 
 - Improved `/methods` generation UX for long-running recipe creation with immediate in-flight status messaging and accessible `aria-live` progress updates.

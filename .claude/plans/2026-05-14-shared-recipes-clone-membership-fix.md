@@ -1,0 +1,16 @@
+- [x] Resolve applicable instructions for the target area.
+- [x] Inspect the `/recipes?section=shared` list path and the public share "Save to My Library" flow.
+- [x] Record baseline metadata.
+  - Pre-existing dirty files: none
+  - Task-owned files: `src/app/api/share/[token]/clone/route.ts`, `src/lib/__tests__/recipe-list.test.ts`, `package.json`, `CHANGELOG.md`
+- [x] Confirm the current behavior with focused evidence.
+  - `src/lib/recipe-list.ts` loads the shared section only from `recipe_share_memberships` rows for the current user.
+  - `src/app/share/[token]/ShareRecipeClient.tsx` calls `POST /api/share/[token]/clone` when the user taps "Save to My Library".
+  - `src/app/api/share/[token]/clone/route.ts` currently inserts only a new `recipes` row, so the saved clone never creates the membership row the shared list depends on.
+- [x] After approval, add a focused regression test that proves a saved shared recipe becomes visible to the shared list flow.
+- [x] After approval, implement the smallest fix in the clone route by creating or restoring the recipient's `recipe_share_memberships` row alongside the cloned recipe.
+- [x] After approval, apply release hygiene if the behavior change is user-facing.
+  - Bump `package.json` patch version.
+  - Add a concise entry to `CHANGELOG.md`.
+- [x] After approval, run immediate review on the resulting diff.
+- [ ] After approval and review sign-off, ask whether to proceed to commit-readiness validation.
