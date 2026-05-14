@@ -1,0 +1,20 @@
+- [x] Resolve applicable instructions for the target area.
+- [x] Inspect the shared recipe mobile layout and compare it with existing bottom-safe guardrails used elsewhere in the app.
+- [x] Record baseline metadata.
+  - Pre-existing dirty files: none
+  - Task-owned files: `src/app/share/[token]/ShareRecipeClient.tsx`, `src/app/share/[token]/ShareRecipeClient.test.tsx` or nearby shared-page test file if created, `package.json`, `CHANGELOG.md`
+- [x] Confirm the current behavior with focused evidence.
+  - `src/components/BottomNav.tsx` renders the mobile nav at `bottom-0` with safe-area padding and sits at `z-40`.
+  - `src/app/globals.css` defines shared guardrails: `ui-bottom-spacer` reserves `var(--mobile-nav-reserved-space)` and `ui-floating-safe-bottom` offsets floating footers by `var(--mobile-floating-offset)`.
+  - `src/app/share/[token]/ShareRecipeClient.tsx` currently bypasses those guardrails with a one-off sticky CTA wrapper: `fixed bottom-0 ... pb-8`.
+  - The shared page content container also uses a hardcoded `pb-28`, which is smaller and less explicit than the shared reserved-space utility used on other mobile screens.
+- [x] After approval, add the smallest regression test feasible for the shared page CTA layout.
+  - Likely target: a jsdom component test that asserts the save CTA wrapper uses the shared mobile-safe offset contract and that the page includes the shared bottom spacer/reserved padding pattern.
+- [x] After approval, update the shared recipe page to use the same mobile-safe bottom guardrails as the rest of the app.
+  - Replace the one-off CTA wrapper positioning with the shared floating-safe pattern.
+  - Replace the hardcoded content bottom padding with the shared reserved-space behavior or an equivalent tokenized offset.
+- [x] After approval, apply release hygiene if the change is user-facing.
+  - Bump `package.json` patch version.
+  - Add a concise `CHANGELOG.md` entry.
+- [x] After approval, run immediate review on the resulting diff.
+- [ ] After approval and review sign-off, ask whether to proceed to commit-readiness validation.

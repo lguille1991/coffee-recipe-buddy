@@ -6,6 +6,12 @@ import { ShareSnapshotSchema } from '@/types/recipe'
 
 type Params = { params: Promise<{ token: string }> }
 
+function isMissingTableError(error: unknown, tableName: string) {
+  if (!error || typeof error !== 'object') return false
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+  return message.includes(`Could not find the table 'public.${tableName}'`)
+}
+
 // ─── POST /api/share/:token/clone ─────────────────────────────────────────────
 // Auth required. Copies the share snapshot into the authenticated user's library
 // as a new saved recipe.
@@ -55,6 +61,19 @@ export async function POST(_request: Request, { params }: Params) {
   }
 
   try {
+    const { error: membershipError } = await supabase
+      .from('recipe_share_memberships')
+      .insert({
+        recipe_id: data.id,
+        owner_id: user.id,
+        recipient_id: user.id,
+        hidden_at: null,
+      })
+
+    if (membershipError && !isMissingTableError(membershipError, 'recipe_share_memberships')) {
+      throw new Error(membershipError.message)
+    }
+
     const snapshot = await createRecipeSnapshot({
       supabase,
       recipeId: data.id,

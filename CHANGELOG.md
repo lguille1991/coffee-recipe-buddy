@@ -1,3 +1,28 @@
+## 1.23.16 - 2026-05-14
+
+- Moved the shared recipe save CTA into the same footer container pattern as saved recipe detail actions so large-screen alignment matches the content column.
+- Tightened shared recipe footer regression coverage to assert the exact footer shell contract used by the recipe detail page.
+
+## 1.23.15 - 2026-05-14
+
+- Aligned the shared recipe desktop content column and save CTA to the same centered large-screen container so the footer button lines up with the fields above it.
+- Expanded shared recipe layout regression coverage to verify the desktop content and footer shells stay on the same width contract.
+
+## 1.23.14 - 2026-05-14
+
+- Aligned the shared recipe desktop save CTA width with the wider footer actions used on saved recipe detail pages for more consistent large-screen layout.
+- Extended shared recipe footer regression coverage to verify the desktop width contract alongside the mobile safe-area guardrails.
+
+## 1.23.13 - 2026-05-14
+
+- Fixed the shared recipe mobile save CTA so it now sits above the bottom navigation instead of being covered on small screens.
+- Added regression coverage for the shared recipe footer layout contract to keep the CTA aligned with the app's mobile safe-area guardrails.
+
+## 1.23.12 - 2026-05-14
+
+- Fixed shared-recipe saving so recipes added from a public share link now also appear under `/recipes?section=shared`.
+- Added regression coverage for the share-clone API to ensure the shared-recipes membership state is created during save.
+
 ## 1.23.11 - 2026-05-04
 
 - Improved `/methods` generation UX for long-running recipe creation with immediate in-flight status messaging and accessible `aria-live` progress updates.

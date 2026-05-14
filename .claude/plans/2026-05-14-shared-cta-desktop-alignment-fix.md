@@ -1,0 +1,20 @@
+- [x] Resolve applicable instructions for the target area.
+- [x] Inspect the current shared recipe desktop CTA shell and compare it with the horizontal alignment of the content above it.
+- [x] Record baseline metadata.
+  - Pre-existing dirty files: `CHANGELOG.md`, `package.json`, `src/app/share/[token]/ShareRecipeClient.tsx`
+  - Pre-existing untracked files: `.claude/plans/2026-05-14-shared-cta-desktop-width-fix.md`, `.claude/plans/2026-05-14-shared-cta-safe-bottom-fix.md`, `src/app/share/[token]/ShareRecipeClient.test.tsx`
+  - Task-owned files: `src/app/share/[token]/ShareRecipeClient.tsx`, `src/app/share/[token]/ShareRecipeClient.test.tsx`, `package.json`, `CHANGELOG.md`
+- [x] Confirm the current behavior with focused evidence.
+  - The screenshot shows the CTA width is now roughly correct, but its left/right edges do not line up with the shared page content cards and form fields.
+  - `src/app/share/[token]/ShareRecipeClient.tsx` gives the page body a simple `px-4` scroll shell with no centered desktop content container.
+  - The CTA shell now uses desktop max-width classes copied from `/recipes/[id]`, but without the same surrounding page-width shell above it, the button aligns to a different horizontal grid than the content stack.
+- [x] After approval, add or update the smallest regression test feasible for the shared page desktop alignment contract.
+  - Likely target: extend `ShareRecipeClient.test.tsx` so both the scroll region and CTA shell assert the same shared desktop max-width / centering classes.
+- [x] After approval, align the shared page content shell and CTA shell to the same desktop container contract.
+  - Prefer the smallest change that makes the content stack and CTA share one centered max-width system on large screens.
+  - Preserve the existing mobile-safe bottom offset behavior.
+- [x] After approval, apply release hygiene if the change is user-facing.
+  - Bump `package.json` patch version.
+  - Add a concise `CHANGELOG.md` entry.
+- [x] After approval, run immediate review on the resulting diff.
+- [ ] After approval and review sign-off, ask whether to proceed to commit-readiness validation.

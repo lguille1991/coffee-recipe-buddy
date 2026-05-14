@@ -1,0 +1,17 @@
+- [x] Resolve applicable instructions for the target area.
+- [x] Compare the exact footer container structure used on `/recipes/[id]` against the shared recipe page CTA container.
+- [x] Record baseline metadata.
+  - Pre-existing dirty files: `CHANGELOG.md`, `package.json`, `src/app/share/[token]/ShareRecipeClient.tsx`
+  - Pre-existing untracked files: `.claude/plans/2026-05-14-shared-cta-desktop-alignment-fix.md`, `.claude/plans/2026-05-14-shared-cta-desktop-width-fix.md`, `.claude/plans/2026-05-14-shared-cta-safe-bottom-fix.md`, `src/app/share/[token]/ShareRecipeClient.test.tsx`
+  - Task-owned files: `src/app/share/[token]/ShareRecipeClient.tsx`, `src/app/share/[token]/ShareRecipeClient.test.tsx`, `package.json`, `CHANGELOG.md`
+- [x] Confirm the current behavior with focused evidence.
+  - `/recipes/[id]` uses an outer footer shell `fixed bottom-0 left-0 right-0 lg:left-56` and an inner `ui-sticky-footer` container with shared horizontal padding and centered width classes.
+  - The shared page CTA still uses a custom floating wrapper `ui-floating-safe-bottom fixed inset-x-0 z-20 px-4`, so even after matching width classes it does not share the same parent gutter and footer container geometry.
+  - This likely explains why the CTA can still look horizontally misaligned relative to the fields above.
+- [x] After approval, update the regression test to assert the shared CTA uses the same footer-container contract as `/recipes/[id]`.
+- [x] After approval, move the shared page CTA into the same outer/inner footer container pattern used by the recipe detail page, preserving the mobile-safe behavior.
+- [x] After approval, apply release hygiene if the change is user-facing.
+  - Bump `package.json` patch version.
+  - Add a concise `CHANGELOG.md` entry.
+- [x] After approval, run immediate review on the resulting diff.
+- [ ] After approval and review sign-off, ask whether to proceed to commit-readiness validation.
