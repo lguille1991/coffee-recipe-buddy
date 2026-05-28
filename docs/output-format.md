@@ -25,6 +25,10 @@ The LLM must output **only valid JSON** matching this schema. Zero extra text ou
       "starting_point": "string — e.g. '83 clicks'",
       "description": "string — texture description (e.g., 'coarser than table salt, finer than raw sugar')"
     },
+    "fellow_opus": {
+      "range": "4.75–5.5",
+      "starting_point": "5.25"
+    },
     "q_air": {
       "range": "string — e.g. '6.2–6.6 (on the 0–10 scale)'",
       "starting_point": "string — e.g. '6.4'"
@@ -110,6 +114,10 @@ The LLM must output **only valid JSON** matching this schema. Zero extra text ou
       "range": "76–80 clicks",
       "starting_point": "78 clicks",
       "description": "Medium-fine, slightly coarser than table salt"
+    },
+    "fellow_opus": {
+      "range": "4.75–5.5",
+      "starting_point": "5.25"
     },
     "q_air": {
       "range": "5.8–6.2",

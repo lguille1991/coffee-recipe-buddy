@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createRecipeSnapshot, mirrorRecipeLiveSnapshot } from '@/lib/recipe-snapshots'
 import { createClient } from '@/lib/supabase/server'
-import { CURRENT_SCHEMA_VERSION } from '@/lib/recipe-migrations'
+import { CURRENT_SCHEMA_VERSION, migrateRecipe } from '@/lib/recipe-migrations'
 import { ShareSnapshotSchema } from '@/types/recipe'
 
 type Params = { params: Promise<{ token: string }> }
@@ -33,7 +33,12 @@ export async function POST(_request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Share link not found' }, { status: 404 })
   }
 
-  const parsed = ShareSnapshotSchema.safeParse(shared.snapshot_json)
+  const snapshotJson = shared.snapshot_json
+  const parsed = ShareSnapshotSchema.safeParse({
+    ...snapshotJson,
+    current_recipe_json: migrateRecipe(snapshotJson.current_recipe_json, snapshotJson.schema_version ?? 1),
+    schema_version: CURRENT_SCHEMA_VERSION,
+  })
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid snapshot data' }, { status: 422 })
   }

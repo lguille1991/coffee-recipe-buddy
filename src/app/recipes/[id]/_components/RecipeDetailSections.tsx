@@ -9,10 +9,11 @@ import type {
   RecipeWithAdjustment,
   SavedRecipe,
 } from '@/types/recipe'
-import { BREW_GOAL_DISPLAY_NAMES, GRINDER_DISPLAY_NAMES, METHOD_DISPLAY_NAMES } from '@/types/recipe'
+import { BREW_GOAL_DISPLAY_NAMES, GRINDER_DISPLAY_NAMES, GRINDER_IDS, METHOD_DISPLAY_NAMES } from '@/types/recipe'
 import {
   formatGrinderRangeForEdit,
   formatGrinderSettingForDisplay,
+  isValidFellowOpusSetting,
   isValidKUltraSetting,
   isValidQAirSetting,
 } from '@/lib/grinder-converter'
@@ -213,7 +214,7 @@ export function RecipeViewGrindSettings({
   secondaryGrindersOpen: boolean
   setSecondaryGrindersOpen: (open: boolean) => void
 }) {
-  const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[]).filter(grinder => grinder !== preferredGrinder)
+  const secondaryGrinders = GRINDER_IDS.filter(grinder => grinder !== preferredGrinder)
   const primaryData = activeGrind[preferredGrinder]
 
   return (
@@ -301,12 +302,16 @@ export function RecipeEditGrindSettings({
         <span className="ui-meta text-[var(--background)]">{GRINDER_DISPLAY_NAMES[preferredGrinder]} <span className="text-[var(--danger-border)]">*</span></span>
         <span className="ui-badge bg-[var(--background)]/20 text-[var(--background)]">Primary</span>
       </div>
-      {preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra' ? (
+      {preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra' || preferredGrinder === 'fellow_opus' ? (
         <input
-          type="text"
+          type={preferredGrinder === 'fellow_opus' ? 'number' : 'text'}
           inputMode="decimal"
-          placeholder={preferredGrinder === 'k_ultra' ? '0.8.2' : '2.5.0'}
+          min={preferredGrinder === 'fellow_opus' ? 1 : undefined}
+          max={preferredGrinder === 'fellow_opus' ? 11 : undefined}
+          step={preferredGrinder === 'fellow_opus' ? 0.25 : undefined}
+          placeholder={preferredGrinder === 'k_ultra' ? '0.8.2' : preferredGrinder === 'q_air' ? '2.5.0' : '5.25'}
           value={String(editDraft.grind_preferred_value)}
+          onKeyDown={event => { if (preferredGrinder === 'fellow_opus' && (event.key === '-' || event.key === 'e')) event.preventDefault() }}
           onChange={event => onChange(event.target.value.replace(/[^\d.]/g, ''))}
           className={inputClass}
         />
@@ -331,6 +336,11 @@ export function RecipeEditGrindSettings({
       {preferredGrinder === 'q_air' && (
         <p className="ui-body-muted text-[var(--background)] mt-1.5">
           Use rotations.major.minor format, for example 2.5.0.
+        </p>
+      )}
+      {preferredGrinder === 'fellow_opus' && (
+        <p className="ui-body-muted text-[var(--background)] mt-1.5">
+          Use quarter-step decimal settings, for example 5.25.
         </p>
       )}
       {preferredGrinder === 'k_ultra' && (
@@ -565,6 +575,9 @@ export function EditHistorySheet({
 }
 
 export function isPreferredGrinderValueInvalid(preferredGrinder: GrinderId, value: string | number) {
+  if (preferredGrinder === 'fellow_opus') {
+    return typeof value !== 'string' || !isValidFellowOpusSetting(value)
+  }
   if (preferredGrinder === 'q_air') {
     return typeof value !== 'string' || !isValidQAirSetting(value)
   }

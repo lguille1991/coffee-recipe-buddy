@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { GrinderId, GRINDER_DISPLAY_NAMES } from '@/types/recipe'
+import { GrinderId, GRINDER_DISPLAY_NAMES, GRINDER_IDS } from '@/types/recipe'
 import { useTheme, Theme } from '@/hooks/useTheme'
 import { useProfile } from '@/hooks/useProfile'
 
@@ -131,7 +131,7 @@ export default function SettingsPage() {
             Preferred Grinder
           </label>
           <div className="flex flex-col gap-2">
-            {(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as const).map(grinder => (
+            {GRINDER_IDS.map(grinder => (
               <button
                 key={grinder}
                 type="button"

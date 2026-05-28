@@ -1,8 +1,8 @@
 import { RecipeWithAdjustment } from '@/types/recipe'
-import { parseKUltraRange, kUltraRangeToQAir } from './grinder-converter'
+import { parseKUltraRange, kUltraRangeToFellowOpus, kUltraRangeToQAir } from './grinder-converter'
 import { buildDerivedGrindSettings, deriveSecondaryGrindSettings, parseClickCount } from './grind-settings'
 
-const CURRENT_SCHEMA_VERSION = 5
+const CURRENT_SCHEMA_VERSION = 6
 
 type MigrationFn = (recipe: RecipeWithAdjustment) => RecipeWithAdjustment
 
@@ -88,6 +88,25 @@ const migrations: Record<number, MigrationFn> = {
       grind: {
         ...recipe.grind,
         q_air: { ...recipe.grind.q_air, range: qAir.range, starting_point: qAir.starting_point },
+      },
+    }
+  },
+
+  // v5 → v6: derive Fellow Opus settings from canonical K-Ultra values.
+  5: (recipe) => {
+    const kuRange = parseKUltraRange(recipe.grind.k_ultra.range)
+    if (!kuRange) return recipe
+
+    const startClicks = parseClickCount(recipe.grind.k_ultra.starting_point, kuRange.mid) ?? kuRange.mid
+    const fellowOpus = kUltraRangeToFellowOpus(kuRange.low, kuRange.high, startClicks)
+
+    return {
+      ...recipe,
+      grind: {
+        ...recipe.grind,
+        fellow_opus: recipe.grind.fellow_opus
+          ? { ...recipe.grind.fellow_opus, ...fellowOpus }
+          : fellowOpus,
       },
     }
   },

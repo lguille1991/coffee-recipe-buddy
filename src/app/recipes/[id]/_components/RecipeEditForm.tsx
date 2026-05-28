@@ -22,6 +22,7 @@ function parseWholeNumberInput(value: string): number | '' {
 
 type LiveGrindSettings = {
   k_ultra: { starting_point: string; range: string; description?: string; note?: string }
+  fellow_opus: { starting_point: string; range: string; description?: string; note?: string }
   q_air: { starting_point: string; range: string; description?: string; note?: string }
   baratza_encore_esp: { starting_point: string; range: string; description?: string; note?: string }
   timemore_c2: { starting_point: string; range: string; description?: string; note?: string }
@@ -71,7 +72,7 @@ export default function RecipeEditForm({
   const kUltraRange = parseKUltraRange(currentRecipe.range_logic.final_operating_range)
   const isGrindOutOfRange = (() => {
     if (editDraft.grind_preferred_value === '') return false
-    if (preferredGrinder === 'q_air' && typeof editDraft.grind_preferred_value !== 'string') return false
+    if ((preferredGrinder === 'q_air' || preferredGrinder === 'fellow_opus') && typeof editDraft.grind_preferred_value !== 'string') return false
     const currentClicks = grinderValueToKUltraClicks(preferredGrinder, editDraft.grind_preferred_value)
     if (!kUltraRange) return false
     return currentClicks < kUltraRange.low || currentClicks > kUltraRange.high
@@ -228,7 +229,7 @@ export default function RecipeEditForm({
           isGrindOutOfRange={isGrindOutOfRange}
           onChange={value => setEditDraft(draft => {
             if (!draft) return draft
-            if (preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra') {
+            if (preferredGrinder === 'q_air' || preferredGrinder === 'k_ultra' || preferredGrinder === 'fellow_opus') {
               return { ...draft, grind_preferred_value: value }
             }
             return { ...draft, grind_preferred_value: parseWholeNumberInput(value) }

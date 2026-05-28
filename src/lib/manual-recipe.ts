@@ -2,7 +2,7 @@ import { createEmptyEditDraft, recomputeAccumulated, validateSteps, type EditDra
 import type { BeanProfile, GrinderId, MethodId, RecipeDraftStep, RecipeWithAdjustment } from '@/types/recipe'
 import { METHOD_DISPLAY_NAMES, RecipeWithAdjustmentSchema } from '@/types/recipe'
 import { deriveSecondaryGrindSettings } from '@/lib/grind-settings'
-import { formatKUltraSetting, grinderValueToKUltraClicks, isValidKUltraSetting, isValidQAirSetting } from '@/lib/grinder-converter'
+import { formatKUltraSetting, grinderValueToKUltraClicks, isValidFellowOpusSetting, isValidKUltraSetting, isValidQAirSetting } from '@/lib/grinder-converter'
 
 export type ManualRecipeDraft = {
   bean_info: BeanProfile
@@ -95,6 +95,9 @@ export function validateManualRecipeDraft(
   if (preferredGrinder === 'k_ultra' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidKUltraSetting(editDraft.grind_preferred_value))) {
     return { valid: false, error: 'K-Ultra grind must use rotations.number.tick format, for example 0.8.2.' }
   }
+  if (preferredGrinder === 'fellow_opus' && (typeof editDraft.grind_preferred_value !== 'string' || !isValidFellowOpusSetting(editDraft.grind_preferred_value))) {
+    return { valid: false, error: 'Fellow Opus grind must use quarter-step decimal settings, for example 5.25.' }
+  }
 
   const stepError = validateSteps(editDraft.steps, editDraft.water_g)
   if (stepError) return { valid: false, error: stepError }
@@ -151,6 +154,7 @@ export function buildRecipeFromManualDraft(
         starting_point: formatKUltraSetting(kUltraClicks),
         note: 'Manual recipe entry.',
       },
+      fellow_opus: secondary.fellow_opus,
       q_air: secondary.q_air,
       baratza_encore_esp: secondary.baratza_encore_esp,
       timemore_c2: secondary.timemore_c2,

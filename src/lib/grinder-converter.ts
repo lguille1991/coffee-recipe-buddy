@@ -13,6 +13,10 @@ export type GrinderEditValue = number | string
 const K_ULTRA_FULL_ROTATION_CLICKS = 100
 const K_ULTRA_NUMBER_CLICKS = 10
 const K_ULTRA_NOTATION_REGEX = /^\d+\.[0-9](?:\.[0-9])?$/
+const FELLOW_OPUS_MIN = 1
+const FELLOW_OPUS_MAX = 11
+const FELLOW_OPUS_STEP = 0.25
+const FELLOW_OPUS_NOTATION_REGEX = /^(?:\d+)(?:\.(?:0|25|5|75))?$/
 
 // ─── K-Ultra: clicks → microns ───────────────────────────────────────────────
 
@@ -126,6 +130,105 @@ export function kUltraRangeToQAir(
   return {
     range: `${formatQAirSetting(lowSetting)}–${formatQAirSetting(highSetting)}`,
     starting_point: formatQAirSetting(startSetting),
+  }
+}
+
+// ─── Fellow Opus: microns → quarter-step decimal ────────────────────────────
+// Anchored to the shared Honest Coffee Guide method ranges captured in
+// docs/grinder-tables/fellow-opus-grind-table.md and converted through the
+// existing K-Ultra micron table so Fellow Opus remains a deterministic
+// derivative of canonical K-Ultra clicks.
+
+const FELLOW_OPUS_TABLE: Array<[number, number]> = [
+  [264, 1.0],
+  [440, 1.75],
+  [473, 2.0],
+  [528, 2.5],
+  [550, 2.5],
+  [583, 2.75],
+  [594, 3.0],
+  [660, 3.25],
+  [671, 3.5],
+  [946, 5.5],
+  [979, 6.0],
+  [990, 6.0],
+  [1100, 11.0],
+]
+
+function clampFellowOpusSetting(value: number) {
+  return Math.max(FELLOW_OPUS_MIN, Math.min(FELLOW_OPUS_MAX, value))
+}
+
+function roundToFellowOpusStep(value: number) {
+  return clampFellowOpusSetting(Math.round(value / FELLOW_OPUS_STEP) * FELLOW_OPUS_STEP)
+}
+
+function formatFellowOpusSetting(value: number): string {
+  const rounded = roundToFellowOpusStep(value)
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/0$/, '')
+}
+
+export function isValidFellowOpusSetting(value: string): boolean {
+  const trimmed = value.trim()
+  if (!FELLOW_OPUS_NOTATION_REGEX.test(trimmed)) return false
+  const parsed = Number(trimmed)
+  if (!Number.isFinite(parsed)) return false
+  if (parsed < FELLOW_OPUS_MIN || parsed > FELLOW_OPUS_MAX) return false
+  return Math.round(parsed * 100) % 25 === 0
+}
+
+function parseFellowOpusSetting(value: string): number | null {
+  const trimmed = value.trim()
+  if (!isValidFellowOpusSetting(trimmed)) return null
+  return roundToFellowOpusStep(Number(trimmed))
+}
+
+function micronsToFellowOpusRaw(microns: number): number {
+  const table = FELLOW_OPUS_TABLE
+  if (microns <= table[0][0]) return table[0][1]
+  if (microns >= table[table.length - 1][0]) return table[table.length - 1][1]
+
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (microns >= x0 && microns <= x1) {
+      const t = (microns - x0) / (x1 - x0)
+      return y0 + t * (y1 - y0)
+    }
+  }
+
+  return 6
+}
+
+function fellowOpusSettingToMicrons(setting: number): number {
+  const table = FELLOW_OPUS_TABLE
+  if (setting <= table[0][1]) return table[0][0]
+  if (setting >= table[table.length - 1][1]) return table[table.length - 1][0]
+
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i]
+    const [x1, y1] = table[i + 1]
+    if (setting >= y0 && setting <= y1) {
+      const t = y1 === y0 ? 0 : (setting - y0) / (y1 - y0)
+      return Math.round(x0 + t * (x1 - x0))
+    }
+  }
+
+  return 880
+}
+
+export function kUltraRangeToFellowOpus(
+  lowClicks: number,
+  highClicks: number,
+  startingClicks: number,
+): GrinderSetting {
+  const lowMicrons = kUltraClicksToMicrons(lowClicks)
+  const highMicrons = kUltraClicksToMicrons(highClicks)
+  const startMicrons = kUltraClicksToMicrons(startingClicks)
+
+  return {
+    range: `${formatFellowOpusSetting(micronsToFellowOpusRaw(lowMicrons))}–${formatFellowOpusSetting(micronsToFellowOpusRaw(highMicrons))}`,
+    starting_point: formatFellowOpusSetting(micronsToFellowOpusRaw(startMicrons)),
   }
 }
 
@@ -387,6 +490,9 @@ function timemoreC2ClicksToMicrons(clicks: number): number {
  * - Q-Air: parse R.C.M → total Q-Air clicks (R*10 + C), ignoring micro-adjustments
  */
 export function parseGrinderValueForEdit(grinder: string, startingPoint: string): GrinderEditValue {
+  if (grinder === 'fellow_opus') {
+    return isValidFellowOpusSetting(startingPoint) ? formatFellowOpusSetting(Number(startingPoint.trim())) : '6'
+  }
   if (grinder === 'q_air') {
     return isValidQAirSetting(startingPoint) ? startingPoint.trim() : '1.2.0'
   }
@@ -395,7 +501,11 @@ export function parseGrinderValueForEdit(grinder: string, startingPoint: string)
     if (parsedKUltra !== null) return formatKUltraSetting(parsedKUltra)
   }
   const match = startingPoint.match(/(\d+)/)
-  if (!match) return grinder === 'k_ultra' ? '0.8.0' : 80
+  if (!match) {
+    if (grinder === 'k_ultra') return '0.8.0'
+    if (grinder === 'fellow_opus') return '6'
+    return 80
+  }
   return grinder === 'k_ultra'
     ? formatKUltraSetting(parseInt(match[1], 10))
     : parseInt(match[1], 10)
@@ -424,6 +534,10 @@ export function grinderValueToKUltraClicks(grinder: string, value: GrinderEditVa
     const microns = qAirRotationsToMicrons(parsed?.rotations ?? 1.2)
     return micronsToKUltraClicks(microns)
   }
+  if (grinder === 'fellow_opus') {
+    const parsed = typeof value === 'string' ? parseFellowOpusSetting(value) : Number(value)
+    return micronsToKUltraClicks(fellowOpusSettingToMicrons(parsed ?? 6))
+  }
   if (grinder === 'baratza_encore_esp') {
     return micronsToKUltraClicks(baratzaClicksToMicrons(Number(value)))
   }
@@ -441,6 +555,9 @@ export function grinderValueToKUltraClicks(grinder: string, value: GrinderEditVa
  */
 export function kUltraClicksToGrinderValue(grinder: string, clicks: number): GrinderEditValue {
   if (grinder === 'k_ultra') return formatKUltraSetting(clicks)
+  if (grinder === 'fellow_opus') {
+    return formatFellowOpusSetting(micronsToFellowOpusRaw(kUltraClicksToMicrons(clicks)))
+  }
   if (grinder === 'q_air') {
     const microns = kUltraClicksToMicrons(clicks)
     const rotations = micronsToQAirRaw(microns)
@@ -464,6 +581,11 @@ export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { lo
   if (grinder === 'k_ultra') {
     return { low: parsed.low, high: parsed.high }
   }
+  if (grinder === 'fellow_opus') {
+    const low = kUltraClicksToGrinderValue(grinder, parsed.low)
+    const high = kUltraClicksToGrinderValue(grinder, parsed.high)
+    return { low: Number(low), high: Number(high) }
+  }
   return {
     low: Number(kUltraClicksToGrinderValue(grinder, parsed.low)),
     high: Number(kUltraClicksToGrinderValue(grinder, parsed.high)),
@@ -471,6 +593,10 @@ export function parseGrinderRange(grinder: string, kUltraRangeStr: string): { lo
 }
 
 export function formatGrinderSettingForDisplay(grinder: string, value: string): string {
+  if (grinder === 'fellow_opus') {
+    const parsed = parseFellowOpusSetting(value)
+    return parsed === null ? value : formatFellowOpusSetting(parsed)
+  }
   if (grinder === 'q_air') return value
   if (grinder === 'k_ultra') {
     const parsed = parseKUltraSetting(value)
@@ -485,6 +611,12 @@ export function formatGrinderSettingForDisplay(grinder: string, value: string): 
 export function formatGrinderRangeForEdit(grinder: string, kUltraRangeStr: string): string | null {
   const parsed = parseKUltraRange(kUltraRangeStr)
   if (!parsed) return null
+
+  if (grinder === 'fellow_opus') {
+    const low = kUltraClicksToGrinderValue(grinder, parsed.low)
+    const high = kUltraClicksToGrinderValue(grinder, parsed.high)
+    return `${low}–${high}`
+  }
 
   if (grinder === 'q_air') {
     const low = kUltraClicksToGrinderValue(grinder, parsed.low)

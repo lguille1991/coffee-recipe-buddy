@@ -16,6 +16,7 @@ export const BASE_RECIPE: RecipeWithAdjustment = {
   },
   grind: {
     k_ultra: { range: '81–84 clicks', starting_point: '82 clicks', note: 'Start here' },
+    fellow_opus: { range: '5–5.25', starting_point: '5', note: 'Derived from K-Ultra' },
     q_air: { range: '2.5.0–2.6.0', starting_point: '2.5.2' },
     baratza_encore_esp: { range: 'clicks 17–19', starting_point: '18 clicks', note: 'Pour-over zone' },
     timemore_c2: { range: 'clicks 16–18', starting_point: '17 clicks', note: 'Pour-over zone' },

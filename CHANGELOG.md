@@ -1,3 +1,8 @@
+## 1.24.0 - 2026-05-27
+
+- Added first-class `Fellow Opus` grinder support across profile preferences, recipe creation/editing, saved recipe detail, active session, and shared recipe views.
+- Added deterministic `Fellow Opus` derivation and migration coverage so legacy saved/session/shared recipes gain compatible `fellow_opus` settings from canonical `k_ultra` values.
+
 ## 1.23.17 - 2026-05-14
 
 - Added saved-recipe `goal` visibility to `/recipes` cards so users can distinguish otherwise similar recipes by cup target such as `Sweetness` or `Body`.

@@ -35,6 +35,6 @@ describe('prompt-builder', () => {
     buildRecipePrompt(TEST_BEAN, 'v60')
     buildRecipePrompt(TEST_BEAN, 'v60', 250)
 
-    expect(readFileSyncMock).toHaveBeenCalledTimes(7)
+    expect(readFileSyncMock).toHaveBeenCalledTimes(8)
   })
 })
