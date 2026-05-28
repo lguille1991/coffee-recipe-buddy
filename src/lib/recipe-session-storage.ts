@@ -6,6 +6,7 @@ import type {
   SaveRecipeRequest,
 } from '@/types/recipe'
 import type { ManualRecipeDraft } from '@/lib/manual-recipe'
+import { CURRENT_SCHEMA_VERSION, migrateRecipe } from '@/lib/recipe-migrations'
 
 const STORAGE_KEYS = {
   adjustmentHistory: 'adjustment_history',
@@ -126,6 +127,23 @@ function readJson<T>(key: StorageKey): T | null {
   return persisted
 }
 
+function migrateStoredRecipe(recipe: RecipeWithAdjustment | null | undefined, schemaVersion = CURRENT_SCHEMA_VERSION) {
+  if (!recipe) return null
+  if ('fellow_opus' in recipe.grind && recipe.grind.fellow_opus) return recipe
+  if (schemaVersion >= CURRENT_SCHEMA_VERSION) return recipe
+  return migrateRecipe(recipe, schemaVersion)
+}
+
+function migrateStoredSaveRequest(request: SaveRecipeRequest | null) {
+  if (!request) return null
+
+  return {
+    ...request,
+    original_recipe_json: migrateStoredRecipe(request.original_recipe_json, 1) ?? request.original_recipe_json,
+    current_recipe_json: migrateStoredRecipe(request.current_recipe_json, 1) ?? request.current_recipe_json,
+  }
+}
+
 function writeJson(key: StorageKey, value: unknown) {
   const serialized = JSON.stringify(value)
   getSessionStorage()?.setItem(key, serialized)
@@ -232,17 +250,17 @@ export const recipeSessionStorage = {
     return readJson<MethodRecommendation[]>(STORAGE_KEYS.methodRecommendations) ?? []
   },
   getPendingSaveRecipe() {
-    return readJson<SaveRecipeRequest>(STORAGE_KEYS.pendingSaveRecipe)
+    return migrateStoredSaveRequest(readJson<SaveRecipeRequest>(STORAGE_KEYS.pendingSaveRecipe))
   },
   getRecipe() {
-    return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipe)
+    return migrateStoredRecipe(readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipe), 1)
   },
   getRecipeFlowSource() {
     const source = readString(STORAGE_KEYS.recipeFlowSource)
     return source === 'manual' || source === 'generated' ? source : null
   },
   getRecipeOriginal() {
-    return readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal)
+    return migrateStoredRecipe(readJson<RecipeWithAdjustment>(STORAGE_KEYS.recipeOriginal), 1)
   },
   getScannedBagImageDataUrl() {
     return readString(STORAGE_KEYS.scannedBagImageDataUrl)

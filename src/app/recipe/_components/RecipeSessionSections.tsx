@@ -19,6 +19,7 @@ import type {
 } from '@/types/recipe'
 import {
   GRINDER_DISPLAY_NAMES,
+  GRINDER_IDS,
 } from '@/types/recipe'
 import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { formatElapsed } from '../_hooks/useWakeLockTimer'
@@ -169,8 +170,7 @@ export function RecipeGrindSettingsCard({
 }) {
   const [secondaryGrindersOpen, setSecondaryGrindersOpen] = useState(false)
   const grindChanged = adjustment?.variable_changed === 'grind'
-  const secondaryGrinders = (['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[])
-    .filter(grinder => grinder !== preferredGrinder)
+  const secondaryGrinders = GRINDER_IDS.filter(grinder => grinder !== preferredGrinder)
   const primaryData = recipe.grind[preferredGrinder]
 
   return (

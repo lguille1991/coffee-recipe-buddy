@@ -16,6 +16,7 @@ const PROMPT_DOCS = {
   methodLogic: readDoc('method-decision-logic.md'),
   outputFormat: readDoc('output-format.md'),
   kUltraTable: readDoc('grinder-tables/1zpresso-k-ultra-grind-table.md'),
+  fellowOpusTable: readDoc('grinder-tables/fellow-opus-grind-table.md'),
   qAirTable: readDoc('grinder-tables/1zpresso-q-air-grind-table.md'),
   baratzaTable: readDoc('grinder-tables/baratza-encore-esp-grind-table.md'),
   timemoreC2Table: readDoc('grinder-tables/timemore-c2-grind-table.md'),
@@ -108,6 +109,10 @@ ${PROMPT_DOCS.kUltraTable}
 
 ${PROMPT_DOCS.qAirTable}
 
+### Fellow Opus
+
+${PROMPT_DOCS.fellowOpusTable}
+
 ### Baratza Encore ESP
 
 ${PROMPT_DOCS.baratzaTable}
@@ -122,7 +127,7 @@ ${PROMPT_DOCS.timemoreC2Table}
 
 1. Follow Block 6 mandatory decision order exactly — record every step in range_logic.
 2. Final operating range MUST be ≤ 10 K-Ultra clicks wide (Block 5B accumulation cap).
-3. Include grind settings for ALL 4 grinders (k_ultra, q_air, baratza_encore_esp, timemore_c2).
+3. Include grind settings for ALL 5 grinders (k_ultra, fellow_opus, q_air, baratza_encore_esp, timemore_c2).
 4. Baratza starting_point MUST be within clicks 14–24 for any pour-over method.
 4b. Timemore C2 starting_point MUST be within clicks 14–22 for any pour-over method.
 5. steps[].water_poured_g must sum to exactly water_g.

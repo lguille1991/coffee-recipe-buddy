@@ -61,9 +61,15 @@ export function validateRecipe(
     )
   }
 
-  // 5. All 4 grinders present (schema already enforces, but double-check non-empty)
-  if (!recipe.grind.k_ultra.range || !recipe.grind.q_air.range || !recipe.grind.baratza_encore_esp.range || !recipe.grind.timemore_c2.range) {
-    errors.push('All 4 grinder ranges must be present and non-empty.')
+  // 5. All 5 grinders present (schema already enforces, but double-check non-empty)
+  if (
+    !recipe.grind.k_ultra.range
+    || !recipe.grind.fellow_opus.range
+    || !recipe.grind.q_air.range
+    || !recipe.grind.baratza_encore_esp.range
+    || !recipe.grind.timemore_c2.range
+  ) {
+    errors.push('All 5 grinder ranges must be present and non-empty.')
   }
 
   // 6. All 5 quick adjustment keys present (schema enforces, but check non-empty)

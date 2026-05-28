@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, RecipeComment } from '@/types/recipe'
+import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId, GrinderId, GRINDER_DISPLAY_NAMES, GRINDER_IDS, RecipeComment } from '@/types/recipe'
 import { formatGrinderSettingForDisplay } from '@/lib/grinder-converter'
 import { expectOk, runClientMutation } from '@/lib/client-mutation'
 import { useAuth } from '@/hooks/useAuth'
@@ -33,7 +33,7 @@ export default function ShareRecipeClient({ data }: { data: PublicShareResponse 
 
   // Default to K-Ultra for public view (viewer's grinder preference unknown)
   const primaryGrinder: GrinderId = 'k_ultra'
-  const secondaryGrinders = (['q_air', 'baratza_encore_esp', 'timemore_c2'] as GrinderId[])
+  const secondaryGrinders = GRINDER_IDS.filter(grinder => grinder !== primaryGrinder)
   const primaryData = r.grind[primaryGrinder]
 
   useEffect(() => {

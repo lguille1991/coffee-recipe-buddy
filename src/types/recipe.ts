@@ -128,6 +128,7 @@ export const RecipeSchema = z.object({
   }),
   grind: z.object({
     k_ultra: GrinderSettingSchema,
+    fellow_opus: GrinderSettingSchema,
     q_air: GrinderSettingSchema,
     baratza_encore_esp: GrinderSettingSchema,
     timemore_c2: GrinderSettingSchema,
@@ -226,11 +227,13 @@ export type ManualEditRound = z.infer<typeof ManualEditRoundSchema>
 export const AnyFeedbackRoundSchema = z.union([FeedbackRoundSchema, ManualEditRoundSchema])
 export type AnyFeedbackRound = z.infer<typeof AnyFeedbackRoundSchema>
 
-export const GrinderIdSchema = z.enum(['k_ultra', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
+export const GrinderIdSchema = z.enum(['k_ultra', 'fellow_opus', 'q_air', 'baratza_encore_esp', 'timemore_c2'])
 export type GrinderId = z.infer<typeof GrinderIdSchema>
+export const GRINDER_IDS = GrinderIdSchema.options
 
 export const GRINDER_DISPLAY_NAMES: Record<GrinderId, string> = {
   k_ultra: '1Zpresso K-Ultra',
+  fellow_opus: 'Fellow Opus',
   q_air: '1Zpresso Q-Air',
   baratza_encore_esp: 'Baratza Encore ESP',
   timemore_c2: 'Timemore C2',

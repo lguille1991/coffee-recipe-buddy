@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { PublicShareResponse, METHOD_DISPLAY_NAMES, MethodId } from '@/types/recipe'
+import { CURRENT_SCHEMA_VERSION, migrateRecipe } from '@/lib/recipe-migrations'
 import { createClient } from '@/lib/supabase/server'
 import ShareRecipeClient from './ShareRecipeClient'
 
@@ -16,11 +17,18 @@ async function getShareData(token: string): Promise<PublicShareResponse | null> 
 
   if (error || !data) return null
 
+  const snapshotJson = data.snapshot_json
+  const snapshot = {
+    ...snapshotJson,
+    current_recipe_json: migrateRecipe(snapshotJson.current_recipe_json, snapshotJson.schema_version ?? 1),
+    schema_version: CURRENT_SCHEMA_VERSION,
+  }
+
   return {
     shareToken: data.share_token,
     title: data.title ?? null,
     createdAt: data.created_at,
-    snapshot: data.snapshot_json,
+    snapshot,
   }
 }
 

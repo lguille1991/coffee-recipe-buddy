@@ -10,6 +10,7 @@ import {
   formatKUltraSetting,
   grinderValueToKUltraClicks,
   parseKUltraRange,
+  kUltraRangeToFellowOpus,
   kUltraRangeToQAir,
   kUltraRangeToBaratza,
   kUltraRangeToTimemoreC2,
@@ -174,12 +175,14 @@ function applyGrindOffset(recipe: Recipe, scaleFactor: number, method: string): 
 
   const newClicks = Math.max(low, Math.min(high, currentClicks + offset))
 
+  const fellowOpus = kUltraRangeToFellowOpus(low, high, newClicks)
   const qAir = kUltraRangeToQAir(low, high, newClicks)
   const baratza = kUltraRangeToBaratza(low, high, newClicks, method)
   const c2 = kUltraRangeToTimemoreC2(low, high, newClicks, method)
 
   return {
     k_ultra: { ...recipe.grind.k_ultra, starting_point: formatKUltraSetting(newClicks) },
+    fellow_opus: { ...recipe.grind.fellow_opus, starting_point: fellowOpus.starting_point },
     q_air: { ...recipe.grind.q_air, starting_point: qAir.starting_point },
     baratza_encore_esp: { ...recipe.grind.baratza_encore_esp, starting_point: baratza.starting_point, note: baratza.note },
     timemore_c2: { ...recipe.grind.timemore_c2, starting_point: c2.starting_point, note: c2.note },

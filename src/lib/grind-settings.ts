@@ -1,6 +1,7 @@
 import type { Recipe } from '@/types/recipe'
 import {
   formatKUltraSetting,
+  kUltraRangeToFellowOpus,
   parseKUltraSetting,
   kUltraRangeToBaratza,
   kUltraRangeToQAir,
@@ -9,7 +10,7 @@ import {
 
 type SecondaryGrindSettings = Pick<
   Recipe['grind'],
-  'q_air' | 'baratza_encore_esp' | 'timemore_c2'
+  'fellow_opus' | 'q_air' | 'baratza_encore_esp' | 'timemore_c2'
 >
 
 export function parseClickCount(value: string, fallback: number | null = null): number | null {
@@ -25,11 +26,13 @@ export function deriveSecondaryGrindSettings(
   highClicks: number,
   startingClicks: number,
 ): SecondaryGrindSettings {
+  const fellowOpus = kUltraRangeToFellowOpus(lowClicks, highClicks, startingClicks)
   const qAir = kUltraRangeToQAir(lowClicks, highClicks, startingClicks)
   const baratza = kUltraRangeToBaratza(lowClicks, highClicks, startingClicks, method)
   const timemore = kUltraRangeToTimemoreC2(lowClicks, highClicks, startingClicks, method)
 
   return {
+    fellow_opus: fellowOpus,
     q_air: qAir,
     baratza_encore_esp: baratza,
     timemore_c2: timemore,
@@ -54,6 +57,10 @@ export function buildDerivedGrindSettings(
       ...recipe.grind.k_ultra,
       range: `${lowClicks}–${highClicks} clicks`,
       starting_point: formatKUltraSetting(startingClicks),
+    },
+    fellow_opus: {
+      ...recipe.grind.fellow_opus,
+      ...secondary.fellow_opus,
     },
     q_air: {
       ...recipe.grind.q_air,
