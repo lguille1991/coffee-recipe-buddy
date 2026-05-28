@@ -113,10 +113,25 @@ Understanding *why* each brewer pairs with certain profiles:
 
 | Bottom | Flow Rate | Grind Adjustment | Pour Adjustment | Best Filter | Best For |
 |--------|-----------|-----------------|----------------|------------|----------|
-| **FAST** | Fastest | Default (base recipe) | Standard spiral pours | Flat paper + Negotiator | Everyday versatility; all brew methods; starting point |
-| **CLASSIC** | Medium | Grind coarser (+2-4 clicks C40) | Same spiral pattern as Fast | Flat paper + Negotiator | Balanced extraction; slightly more body than Fast |
-| **OPEN** | Fast | Same grind as base | Half circular + half central pours (except bloom) | Flat paper or conical | More sweetness; highlights terroir; central pour concentrates flavour |
-| **APEX** | Fast | Grind finer (-2-4 clicks C40) **except for natural/honey process** — for those, grind coarser (+1-2 clicks) or use same as base | Final 2 pours central only | Conical (V60/Origami); use Negotiator to fold | Maximum sweetness and clarity; competition-grade expression |
+| **FAST** | Fastest | Default (base recipe) | Standard spiral pours | Flat paper + Negotiator | Everyday versatility; all brew methods; starting point; WBrC winner choice |
+| **CLASSIC** | Medium | Grind coarser (+2-4 clicks C40) | Same spiral pattern as Fast | Flat paper + Negotiator | Balanced extraction; slightly more body than Fast; natural processed beans |
+| **OPEN** | Fast | Same grind as base | Half circular + half central pours (except bloom) | Flat paper or conical | More sweetness; highlights terroir; central pour concentrates flavour; bypass-style recipes |
+| **APEX** | Fast | Grind finer (-2-4 clicks C40) **except for natural/honey process** — for those, grind coarser (+1-2 clicks) or use same as base | Final 2 pours central only | Conical (V60/Origami/Sibarist Fast Conical); flat with APEX Negotiator tip | Maximum sweetness and clarity; competition-grade expression; semi-conical shape |
+
+### Orea V4 Filter Papers
+
+| Filter | Flow | Character | Best Pairing |
+|--------|------|-----------|--------------|
+| **Orea Wave (185)** | Slow | Traditional wave-style | Classic/Open bottom; forgiving; do NOT use with Apex |
+| **Orea Flat Type G** | Moderate | General purpose flat | All flat bottoms; requires Negotiator |
+| **Orea Flat Type C** | Fast | Higher clarity than Type G | Fast/Open bottom; bright coffees |
+| **Sibarist Fast Flat** | Ultra-fast | Pre-creased, premium, high acidity | Fast bottom; competition recipes (Wölfl 2024 WBrC) |
+| **Sibarist Fast Conical** | Fast | Conical shape for Wide + Apex | Apex bottom in Wide geometry |
+
+### Competition Usage
+
+- **Martin Wölfl (Austria) — 2024 World Brewers Cup Champion:** V4 Narrow + Fast Bottom + Sibarist Fast Flat + WDT + Melodrip. 17g Panama Geisha, 270ml @ 93°C, ~630 microns, total time ~2:20–2:25.
+- **Matteo D'Ottavio (UK Brewing Champion):** V4 Narrow + Open Bottom, bypass recipe (18g, 260ml + 30ml bypass @ 96°C).
 
 > **Source:** [OREA Official V4 Guides](https://www.orea.uk/guides-v4) — OREA Shop UK/Global, 2024-2025.
 

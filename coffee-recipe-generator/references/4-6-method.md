@@ -29,11 +29,20 @@ Because "medium-coarse" is vague, Kasuya gives a time-based test:
 ## The Exact Steps
 1. Rinse paper filter with hot water to preheat dripper and server.
 2. Add **20g medium-coarse ground coffee**.
-3. **Pour 1 (Bloom):** 60g. Wait until water has nearly drained.
-4. **Pour 2:** 60g (total 120g = **40%**). Wait until nearly drained.
-5. **Pour 3:** 60g. Wait until nearly drained.
-6. **Pour 4:** 60g. Wait until nearly drained.
-7. **Pour 5:** 60g (total 300g = **100%**). Let it finish drawing down.
+3. **Pour 1 (Bloom):** 60g at **0s**. Wait until water has nearly drained.
+4. **Pour 2:** 60g at **~45s** (total 120g = **40%**). Wait until nearly drained.
+5. **Pour 3:** 60g at **~1m30s**. Wait until nearly drained.
+6. **Pour 4:** 60g at **~2m15s**. Wait until nearly drained.
+7. **Pour 5:** 60g at **~3m00s** (total 300g = **100%**). Let it finish drawing down.
+
+> **Note on intervals:** The 4:6 method is fundamentally a **drain-timed** system, not a clock-timed one. The exact intervals above (~45s between pours) assume a calibrated medium-coarse grind and a 20g dose. If your drawdown is faster or slower, intervals shift accordingly. Kasuya's core rule is "pour the next dose only when water is almost completely drained." These times are a reference for a correctly calibrated grind.
+
+## Drawdown Timing Targets
+- **Remove dripper / end of brew:**
+  - Light strength (2 pours in 60% phase): **~2m15s**
+  - Medium strength (3 pours in 60% phase): **~3m00s**
+  - Strong strength (5 total pours): **~3m45s**
+- Total brew time should not exceed **3:30–4:00**; if it does, grind coarser.
 
 ## What Each Pour Does
 

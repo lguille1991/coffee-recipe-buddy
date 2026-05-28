@@ -7,8 +7,10 @@ Base parameters for each brew method. Use these as the starting point before app
 | **V60 / Pour-Over (Conical)** | 1:15 to 1:17 | Medium-fine | 93-96°C | 2:30-3:30 | 3-4 pours (bloom + 2-3 main pours) | Bright, clean, complex single-origin coffees |
 | **Chemex** | 1:15 to 1:17 | Medium-coarse | 93-96°C | 4:00-5:00 | 1 bloom + 2-3 slow pours | Smooth, sweet, low-acid coffees |
 | **Kalita / Flat-Bottom Dripper** | 1:15 to 1:16 | Medium | 93-96°C | 3:00-4:00 | Continuous or pulse pour | Consistent, forgiving, everyday brewing |
+| **Kalita Wave Mino 185 (Ceramic)** | 1:15 to 1:16 | Medium-fine | 92-94°C | 2:45-3:15 | 3-4 pulse pours | Fast, consistent drain; forgiving; excellent for 20-30g doses |
 | **French Press** | 1:12 to 1:15 | Coarse | 93-96°C | 4:00 | 1 (just mix and steep) | Full-bodied, rich, heavy mouthfeel |
 | **AeroPress (Standard)** | 1:12 to 1:15 | Fine-medium | 80-93°C | 1:30-2:00 (plus press) | 1-2 (steep + press) | Versatile, portable, quick cups |
+| **AeroPress + Prismo** | 1:12 to 1:13 | Medium-fine to fine | 85-89°C | 2:00-2:30 steep + 30-40s press | 1 bloom + steep + slow press | Bold, syrupy, full immersion, no drip-through |
 | **AeroPress (Inverted)** | 1:12 to 1:16 | Fine-medium | 80-96°C | 1:30-2:00 steep + press | 1-2 (steep first, then press) | Full immersion extraction with no drip-through |
 | **Origami / Cupsmith** | 1:15 to 1:17 | Medium | 93-96°C | 2:30-3:30 | Bloom + 2-3 pours | Clean, sweet, nuanced coffees |
 | **Moka Pot** | 1:7 to 1:10 (strong concentrate) | Fine | Low heat | 3-5 minutes | 1 (just fill and heat) | Strong, espresso-like drinks |
