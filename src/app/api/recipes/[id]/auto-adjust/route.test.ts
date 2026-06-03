@@ -114,9 +114,9 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
 
     expect(response.status).toBe(200)
     expect(models).toEqual([
-      'google/gemini-2.0-flash-001',
-      'google/gemini-2.0-flash-001',
-      'google/gemini-2.0-flash-001',
+      'google/gemini-2.5-flash',
+      'google/gemini-2.5-flash',
+      'google/gemini-2.5-flash',
     ])
     expect(body.recipe.display_name).toBe(BASE_RECIPE.display_name)
   })

@@ -59,7 +59,7 @@ export async function generateRecipeWithRetries({
 
     try {
       const response = await client.chat.completions.create({
-        model: 'google/gemini-2.0-flash-001',
+        model: 'google/gemini-2.5-flash',
         max_tokens: maxTokens,
         user: openRouterUser,
         messages,
