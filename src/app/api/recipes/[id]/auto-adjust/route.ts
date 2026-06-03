@@ -20,7 +20,7 @@ import { z } from 'zod'
 export const maxDuration = 10
 
 const MAX_RETRIES = 2
-const AUTO_ADJUST_MODEL = 'google/gemini-2.0-flash-001'
+const AUTO_ADJUST_MODEL = 'google/gemini-2.5-flash'
 const MAX_INTENT_WORDS = 80
 
 const INTENT_META_PATTERNS = [
