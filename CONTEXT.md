@@ -8,6 +8,22 @@ Domain language for generating, saving, sharing, and retrieving coffee brewing r
 The user’s intended cup outcome for a recipe, using the canonical values `clarity`, `balanced`, `sweetness`, `body`, or `forgiving`.
 _Avoid_: intent, target flavor mode, preference
 
+**Canonical Grinder Reference**:
+The complete skill-owned grinder setting reference used to determine and explain generated recipe grind outputs for every supported grinder.
+_Avoid_: app-only grinder table, supplemental grinder source, parity table
+
+**Supported Grinder**:
+A grinder model that generated recipes must include in structured grind output and that saved recipes must preserve across display, editing, and migration flows.
+_Avoid_: optional grinder, secondary grinder
+
+**Preferred Grinder**:
+The user-selected grinder used to prioritize display and editing controls without reducing the generated recipe's full grinder bundle.
+_Avoid_: selected grinder output, only grinder
+
+**Recipe JSON Compatibility**:
+The obligation to preserve existing structured recipe fields for saved/session/shared recipes while behavior is refined internally.
+_Avoid_: schema cleanup, response reshaping
+
 **Recipe List Endpoint**:
 The authenticated API path family used to query paginated recipe collections for a user.
 _Avoid_: recipes API, list API
@@ -171,6 +187,10 @@ _Avoid_: vague regression calls, moving-goalpost rollback
 ## Relationships
 
 - A **Goal** shapes recipe generation and is part of how users distinguish otherwise similar saved recipes
+- A **Canonical Grinder Reference** covers every **Supported Grinder**
+- A **Supported Grinder** must remain present in generated recipe output and saved recipe behavior
+- A **Preferred Grinder** controls primary presentation for a full set of **Supported Grinder** outputs
+- **Recipe JSON Compatibility** constrains grinder-policy refactors from removing existing recipe fields
 - A **Recipe List Endpoint** must satisfy **Behavioral Parity** during optimization work
 - A **Backend Response Latency Target** constrains optimization choices for each **Recipe List Endpoint**
 - The **Backend Response Latency Target** is evaluated against the **Phase 1 Representative Load Profile**
@@ -216,6 +236,15 @@ _Avoid_: vague regression calls, moving-goalpost rollback
 > **Dev:** "Two saved recipes use the same brewer and coffee, but one aims for sweetness and one for body. Is that a different **Goal** or just different notes?"
 > **Domain expert:** "That is a different **Goal**; users should be able to see it directly without reading the full recipe."
 
+> **Dev:** "Can Fellow Opus use an app-only table while K-Ultra uses the skill?"
+> **Domain expert:** "No — every **Supported Grinder** belongs in the **Canonical Grinder Reference** before the app refactor depends on it."
+
+> **Dev:** "If the user prefers K-Ultra, should we omit Fellow Opus and Timemore C2 from the generated JSON?"
+> **Domain expert:** "No — **Preferred Grinder** affects display only; every **Supported Grinder** stays in the recipe."
+
+> **Dev:** "Can we remove `compressed` now that skill-derived grind ranges are allowed to be wide?"
+> **Domain expert:** "No — keep **Recipe JSON Compatibility** and make the field inert until a separate schema cleanup."
+
 > **Dev:** "Can we skip shared recipes to hit the latency target?"
 > **Domain expert:** "No, keep **Behavioral Parity** and optimize query shape so the **Recipe List Endpoint** still returns the same visible recipes."
 
@@ -223,3 +252,5 @@ _Avoid_: vague regression calls, moving-goalpost rollback
 
 - "intent" was used to mean the saved recipe’s user-facing cup outcome choice; resolved to **Goal**.
 - "related APIs" resolved to read/list paths only (`GET /api/recipes` and list-query dependencies such as section/filter/favorites/shared retrieval); write/mutation routes are out of Phase 1 scope unless they block read/list latency.
+- "skill source of truth" for grinder settings resolved to **Canonical Grinder Reference**: the skill-owned table must cover every **Supported Grinder** before app grind-policy refactoring proceeds.
+- "remove compression" resolved under **Recipe JSON Compatibility**: keep the `compressed` field for now, but set it to false for canonical skill grinds.
