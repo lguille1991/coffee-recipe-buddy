@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getOpenRouterModel } from '@/lib/openrouter-model'
 import { buildExtractionPrompt } from '@/lib/prompt-builder'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -58,9 +59,10 @@ export async function POST(req: NextRequest) {
     const mediaType = imageFile.type || 'image/jpeg'
 
     const systemPrompt = buildExtractionPrompt()
+    const model = getOpenRouterModel('bean_extraction')
 
     const response = await client.chat.completions.create({
-      model: 'google/gemini-2.5-flash',
+      model,
       max_tokens: 1024,
       user: openRouterUser,
       messages: [

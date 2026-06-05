@@ -1,3 +1,9 @@
+## 1.25.0 - 2026-06-05
+
+- Added env-based OpenRouter model selection with one shared default (`OPENROUTER_MODEL`) plus feature-specific overrides for recipe generation, bean extraction, and auto-adjust flows.
+- Kept the existing production fallback model (`google/gemini-2.5-flash`) when no model env vars are configured.
+- Added regression coverage for selector precedence and OpenRouter model propagation across generation, extraction, and auto-adjust paths.
+
 ## 1.24.0 - 2026-05-27
 
 - Added first-class `Fellow Opus` grinder support across profile preferences, recipe creation/editing, saved recipe detail, active session, and shared recipe views.

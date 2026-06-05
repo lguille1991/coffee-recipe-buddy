@@ -100,6 +100,7 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
   })
 
   it('retries with Gemini after invalid JSON responses', async () => {
+    vi.stubEnv('OPENROUTER_MODEL_AUTO_ADJUST', 'openai/gpt-4.1-mini')
     createCompletionMock
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 1' } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: 'not json 2' } }] })
@@ -114,9 +115,9 @@ describe('POST /api/recipes/[id]/auto-adjust', () => {
 
     expect(response.status).toBe(200)
     expect(models).toEqual([
-      'google/gemini-2.5-flash',
-      'google/gemini-2.5-flash',
-      'google/gemini-2.5-flash',
+      'openai/gpt-4.1-mini',
+      'openai/gpt-4.1-mini',
+      'openai/gpt-4.1-mini',
     ])
     expect(body.recipe.display_name).toBe(BASE_RECIPE.display_name)
   })

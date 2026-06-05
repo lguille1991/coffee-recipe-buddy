@@ -239,6 +239,29 @@ describe('POST /api/recipes/from-profile', () => {
     }))
   })
 
+  it('keeps recipe generation centralized in generateRecipeWithRetries for profile-based requests', async () => {
+    const response = await POST(new Request('http://localhost/api/recipes/from-profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        coffee_profile_id: '11111111-1111-1111-1111-111111111111',
+        method: 'v60',
+        goal: 'clarity',
+        water_mode: 'absolute',
+        water_grams: 250,
+      }),
+    }) as never)
+
+    expect(response.status).toBe(201)
+    expect(generateRecipeWithRetriesMock).toHaveBeenCalledWith(expect.objectContaining({
+      client: {},
+      openRouterUser: 'crp:test-user',
+      method: 'v60',
+      bean: WASHED_LIGHT_BEAN,
+      targetVolumeMl: 250,
+    }))
+  })
+
   it('includes debug parity metadata when DEBUG_RECIPE_PARITY=1', async () => {
     vi.stubEnv('DEBUG_RECIPE_PARITY', '1')
     vi.stubEnv('SKILL_GRIND_PARITY_MODE', 'skill_v2')

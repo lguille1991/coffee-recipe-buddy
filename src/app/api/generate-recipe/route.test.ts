@@ -72,6 +72,7 @@ describe('POST /api/generate-recipe', () => {
   })
 
   it('overrides model grind output with deterministic skill grind settings for a Pacas washed profile', async () => {
+    vi.stubEnv('OPENROUTER_MODEL_RECIPE_GENERATION', 'anthropic/claude-3.7-sonnet')
     createCompletionMock.mockResolvedValue({
       choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
     })
@@ -96,6 +97,9 @@ describe('POST /api/generate-recipe', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
+    expect(createCompletionMock).toHaveBeenCalledWith(expect.objectContaining({
+      model: 'anthropic/claude-3.7-sonnet',
+    }))
     expect(body.grind.k_ultra.starting_point).toBe('0.7.1')
     expect(body.grind.k_ultra.range).toBe('66–76 clicks')
     expect(body.range_logic.final_operating_range).toBe('66–76 clicks')
@@ -199,5 +203,31 @@ describe('POST /api/generate-recipe', () => {
     })
 
     vi.unstubAllEnvs()
+  })
+
+  it('uses the shared OpenRouter model when no recipe-specific override is set', async () => {
+    vi.stubEnv('OPENROUTER_MODEL', 'openai/gpt-4.1-mini')
+    createCompletionMock.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
+    })
+
+    const request = new Request('http://localhost/api/generate-recipe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        method: 'v60',
+        bean: {
+          process: 'washed',
+          roast_level: 'medium-light',
+        },
+      }),
+    })
+
+    const response = await POST(request as never)
+
+    expect(response.status).toBe(200)
+    expect(createCompletionMock).toHaveBeenCalledWith(expect.objectContaining({
+      model: 'openai/gpt-4.1-mini',
+    }))
   })
 })

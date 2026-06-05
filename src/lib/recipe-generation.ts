@@ -1,4 +1,5 @@
 import type OpenAI from 'openai'
+import { getOpenRouterModel } from '@/lib/openrouter-model'
 import { buildRecipePrompt } from '@/lib/prompt-builder'
 import { applyFourSixRecipeMode } from '@/lib/skill-recipe-mode-engine'
 import { applySkillBrewParameterSettings } from '@/lib/skill-brew-parameters-engine'
@@ -49,6 +50,7 @@ export async function generateRecipeWithRetries({
     { role: 'system', content: system },
     { role: 'user', content: userPrompt },
   ]
+  const model = getOpenRouterModel('recipe_generation')
 
   let lastErrors: string[] = []
   let attempt = 0
@@ -59,7 +61,7 @@ export async function generateRecipeWithRetries({
 
     try {
       const response = await client.chat.completions.create({
-        model: 'google/gemini-2.5-flash',
+        model,
         max_tokens: maxTokens,
         user: openRouterUser,
         messages,
