@@ -297,3 +297,17 @@ Canonical units and compatibility rules:
 - `npm run test:e2e:ocr-ui` starts an isolated Webpack local app server at port 3001 with test auth enabled, then drives the real Scan → Analysis route with Playwright and the browser-side Tesseract worker.
 - The final five-image pass asserted: Geisha/Loma Verde with medium-light roast; Bourbon Rosa with washed process; Jaho Minas with washed process and medium roast; Pacamara/Machuca with honey process and 1850 masl; and SL28/La Divina/Roberto Ulloa with natural process and 1550 masl.
 - The harness rejects any non-local browser request, so it would fail if a removed extraction endpoint or a third-party OCR host were contacted.
+
+## Webpack development-server fallback (proposed 2026-07-23)
+
+### Baseline metadata
+
+- Pre-existing dirty files: generated `.next-recovery-20260723/`, created while preserving a corrupted Turbopack cache; it is not task-owned application source.
+- Task-owned files: `.gitignore`, `package.json`, `package-lock.json`, `CHANGELOG.md`, `next.config.ts`, `eslint.config.mjs`, `tsconfig.json`, `scripts/e2e-ocr-ui.mjs`, and this plan.
+
+- [x] Make Webpack the default `npm run dev` bundler to avoid the reproducible Turbopack/PostCSS corruption of generated CSS while keeping production builds unchanged; ordinary development uses an isolated `.next-dev` cache and OCR E2E retains `.next-e2e`.
+- [x] Keep the local OCR E2E harness aligned with the default dev command, including its isolated port and build output.
+- [x] Add patch release hygiene and validate a fresh Webpack dev server serves `/scan` without CSS parsing errors (`npm run dev -- --port 3000`; `GET /scan` returned HTTP 200).
+- [x] Run the required review loop and wait for commit-readiness confirmation before full validation.
+
+- Approved validation rework (2026-07-23): exclude generated development-cache recovery directories from ESLint after they caused generated-code findings; source linting remains unchanged.

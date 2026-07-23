@@ -1,3 +1,7 @@
+## 2.0.3 - 2026-07-23
+
+- Switched the local development server to Webpack to avoid a Turbopack CSS-generation failure; production builds are unchanged.
+
 ## 2.0.2 - 2026-07-23
 
 - Added a production-disabled local E2E authentication mode for testing the real Scan-to-Analysis OCR UI flow.

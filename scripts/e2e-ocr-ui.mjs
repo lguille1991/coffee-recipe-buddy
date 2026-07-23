@@ -52,7 +52,7 @@ function assertEqual(label, actual, expected) {
   if (actual !== expected) throw new Error(`${label}: expected ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`)
 }
 
-const app = spawn('npm', ['run', 'dev', '--', '--webpack', '--port', String(port)], {
+const app = spawn('npm', ['run', 'dev', '--', '--port', String(port)], {
   env: { ...process.env, OCR_E2E_TEST_MODE: '1', NEXT_PUBLIC_E2E_TEST_AUTH: '1' },
   stdio: 'inherit',
   detached: true,
