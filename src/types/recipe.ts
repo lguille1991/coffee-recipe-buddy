@@ -30,6 +30,8 @@ export type BeanProfile = z.infer<typeof BeanProfileSchema>
 export const ExtractionResponseSchema = z.object({
   bean: BeanProfileSchema,
   confidence: z.record(z.string(), z.number()),
+  status: z.enum(['complete', 'partial', 'empty']).default('complete'),
+  warnings: z.array(z.string()).default([]),
 })
 
 export type ExtractionResponse = z.infer<typeof ExtractionResponseSchema>

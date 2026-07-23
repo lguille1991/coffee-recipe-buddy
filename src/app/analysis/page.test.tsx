@@ -90,6 +90,8 @@ function buildExtraction(partial?: Partial<ExtractionResponse>): ExtractionRespo
       process: 0.7,
       altitude_masl: 0.7,
     },
+    status: 'complete',
+    warnings: [],
     ...partial,
   }
 }
@@ -190,5 +192,22 @@ describe('AnalysisPage editability and validation', () => {
 
     expect(roast.value).toBe('medium-dark')
     expect(process.value).toBe('thermal_shock')
+  })
+
+  it('keeps unknown roast selectable and shows zero confidence as low confidence', () => {
+    getExtractionResultMock.mockReturnValue(buildExtraction({
+      bean: { ...buildExtraction().bean, roast_level: 'unknown' },
+      confidence: { ...buildExtraction().confidence, roast_level: 0 },
+      status: 'partial',
+    }))
+
+    act(() => {
+      root.render(<AnalysisPage />)
+    })
+
+    const roast = container.querySelector('[data-testid="roast-level-input"]') as HTMLSelectElement
+    expect(roast.value).toBe('unknown')
+    expect(Array.from(roast.options).map(option => option.textContent)).toContain('Unknown')
+    expect(container.textContent).toContain('low confidence')
   })
 })

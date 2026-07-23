@@ -4,12 +4,32 @@
 
 - Pre-existing dirty files at the original plan baseline: none.
 - Current ambient dirty files: none.
-- Task-owned files: `.claude/plans/deterministic-recipe-engine-plan-2026-07-22.md`, `src/types/recipe.ts`, `src/types/coffee-profile.ts`, `src/lib/recipe-migrations.ts`, `src/lib/deterministic-recipe-engine.ts`, `src/lib/recipe-generation.ts`, `src/lib/__tests__/deterministic-recipe-engine.test.ts`, `src/app/api/generate-recipe/route.ts`, `src/app/api/generate-recipe/route.integration.test.ts`, `src/app/api/recipes/from-profile/route.ts`, `package.json`, and `CHANGELOG.md`.
+- Task-owned files: `.claude/plans/deterministic-recipe-engine-plan-2026-07-22.md`, `src/types/recipe.ts`, `src/types/coffee-profile.ts`, `src/lib/recipe-migrations.ts`, `src/lib/deterministic-recipe-engine.ts`, `src/lib/recipe-generation.ts`, `src/lib/deterministic-ocr-parser.ts`, `src/lib/__tests__/deterministic-ocr-parser.test.ts`, `src/lib/__tests__/deterministic-recipe-engine.test.ts`, `src/app/analysis/page.tsx`, `src/app/analysis/page.test.tsx`, `src/app/api/generate-recipe/route.ts`, `src/app/api/generate-recipe/route.integration.test.ts`, `src/app/api/recipes/from-profile/route.ts`, `package.json`, and `CHANGELOG.md`.
 - Refresh the task-owned file list and newly observed ambient dirty files before implementation begins and after every approved rework batch.
 - Approved rework batch (2026-07-22): no newly observed ambient dirty files; task-owned files include `src/app/api/generate-recipe/route.integration.test.ts`.
+- Approved OCR-parser review rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Baseline runtime: Node `22.4.0`, npm `10.8.1`.
 - Baseline validation: `npm test` reports 245 passing tests but exits nonzero because eight jsdom workers hit a pre-existing `ERR_REQUIRE_ESM` dependency error. A completely green test run is a hard deployment requirement; this failure may not be waived for production.
 - Security prerequisite: rotate the live-looking OpenRouter credential exposed from the ignored `.env.local` file during plan review. Never commit or reproduce the credential in code, documentation, fixtures, logs, or test output.
+
+## Current implementation batch (2026-07-22)
+
+- [x] Define a typed local-OCR result contract and implement a pure English/Spanish label-only parser with documented normalization, token-derived confidence, and partial/empty results.
+- [x] Keep unknown roast neutral and selectable in Coffee Analysis, including a visible low-confidence score of zero.
+- [x] Add focused parser and analysis coverage before integrating the browser OCR worker in the next batch.
+- [x] Commit-readiness validation passed: `npm test` (55 files, 280 tests), `npm run lint`, and `npm run build`.
+
+## Session implementation status (2026-07-22)
+
+The parent checklist items below remain open unless they are fully complete. This session completed the deterministic recipe-generation foundation and its commit-readiness validation; browser OCR, deterministic Auto Adjust, removal of the remaining AI routes, documentation, and production acceptance work are still outstanding.
+
+- [x] Added `src/lib/deterministic-recipe-engine.ts`: a pure deterministic generator with a deep-frozen, typed v2.0.0 catalog for all nine methods; exact integer water allocation; V60-only 4:6 mode; capacity/mode/input errors; UTC evaluation-date and roast-date validation; deterministic templates; and ordered generation provenance.
+- [x] Replaced model-backed runtime generation in `/api/generate-recipe` and `/api/recipes/from-profile` with the deterministic engine. The routes preserve their URLs and success envelopes, derive the evaluation date server-side, default legacy direct callers to the `balanced` Goal, return stable error codes, and no longer create OpenRouter clients or tracking cookies.
+- [x] Made profile idempotency keys include catalog version, UTC evaluation date, normalized bean data/profile revision, Goal, method, exact target water, and recipe mode. Removed the profile route's `Math.max(50, ...)` water clamp.
+- [x] Added additive `generation_metadata`, bumped saved-recipe schema version to 7, added a v6 → v7 preservation-only migration, and introduced `unknown` as the neutral parsed roast state.
+- [x] Bumped the application version from 1.25.0 to 2.0.0 and added a user-facing changelog entry for deterministic generation.
+- [x] Added focused deterministic-engine and route coverage. Final validation passed: `npm test` (54 files, 276 tests), `npm run lint`, and `npm run build`.
+- [ ] Still in scope: all remaining unchecked parent items below, including source-ledger/recommendation recalibration, expanded compatibility and boundary testing, OCR, Auto Adjust, residual OpenRouter removal, documentation, physical brewing, preview rollback, and launch gates.
 
 ## Summary and non-negotiable behavior
 
@@ -33,6 +53,7 @@ Canonical units and compatibility rules:
 
 - [x] Refresh baseline metadata and task-owned files before editing implementation code.
 - [ ] Add a typed, immutable, versioned Rule Catalog and pure `generateDeterministicRecipe` orchestration.
+  - [x] Session implementation: the v2.0.0 catalog and pure generator are in place; the catalog is recursively frozen and generation rejects unknown engine versions.
   - Inputs: `MethodId`, normalized bean profile, Goal, integer target water grams, recipe mode, explicit evaluation date, and engine version.
   - The pure engine never calls `Date.now()`, reads environment variables, performs I/O, or accepts a client/model/tracking argument.
   - Production routes derive one canonical `YYYY-MM-DD` evaluation date in UTC and pass it to the engine. Clients cannot submit or override it. Tests may call the pure engine with a fixed date.
@@ -45,11 +66,13 @@ Canonical units and compatibility rules:
   - Process and variety are the primary bean-derived signals; Goal may deliberately outrank them because it expresses user intent.
   - Store source URL/title, accessed date, extracted recommendation, and conflict resolution for every externally derived rule. Prefer official brewer/recipe-creator guidance, then credible brewing research, then existing project references.
 - [ ] Recalibrate recommendations, grind, temperature, timing, and pour rules as engine v2.
+  - [x] Session implementation: all nine methods now have deterministic capacity, filter, ratio, temperature, grind, timing, pour-rate, and template defaults; V60 4:6 is V60-only and scales to requested water.
   - Each brewer defines min/max water capacity, filter, base ratio/temperature/grind, internal typed step templates, total-time bands, and pour-rate bands.
   - Pass target water into method recommendation. Exclude or visibly mark brewers that cannot safely handle it so a top recommendation cannot fail immediately after selection.
   - Keep grinder conversion for all five supported grinders and enforce method-specific ranges.
   - Preserve V60 4:6, restrict it to V60, scale it to exact target water, use Goal-sensitive first-40% splits, numeric pour speeds, near-drain timing, and the 3:30–4:00 guardrail.
 - [ ] Generate exact, internally structured recipe steps and map them to the existing `RecipeStep` response shape.
+  - [x] Session implementation: deterministic recipes use exact integer Water Additions, a final zero-water Brew Step, canonical pour-rate action text, capacity bounds, and whole-gram coffee doses.
   - Internal Water Addition steps have integer `water_poured_g > 0`; internal non-water Brew Steps have `water_poured_g === 0`.
   - Maintain numeric internal start/end timestamps and render the existing `time` string from them so chronological validation does not depend on parsing prose.
   - Allocate integer Water Additions with a constrained largest-remainder strategy. The allocator must preserve the target total, template intent, minimum positive additions, and pour-rate bands; do not blindly place all remainder in the final pour when that violates a constraint.
@@ -61,16 +84,19 @@ Canonical units and compatibility rules:
 ## Schema, provenance, and historical compatibility
 
 - [ ] Add optional `generation_metadata` to `RecipeSchema`.
+  - [x] Session implementation: additive metadata fields exist and deterministic generation writes engine version, UTC evaluation date, and ordered unique rule IDs.
   - `engine_version`: a catalog-backed version identifier.
   - `evaluation_date`: a validated real `YYYY-MM-DD` date.
   - `applied_rule_ids`: ordered and unique; every ID must belong to the declared engine version when that catalog remains available.
   - Metadata describes the original deterministic generation, not every later edit. Scaling and Auto Adjust preserve it unchanged; adjustment/edit history records later transformations.
   - Manual recipes omit generation metadata. Clones, shares, snapshots, session recovery, save-as-new, replace, and manual edits preserve it when present.
 - [ ] Bump `CURRENT_SCHEMA_VERSION` from 6 to 7 for new saved recipes.
+  - [x] Session implementation: `CURRENT_SCHEMA_VERSION` is 7 and migration 6 → 7 preserves the existing JSON unchanged.
   - Add an explicit v6→v7 preservation-only migration/no-op. Do not synthesize metadata for historical recipes or rewrite stored rows.
   - Existing recipes without metadata must remain valid in every read, edit, share, clone, restore, and Auto Adjust path.
   - Verify rollback compatibility: the previous production build must at minimum render recipes containing the additive field without crashing. Document that edits made by an old build may strip unknown metadata if that cannot be prevented.
 - [ ] Replace accidental “medium roast” inference with genuinely neutral missing data.
+  - [x] Session implementation: parsed/missing roast values now normalize to `unknown`; Analysis UI support and full neutral-recommendation verification remain open.
   - Add an explicit `unknown` roast state or carry provenance that prevents an unconfirmed medium default from affecting recommendations and engine rules. Prefer the explicit `unknown` state.
   - Allow the Analysis screen to show and edit Unknown without changing its overall layout.
   - Keep process `unknown`, optional variety/notes/origin/altitude, and reduced recommendation confidence neutral until the user confirms values.
@@ -81,16 +107,19 @@ Canonical units and compatibility rules:
 ## Generation routes and persistence
 
 - [ ] Keep `/api/generate-recipe` and `/api/recipes/from-profile` URLs and success response envelopes.
+  - [x] Session implementation: both generation routes now invoke the deterministic engine, validate canonical request inputs, preserve their response envelopes, and return stable generation errors without OpenRouter/model behavior.
   - Define dedicated Zod request schemas using `MethodIdSchema`, integer target water, recipe mode, and optional Goal defaulting to `balanced` for legacy callers.
   - Update the direct method-selection request to send Goal; the saved-profile path already sends it.
   - Preserve guest and authenticated behavior, profile saving, snapshot creation, Goal persistence, and the existing 201-created/200-idempotent-replay statuses.
   - Remove OpenRouter clients, model/tracking arguments, retry logic, debug parity environment behavior, and model-specific errors.
   - Return stable machine-readable codes for invalid input, unsupported method/mode, capacity bounds, and deterministic invariant failures, with tested HTTP statuses and safe user messages.
 - [ ] Make profile idempotency version- and date-aware.
+  - [x] Session implementation: the idempotency key includes catalog version, evaluation date, profile revision/normalized bean, Goal, method, target water, and mode.
   - Include engine version, UTC evaluation date, normalized bean input or profile revision, Goal, method, exact target water, and recipe mode in the key.
   - Verify concurrent duplicates produce one saved recipe and one snapshot chain.
   - Verify a new evaluation date or engine version does not replay an older result.
 - [ ] Keep Goal and generation provenance consistent across save paths.
+  - [x] Session implementation: profile saves persist Goal in `generation_context`, and the same deterministic recipe—including metadata—is used for both original and current recipe JSON.
   - Persist Goal in `generation_context` for direct saves and from-profile saves.
   - Preserve generation metadata independently in both `original_recipe_json` and `current_recipe_json`.
   - Do not encode Goal only as an objective suffix; objective text may display it, but structured data is authoritative.
@@ -137,6 +166,8 @@ Canonical units and compatibility rules:
 ## Removal, documentation, and release hygiene
 
 - [ ] Remove OpenRouter clients, model selection, prompt builders, guest-user tracking, model-specific tests, debug parity variables, OpenRouter environment variables, and the `openai` dependency.
+  - [x] Session implementation: OpenRouter/model behavior was removed from the two recipe-generation routes only.
+  - [ ] Remaining: scanning and Auto Adjust still use OpenRouter; the dependency, shared client, model configuration, prompt builder, cookie cleanup, and environment/docs cleanup are not yet done.
   - Expire the legacy `crp_openrouter_guest_id` cookie once for returning users; deleting server code alone does not clear existing browser cookies.
   - Remove OpenRouter secrets from local/deployment configuration after rotation and confirm the production build starts with no OpenRouter variables.
   - Audit source, lockfile, built server chunks, and browser network activity for residual OpenRouter/OpenAI code or requests.
@@ -146,6 +177,7 @@ Canonical units and compatibility rules:
 - [ ] Update README deployment/API instructions, privacy wording, supported browser behavior, brewing-rule documentation/source ledger, and `CHANGELOG.md`.
 - [ ] Pin one supported Node version consistently in local tooling, CI, and deployment (`engines` plus `.nvmrc` or the repository-standard equivalent) after resolving the jsdom failure.
 - [ ] Bump the app from `1.25.0` to `2.0.0` because `/api/extract-bean` is removed and the Auto Adjust request contract changes.
+  - [x] Session implementation: the app version is now 2.0.0. The stated extraction/Auto Adjust breaking changes are still pending.
 
 ## Automated test plan
 
@@ -166,6 +198,7 @@ Canonical units and compatibility rules:
 - [ ] Unit-test OCR parsing with English/Spanish text/block fixtures, accents, aliases, multiline labels, false positives, mixed confidence, zero confidence, partial results, and empty OCR.
 - [ ] Component-test OCR progress, `aria-live` behavior, stale-result protection, cancellation, worker cleanup on every exit path, storage quota failure, empty-result warning, user corrections, and navigation to Analysis.
 - [ ] Route-test both generation paths with OpenRouter absent.
+  - [x] Session implementation: direct and profile generation route tests cover deterministic behavior, legacy Goal defaulting, capacity/mode errors, metadata, profile persistence, and idempotent replay basics.
   - Guest/authenticated direct generation, legacy Goal default, invalid Goal/method/date/volume, every capacity boundary, stable error codes, and additive metadata.
   - Profile idempotency under concurrency, date/version key changes, one snapshot chain, Goal persistence, and no silent delta clamp.
 - [ ] Test every allowed scale factor alone and every scale/symptom combination against generated, historical, manually authored, minimum-capacity, and maximum-capacity recipes.
@@ -177,6 +210,7 @@ Canonical units and compatibility rules:
 
 - [ ] Resolve the jsdom/Node failure first, then establish a clean green baseline on the pinned runtime. Passing tests may not be inferred from a partial worker run.
 - [ ] From a clean checkout run, in repository workflow order: `review-recent-changes`, report findings and wait for approval, then `npm test`, `npm run lint`, and `npm run build` after commit-readiness approval.
+  - [x] Session implementation: review/rework loops completed and the final working tree passed `npm test`, `npm run lint`, and `npm run build`; a clean-checkout run remains to be performed.
 - [ ] Run production-mode browser tests against `next build` + `next start`, not only jsdom/dev mode.
   - Verify actual worker/core/language asset requests, MIME/cache/CSP behavior, no third-party OCR request, no extraction endpoint call, and no OCR bundle/asset request on non-scan routes.
   - Cover authenticated and guest generation plus scan → analysis → recommendation → recipe → save → detail → share/clone → Auto Adjust.
