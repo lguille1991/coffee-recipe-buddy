@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import type { UserProfile } from '@/types/recipe'
+import { E2E_TEST_USER, isE2eTestAuthEnabled } from '@/lib/e2e-test-auth'
 
 type AuthContextValue = {
   user: User | null
@@ -36,6 +37,10 @@ async function fetchProfile() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const testAuthEnabled = isE2eTestAuthEnabled({
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_E2E_TEST_AUTH: process.env.NEXT_PUBLIC_E2E_TEST_AUTH,
+  })
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,6 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (testAuthEnabled) {
+      const activationTimer = window.setTimeout(() => {
+        setUser(E2E_TEST_USER)
+        setLoading(false)
+      }, 0)
+      return () => window.clearTimeout(activationTimer)
+    }
+
     const supabase = createClient()
     let active = true
 
@@ -113,15 +126,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       active = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [testAuthEnabled])
 
   const signOut = useCallback(async () => {
+    if (testAuthEnabled) {
+      setUser(null)
+      setProfile(null)
+      setProfileLoading(false)
+      return
+    }
     const supabase = createClient()
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
     setProfileLoading(false)
-  }, [])
+  }, [testAuthEnabled])
 
   const value = useMemo<AuthContextValue>(() => ({
     user,

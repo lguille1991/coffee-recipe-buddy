@@ -277,3 +277,23 @@ Canonical units and compatibility rules:
 - 1200 Café Kenya SL28: OCR read the labelled process, farm, producer, region, altitude, and profile fields; parser maps those labelled values. `Tueste: Brew` correctly remains unknown because Brew is not a roast level.
 - The authenticated browser UI could not be opened from the clean automation browser session; the same parser-to-Coffee Analysis mapping is covered by five focused component cases. Manual authenticated scan verification remains useful for the exact device/browser photo pipeline.
 - Approved review rework (2026-07-22): normalize OCR de-duplication with locale-independent `toLowerCase()`; no newly observed ambient dirty files.
+
+## Test-only authenticated OCR UI harness (proposed 2026-07-23)
+
+### Baseline metadata
+
+- Pre-existing dirty files: `.claude/plans/deterministic-recipe-engine-plan-2026-07-22.md`, `CHANGELOG.md`, `package.json`, `package-lock.json`, `src/app/analysis/page.test.tsx`, `src/lib/__tests__/browser-ocr.test.ts`, `src/lib/__tests__/deterministic-ocr-parser.test.ts`, `src/lib/browser-ocr.ts`, and `src/lib/deterministic-ocr-parser.ts`; all belong to the preceding OCR calibration batch.
+- Task-owned files: `src/components/AuthContext.tsx`, `src/lib/e2e-test-auth.ts`, `src/lib/__tests__/e2e-test-auth.test.ts`, `scripts/e2e-ocr-ui.mjs`, `next.config.ts`, `eslint.config.mjs`, `tsconfig.json`, `package.json`, `package-lock.json`, `CHANGELOG.md`, and this plan. Existing dirty calibration files remain owned by the preceding batch and will not be reverted.
+
+- [x] Add a client-only test identity that activates only when an explicit public E2E flag is set and the app is not running in production; it bypasses neither server/API authorization nor Supabase in ordinary sessions.
+- [x] Keep the existing Supabase auth lifecycle intact when the flag is absent, and add focused tests proving production/flag-off behavior cannot enable the test identity.
+- [x] Launch a fresh local app instance with the E2E flag, upload at least five supplied bag photos through the real Scan UI, wait for local Tesseract, and record the resulting Coffee Analysis controls.
+- [x] Assert no scan request reaches the removed extraction endpoint or a third-party OCR host; the harness explicitly rejects `/api/extract-bean`, and OCR worker/core/language requests remain same-origin under `/ocr/v7`.
+- [x] Classify UI-matrix mismatches and add the smallest source-supported calibration regression: a narrow portrait variety pass plus the observed `acámara` → `Pacamara` OCR correction. Neutral fields remain neutral when OCR does not transcribe them.
+- [x] Apply required release hygiene for user-facing runtime code, then run the required review loop and wait for commit-readiness confirmation before full validation.
+
+### E2E evidence (2026-07-23)
+
+- `npm run test:e2e:ocr-ui` starts an isolated Webpack local app server at port 3001 with test auth enabled, then drives the real Scan → Analysis route with Playwright and the browser-side Tesseract worker.
+- The final five-image pass asserted: Geisha/Loma Verde with medium-light roast; Bourbon Rosa with washed process; Jaho Minas with washed process and medium roast; Pacamara/Machuca with honey process and 1850 masl; and SL28/La Divina/Roberto Ulloa with natural process and 1550 masl.
+- The harness rejects any non-local browser request, so it would fail if a removed extraction endpoint or a third-party OCR host were contacted.

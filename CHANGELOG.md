@@ -1,3 +1,7 @@
+## 2.0.2 - 2026-07-23
+
+- Added a production-disabled local E2E authentication mode for testing the real Scan-to-Analysis OCR UI flow.
+
 ## 2.0.1 - 2026-07-22
 
 - Improved on-device coffee-bag OCR for independently positioned package labels, yielding more reliable field extraction in Coffee Analysis.

@@ -68,6 +68,8 @@ const VARIETY_ALIASES: Record<string, string> = {
   geisha: 'Geisha',
   gesha: 'Gesha',
   pacamara: 'Pacamara',
+  // Tesseract commonly drops the decorative leading "P" on Pacamara labels.
+  acamara: 'Pacamara',
   pacas: 'Pacas',
   'bourbon rosa': 'Bourbon Rosa',
   'pink bourbon': 'Pink Bourbon',

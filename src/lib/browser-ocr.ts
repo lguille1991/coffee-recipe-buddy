@@ -12,6 +12,7 @@ const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 export const OCR_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
 export const OCR_DEFAULT_PAGE_SEGMENTATION_MODE: PSM = '3' as PSM
 export const OCR_IDENTITY_PAGE_SEGMENTATION_MODE: PSM = '6' as PSM
+export const OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE: PSM = '7' as PSM
 
 export type OcrProgress = {
   progress: number
@@ -54,6 +55,19 @@ export function identityCropForPortraitBag(width: number, height: number) {
     top: Math.round(height * 0.14),
     width: Math.round(width * 0.73),
     height: Math.round(height * 0.25),
+  }
+}
+
+// A second, tighter pass favors the large variety name commonly printed in
+// the upper-middle of portrait labels. It is only used when the broader OCR
+// passes did not already identify a variety.
+export function varietyCropForPortraitBag(width: number, height: number) {
+  if (height / width < 1.1) return null
+  return {
+    left: Math.round(width * 0.1),
+    top: Math.round(height * 0.22),
+    width: Math.round(width * 0.8),
+    height: Math.round(height * 0.18),
   }
 }
 
@@ -135,6 +149,21 @@ export async function recognizeCoffeeBag(
       if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
       blocks = mergeOcrBlocks(blocks, blocksFromOcrData(identityResult.data))
       extraction = parseCoffeeBagOcr(blocks)
+    }
+    const varietyCrop = !extraction.bean.variety && varietyCropForPortraitBag(prepared.width, prepared.height)
+    if (varietyCrop) {
+      await worker.setParameters({ tessedit_pageseg_mode: OCR_PAGE_SEGMENTATION_MODE })
+      const varietyResult = await worker.recognize(prepared.image, { rectangle: varietyCrop }, { blocks: true })
+      if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
+      blocks = mergeOcrBlocks(blocks, blocksFromOcrData(varietyResult.data))
+      extraction = parseCoffeeBagOcr(blocks)
+      if (!extraction.bean.variety) {
+        await worker.setParameters({ tessedit_pageseg_mode: OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE })
+        const singleLineResult = await worker.recognize(prepared.image, { rectangle: varietyCrop }, { blocks: true })
+        if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
+        blocks = mergeOcrBlocks(blocks, blocksFromOcrData(singleLineResult.data))
+        extraction = parseCoffeeBagOcr(blocks)
+      }
     }
     return extraction
   } finally {

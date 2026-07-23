@@ -132,6 +132,8 @@ describe('parseCoffeeBagOcr', () => {
       .toMatchObject({ variety: 'Bourbon Rosa', process: 'washed' })
     expect(parseCoffeeBagOcr([{ text: 'Pacamara Black Honey', confidence: 0.8 }]).bean)
       .toMatchObject({ variety: 'Pacamara', process: 'honey' })
+    expect(parseCoffeeBagOcr([{ text: 'acámara', confidence: 0.8 }]).bean)
+      .toMatchObject({ variety: 'Pacamara' })
   })
 
   it('does not mistake a labelled tasting note ending in a process word for a compact identity', () => {

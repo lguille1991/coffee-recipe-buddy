@@ -5,10 +5,12 @@ import {
   assertSupportedOcrImage,
   blocksFromOcrData,
   identityCropForPortraitBag,
+  varietyCropForPortraitBag,
   mergeOcrBlocks,
   OCR_DEFAULT_PAGE_SEGMENTATION_MODE,
   OCR_IDENTITY_PAGE_SEGMENTATION_MODE,
   OCR_PAGE_SEGMENTATION_MODE,
+  OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE,
 } from '../browser-ocr'
 
 describe('browser OCR helpers', () => {
@@ -16,11 +18,17 @@ describe('browser OCR helpers', () => {
     expect(OCR_DEFAULT_PAGE_SEGMENTATION_MODE).toBe('3')
     expect(OCR_PAGE_SEGMENTATION_MODE).toBe('11')
     expect(OCR_IDENTITY_PAGE_SEGMENTATION_MODE).toBe('6')
+    expect(OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE).toBe('7')
   })
 
   it('targets the central identity strip only for portrait bags', () => {
     expect(identityCropForPortraitBag(960, 1280)).toEqual({ left: 144, top: 179, width: 701, height: 320 })
     expect(identityCropForPortraitBag(1280, 960)).toBeNull()
+  })
+
+  it('targets the upper-middle variety name only for portrait bags', () => {
+    expect(varietyCropForPortraitBag(960, 1280)).toEqual({ left: 96, top: 282, width: 768, height: 230 })
+    expect(varietyCropForPortraitBag(1280, 960)).toBeNull()
   })
 
   it('merges complementary OCR passes without duplicating a stronger shared line', () => {
