@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Camera, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { compressImage } from '@/lib/image-compressor'
+import { assertSupportedOcrImage, recognizeCoffeeBag } from '@/lib/browser-ocr'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
 
 export default function ScanPage() {
@@ -12,18 +13,27 @@ export default function ScanPage() {
   const { user, loading: authLoading } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const activeScanRef = useRef<AbortController | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progressMessage, setProgressMessage] = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth?returnTo=/scan')
   }, [user, authLoading, router])
 
+  useEffect(() => () => activeScanRef.current?.abort(), [])
+
   async function handleFile(file: File) {
+    activeScanRef.current?.abort()
+    const controller = new AbortController()
+    activeScanRef.current = controller
     setError(null)
+    setProgressMessage('Preparing your coffee bag photo…')
     setLoading(true)
 
     try {
+      assertSupportedOcrImage(file)
       const compressed = await compressImage(file)
       const imageDataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
@@ -34,22 +44,21 @@ export default function ScanPage() {
         reader.onerror = () => reject(new Error('Failed to read image data'))
         reader.readAsDataURL(compressed)
       })
-      const form = new FormData()
-      form.append('image', compressed, 'coffee-bag.jpg')
-
-      const res = await fetch('/api/extract-bean', { method: 'POST', body: form })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Extraction failed')
-      }
-
-      const data = await res.json()
+      const data = await recognizeCoffeeBag(file, {
+        signal: controller.signal,
+        onProgress: progress => setProgressMessage(`${progress.status} (${Math.round(progress.progress * 100)}%)`),
+      })
+      if (controller.signal.aborted) return
       recipeSessionStorage.setExtractionResult(data)
       recipeSessionStorage.setScannedBagImageDataUrl(imageDataUrl)
       router.push('/analysis')
     } catch (err) {
+      if (controller.signal.aborted) return
       setError(err instanceof Error ? err.message : 'Something went wrong')
+      setProgressMessage('')
       setLoading(false)
+    } finally {
+      if (activeScanRef.current === controller) activeScanRef.current = null
     }
   }
 
@@ -88,7 +97,7 @@ export default function ScanPage() {
           {loading ? (
             <>
               <div className="w-8 h-8 border-2 border-[var(--foreground)] border-t-transparent rounded-full animate-spin" />
-              <p className="ui-body-muted">Analyzing your coffee bag…</p>
+              <p className="ui-body-muted" aria-live="polite">{progressMessage || 'Reading your coffee bag on this device…'}</p>
             </>
           ) : (
             <>

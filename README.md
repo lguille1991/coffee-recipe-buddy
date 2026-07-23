@@ -6,7 +6,7 @@ Package/app identifier: `crp`
 
 ## What it does
 
-- Scan a coffee bag image and extract bean details
+- Scan a coffee bag image locally in the browser and extract explicitly labelled bean details
 - Generate brew recommendations across supported methods
 - Save, revisit, edit, auto-adjust, and share recipes
 - Support guest flows with `sessionStorage`, then persist to Supabase after sign-in
@@ -31,7 +31,7 @@ The app uses the App Router under `src/app`.
 - React `19.2.4`
 - Tailwind CSS v4
 - Supabase via `@supabase/ssr`
-- OpenRouter for bean extraction and recipe generation
+- Tesseract.js v7 for on-device bag OCR
 - Vitest for unit tests
 
 ## Environment variables
@@ -41,14 +41,14 @@ Copy `.env.example` to `.env.local` and set:
 ```bash
 OPENROUTER_API_KEY=...
 OPENROUTER_MODEL=...
-OPENROUTER_MODEL_RECIPE_GENERATION=...
-OPENROUTER_MODEL_BEAN_EXTRACTION=...
 OPENROUTER_MODEL_AUTO_ADJUST=...
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-OpenRouter model configuration is env-only. If `OPENROUTER_MODEL_RECIPE_GENERATION`, `OPENROUTER_MODEL_BEAN_EXTRACTION`, or `OPENROUTER_MODEL_AUTO_ADJUST` are unset, each feature inherits `OPENROUTER_MODEL`. If `OPENROUTER_MODEL` is also unset, the app keeps the current default model: `google/gemini-2.5-flash`.
+OpenRouter model configuration is env-only for the legacy Auto Adjust flow. If `OPENROUTER_MODEL_AUTO_ADJUST` is unset, it inherits `OPENROUTER_MODEL`. If `OPENROUTER_MODEL` is also unset, the app keeps the current default model: `google/gemini-2.5-flash`.
+
+Coffee-bag OCR is self-hosted under `/ocr/v7/`, starts only after the user selects an image, and processes the image in the browser. The compressed color photo is uploaded to Supabase only if the user saves a coffee profile with its image. See [`docs/ocr-assets.md`](docs/ocr-assets.md) for asset versions, licenses, and checksums.
 
 For local development, set these in `.env.local`. For Vercel, add them as project environment variables per environment. Changing a Vercel env var requires a redeploy before the new model selection takes effect.
 
@@ -83,7 +83,6 @@ This repo uses `@supabase/ssr`, not `@supabase/auth-helpers-nextjs`.
 
 ## Key routes
 
-- `POST /api/extract-bean`
 - `POST /api/generate-recipe`
 - `POST /api/adjust-recipe`
 - `GET|POST /api/recipes`

@@ -1,3 +1,7 @@
+## 2.0.0 - 2026-07-22
+
+- Added on-device English/Spanish coffee-bag OCR with deterministic, label-only parsing; scan images no longer go to an extraction AI route.
+
 ## 1.25.0 - 2026-06-05
 
 - Added env-based OpenRouter model selection with one shared default (`OPENROUTER_MODEL`) plus feature-specific overrides for recipe generation, bean extraction, and auto-adjust flows.

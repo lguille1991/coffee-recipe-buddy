@@ -4,10 +4,12 @@
 
 - Pre-existing dirty files at the original plan baseline: none.
 - Current ambient dirty files: none.
-- Task-owned files: `.claude/plans/deterministic-recipe-engine-plan-2026-07-22.md`, `src/types/recipe.ts`, `src/types/coffee-profile.ts`, `src/lib/recipe-migrations.ts`, `src/lib/deterministic-recipe-engine.ts`, `src/lib/recipe-generation.ts`, `src/lib/deterministic-ocr-parser.ts`, `src/lib/__tests__/deterministic-ocr-parser.test.ts`, `src/lib/__tests__/deterministic-recipe-engine.test.ts`, `src/app/analysis/page.tsx`, `src/app/analysis/page.test.tsx`, `src/app/api/generate-recipe/route.ts`, `src/app/api/generate-recipe/route.integration.test.ts`, `src/app/api/recipes/from-profile/route.ts`, `package.json`, and `CHANGELOG.md`.
+- Task-owned files: `.claude/plans/deterministic-recipe-engine-plan-2026-07-22.md`, `src/types/recipe.ts`, `src/types/coffee-profile.ts`, `src/lib/recipe-migrations.ts`, `src/lib/deterministic-recipe-engine.ts`, `src/lib/recipe-generation.ts`, `src/lib/deterministic-ocr-parser.ts`, `src/lib/browser-ocr.ts`, `src/lib/__tests__/deterministic-ocr-parser.test.ts`, `src/lib/__tests__/browser-ocr.test.ts`, `src/lib/__tests__/deterministic-recipe-engine.test.ts`, `src/app/scan/page.tsx`, `src/app/scan/page.test.tsx`, `src/app/analysis/page.tsx`, `src/app/analysis/page.test.tsx`, `src/app/api/extract-bean/route.ts`, `src/app/api/extract-bean/route.test.ts`, `src/app/api/generate-recipe/route.ts`, `src/app/api/generate-recipe/route.integration.test.ts`, `src/app/api/recipes/from-profile/route.ts`, `public/ocr/v7/`, `docs/ocr-assets.md`, `next.config.ts`, `eslint.config.mjs`, `README.md`, `.env.example`, `package.json`, `package-lock.json`, and `CHANGELOG.md`.
 - Refresh the task-owned file list and newly observed ambient dirty files before implementation begins and after every approved rework batch.
 - Approved rework batch (2026-07-22): no newly observed ambient dirty files; task-owned files include `src/app/api/generate-recipe/route.integration.test.ts`.
 - Approved OCR-parser review rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved browser-OCR review rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved browser-OCR validation rework (2026-07-22): no newly observed ambient dirty files; `eslint.config.mjs` added to task-owned files.
 - Baseline runtime: Node `22.4.0`, npm `10.8.1`.
 - Baseline validation: `npm test` reports 245 passing tests but exits nonzero because eight jsdom workers hit a pre-existing `ERR_REQUIRE_ESM` dependency error. A completely green test run is a hard deployment requirement; this failure may not be waived for production.
 - Security prerequisite: rotate the live-looking OpenRouter credential exposed from the ignored `.env.local` file during plan review. Never commit or reproduce the credential in code, documentation, fixtures, logs, or test output.
@@ -18,6 +20,14 @@
 - [x] Keep unknown roast neutral and selectable in Coffee Analysis, including a visible low-confidence score of zero.
 - [x] Add focused parser and analysis coverage before integrating the browser OCR worker in the next batch.
 - [x] Commit-readiness validation passed: `npm test` (55 files, 280 tests), `npm run lint`, and `npm run build`.
+
+## Browser OCR implementation batch (2026-07-22)
+
+- [x] Add pinned, same-origin Tesseract.js v7 worker/core/language assets with documented checksums and cache policy.
+- [x] Add an event-triggered browser OCR helper that preprocesses a separate grayscale image, dynamically imports Tesseract, reports progress, and always terminates its worker.
+- [x] Replace scan-page extraction fetches with local OCR, preserve the compressed color image for optional profile saving, and reject stale scan results.
+- [x] Delete `/api/extract-bean` and its tests; add coverage proving the scan flow makes no extraction request.
+- [x] Commit-readiness validation passed: `npm test` (56 files, 285 tests), `npm run lint`, and `npm run build`.
 
 ## Session implementation status (2026-07-22)
 
