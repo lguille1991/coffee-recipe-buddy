@@ -119,6 +119,10 @@
 
 # Changelog
 
+## 2.0.0
+
+- Replace runtime model-based recipe generation with the deterministic recipe engine, including generation provenance and brewer capacity errors.
+
 All notable product-facing changes are documented here.
 
 ## [1.22.0] - 2026-05-02

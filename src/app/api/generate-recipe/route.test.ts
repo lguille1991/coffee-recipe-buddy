@@ -1,233 +1,39 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { BASE_RECIPE } from '@/lib/__tests__/fixtures'
-
-const {
-  createClientMock,
-  createCompletionMock,
-  createOpenRouterClientMock,
-  buildAuthenticatedOpenRouterUserIdMock,
-  attachGuestOpenRouterCookieMock,
-  validateRecipeMock,
-  buildRetryPromptMock,
-} = vi.hoisted(() => ({
-  createClientMock: vi.fn(),
-  createCompletionMock: vi.fn(),
-  createOpenRouterClientMock: vi.fn(),
-  buildAuthenticatedOpenRouterUserIdMock: vi.fn(),
-  attachGuestOpenRouterCookieMock: vi.fn(),
-  validateRecipeMock: vi.fn(),
-  buildRetryPromptMock: vi.fn(),
-}))
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: createClientMock,
-}))
-
-vi.mock('@/lib/openrouter', () => ({
-  createOpenRouterClient: createOpenRouterClientMock,
-  buildAuthenticatedOpenRouterUserId: buildAuthenticatedOpenRouterUserIdMock,
-  getGuestOpenRouterUserId: vi.fn(),
-  attachGuestOpenRouterCookie: attachGuestOpenRouterCookieMock,
-}))
-
-vi.mock('@/lib/recipe-validator', () => ({
-  validateRecipe: validateRecipeMock,
-  buildRetryPrompt: buildRetryPromptMock,
-}))
-
+import { describe, expect, it } from 'vitest'
 import { POST } from './route'
 
-function createSupabaseClient() {
-  return {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: '22222222-2222-2222-2222-222222222222' } },
-      }),
-    },
-  }
-}
+const bean = { process: 'washed', roast_level: 'medium-light', roast_date: '2026-07-01' }
 
 describe('POST /api/generate-recipe', () => {
-  beforeEach(() => {
-    createClientMock.mockReset()
-    createCompletionMock.mockReset()
-    createOpenRouterClientMock.mockReset()
-    buildAuthenticatedOpenRouterUserIdMock.mockReset()
-    attachGuestOpenRouterCookieMock.mockReset()
-    validateRecipeMock.mockReset()
-    buildRetryPromptMock.mockReset()
-
-    createClientMock.mockResolvedValue(createSupabaseClient())
-    buildAuthenticatedOpenRouterUserIdMock.mockReturnValue('crp:test-user')
-    attachGuestOpenRouterCookieMock.mockImplementation((response: Response) => response)
-    validateRecipeMock.mockReturnValue({ valid: true, errors: [] })
-    buildRetryPromptMock.mockReturnValue('retry')
-    createOpenRouterClientMock.mockReturnValue({
-      chat: {
-        completions: {
-          create: createCompletionMock,
-        },
-      },
-    })
-  })
-
-  it('overrides model grind output with deterministic skill grind settings for a Pacas washed profile', async () => {
-    vi.stubEnv('OPENROUTER_MODEL_RECIPE_GENERATION', 'anthropic/claude-3.7-sonnet')
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
-    })
-
-    const request = new Request('http://localhost/api/generate-recipe', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        method: 'v60',
-        bean: {
-          process: 'washed',
-          roast_level: 'medium-light',
-          altitude_masl: 1400,
-          variety: 'Pacas',
-          origin: 'El Salvador, Finca Potrerito',
-          tasting_notes: ['floral', 'orange', 'honey'],
-        },
-      }),
-    })
-
-    const response = await POST(request as never)
+  it('generates without an authenticated user, model client, or tracking cookie', async () => {
+    const response = await POST(new Request('http://localhost/api/generate-recipe', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method: 'v60', bean, target_water_g: 250, goal: 'clarity' }),
+    }) as never)
     const body = await response.json()
-
     expect(response.status).toBe(200)
-    expect(createCompletionMock).toHaveBeenCalledWith(expect.objectContaining({
-      model: 'anthropic/claude-3.7-sonnet',
-    }))
-    expect(body.grind.k_ultra.starting_point).toBe('0.7.1')
-    expect(body.grind.k_ultra.range).toBe('66–76 clicks')
-    expect(body.range_logic.final_operating_range).toBe('66–76 clicks')
-    expect(body.parameters.temperature_c).toBe(94)
-    expect(body.grind.k_ultra.starting_point).not.toBe(BASE_RECIPE.grind.k_ultra.starting_point)
+    expect(body.parameters.water_g).toBe(250)
+    expect(body.generation_metadata.engine_version).toBe('v2.0.0')
   })
 
-  it('supports recipe_mode=four_six with deterministic 4:6 output structure', async () => {
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
-    })
-
-    const request = new Request('http://localhost/api/generate-recipe', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        method: 'v60',
-        recipe_mode: 'four_six',
-        bean: {
-          process: 'washed',
-          roast_level: 'light',
-          altitude_masl: 1600,
-          variety: 'Gesha',
-          origin: 'Panama',
-        },
-      }),
-    })
-
-    const response = await POST(request as never)
+  it('defaults legacy callers to a balanced goal and accepts targetVolumeMl', async () => {
+    const response = await POST(new Request('http://localhost/api/generate-recipe', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method: 'v60', bean, targetVolumeMl: 250 }),
+    }) as never)
     const body = await response.json()
-
     expect(response.status).toBe(200)
-    expect(body.recipe_mode).toBe('four_six')
-    expect(body.parameters.coffee_g).toBe(20)
-    expect(body.parameters.water_g).toBe(300)
-    expect(body.parameters.ratio).toBe('1:15')
-    expect(body.steps).toHaveLength(5)
+    expect(body.generation_metadata.applied_rule_ids).toContain('goal:balanced')
   })
 
-  it('returns 422 when deterministic override fails post-validation', async () => {
-    validateRecipeMock
-      .mockReturnValueOnce({ valid: true, errors: [] })
-      .mockReturnValueOnce({ valid: false, errors: ['range_logic.final_operating_range invalid'] })
+  it('returns stable capacity and mode errors', async () => {
+    const oversized = await POST(new Request('http://localhost/api/generate-recipe', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method: 'aeropress', bean, target_water_g: 300 }),
+    }) as never)
+    expect(oversized.status).toBe(422)
+    expect(await oversized.json()).toMatchObject({ code: 'CAPACITY_EXCEEDED', bounds: { minWaterG: 120, maxWaterG: 250 } })
 
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
-    })
-
-    const request = new Request('http://localhost/api/generate-recipe', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        method: 'v60',
-        bean: {
-          process: 'washed',
-          roast_level: 'medium-light',
-          altitude_masl: 1400,
-          variety: 'Pacas',
-          origin: 'El Salvador, Finca Potrerito',
-          tasting_notes: ['floral', 'orange', 'honey'],
-        },
-      }),
-    })
-
-    const response = await POST(request as never)
-    const body = await response.json()
-
-    expect(response.status).toBe(422)
-    expect(body.error).toBe('Deterministic grind override failed validation')
-    expect(body.validationErrors).toContain('range_logic.final_operating_range invalid')
-  })
-
-  it('includes debug parity metadata when DEBUG_RECIPE_PARITY=1', async () => {
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
-    })
-
-    vi.stubEnv('DEBUG_RECIPE_PARITY', '1')
-    vi.stubEnv('SKILL_GRIND_PARITY_MODE', 'skill_v2')
-    vi.stubEnv('STRICT_GRINDER_TABLE_PARITY', '1')
-
-    const request = new Request('http://localhost/api/generate-recipe', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        method: 'v60',
-        bean: {
-          process: 'washed',
-          roast_level: 'medium-light',
-        },
-      }),
-    })
-
-    const response = await POST(request as never)
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(body._debug).toEqual({
-      grind_parity_mode: 'skill_v2',
-      strict_grinder_table_parity: true,
-    })
-
-    vi.unstubAllEnvs()
-  })
-
-  it('uses the shared OpenRouter model when no recipe-specific override is set', async () => {
-    vi.stubEnv('OPENROUTER_MODEL', 'openai/gpt-4.1-mini')
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(BASE_RECIPE) } }],
-    })
-
-    const request = new Request('http://localhost/api/generate-recipe', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        method: 'v60',
-        bean: {
-          process: 'washed',
-          roast_level: 'medium-light',
-        },
-      }),
-    })
-
-    const response = await POST(request as never)
-
-    expect(response.status).toBe(200)
-    expect(createCompletionMock).toHaveBeenCalledWith(expect.objectContaining({
-      model: 'openai/gpt-4.1-mini',
-    }))
+    const wrongMode = await POST(new Request('http://localhost/api/generate-recipe', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method: 'origami', bean, target_water_g: 250, recipe_mode: 'four_six' }),
+    }) as never)
+    expect(wrongMode.status).toBe(422)
+    expect(await wrongMode.json()).toMatchObject({ code: 'UNSUPPORTED_MODE' })
   })
 })

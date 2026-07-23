@@ -4,15 +4,11 @@ import { resetIdempotencyStateForTests } from '@/lib/request-idempotency'
 
 const {
   createClientMock,
-  createOpenRouterClientMock,
-  buildAuthenticatedOpenRouterUserIdMock,
-  generateRecipeWithRetriesMock,
+  generateRecipeMock,
   saveRecipeWithSnapshotMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
-  createOpenRouterClientMock: vi.fn(),
-  buildAuthenticatedOpenRouterUserIdMock: vi.fn(),
-  generateRecipeWithRetriesMock: vi.fn(),
+  generateRecipeMock: vi.fn(),
   saveRecipeWithSnapshotMock: vi.fn(),
 }))
 
@@ -20,13 +16,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: createClientMock,
 }))
 
-vi.mock('@/lib/openrouter', () => ({
-  createOpenRouterClient: createOpenRouterClientMock,
-  buildAuthenticatedOpenRouterUserId: buildAuthenticatedOpenRouterUserIdMock,
-}))
-
 vi.mock('@/lib/recipe-generation', () => ({
-  generateRecipeWithRetries: generateRecipeWithRetriesMock,
+  generateRecipe: generateRecipeMock,
 }))
 
 vi.mock('@/lib/save-recipe', () => ({
@@ -58,6 +49,7 @@ function createSupabaseClient(options?: { archived?: boolean; notFound?: boolean
       label: 'Test Coffee',
       bean_profile_json: WASHED_LIGHT_BEAN,
       archived_at: options?.archived ? '2026-05-01T00:00:00.000Z' : null,
+      updated_at: '2026-07-01T00:00:00.000Z',
     },
     error: options?.notFound ? { message: 'Not found' } : null,
   })
@@ -87,16 +79,12 @@ describe('POST /api/recipes/from-profile', () => {
   beforeEach(() => {
     resetIdempotencyStateForTests()
     createClientMock.mockReset()
-    createOpenRouterClientMock.mockReset()
-    buildAuthenticatedOpenRouterUserIdMock.mockReset()
-    generateRecipeWithRetriesMock.mockReset()
+    generateRecipeMock.mockReset()
     saveRecipeWithSnapshotMock.mockReset()
     process.env.NEXT_PUBLIC_ENABLE_SAVED_COFFEE_PROFILES = 'true'
 
     createClientMock.mockResolvedValue(createSupabaseClient())
-    createOpenRouterClientMock.mockReturnValue({})
-    buildAuthenticatedOpenRouterUserIdMock.mockReturnValue('crp:test-user')
-    generateRecipeWithRetriesMock.mockResolvedValue(BASE_RECIPE)
+    generateRecipeMock.mockReturnValue(BASE_RECIPE)
     saveRecipeWithSnapshotMock.mockResolvedValue({ id: 'recipe-1' })
   })
 
@@ -155,7 +143,7 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(409)
-    expect(generateRecipeWithRetriesMock).not.toHaveBeenCalled()
+    expect(generateRecipeMock).not.toHaveBeenCalled()
   })
 
   it('returns 404 when profile is not found for user', async () => {
@@ -174,7 +162,7 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(404)
-    expect(generateRecipeWithRetriesMock).not.toHaveBeenCalled()
+    expect(generateRecipeMock).not.toHaveBeenCalled()
   })
 
   it('returns 400 for non-canonical method', async () => {
@@ -191,7 +179,7 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(400)
-    expect(generateRecipeWithRetriesMock).not.toHaveBeenCalled()
+    expect(generateRecipeMock).not.toHaveBeenCalled()
   })
 
   it('returns 400 for invalid water mode payload', async () => {
@@ -207,7 +195,7 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(400)
-    expect(generateRecipeWithRetriesMock).not.toHaveBeenCalled()
+    expect(generateRecipeMock).not.toHaveBeenCalled()
   })
 
   it('generates and persists a recipe from profile with provenance context', async () => {
@@ -224,7 +212,7 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(201)
-    expect(generateRecipeWithRetriesMock).toHaveBeenCalled()
+    expect(generateRecipeMock).toHaveBeenCalled()
     expect(saveRecipeWithSnapshotMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       bean_info: WASHED_LIGHT_BEAN,
       coffee_profile_id: 'profile-1',
@@ -239,7 +227,7 @@ describe('POST /api/recipes/from-profile', () => {
     }))
   })
 
-  it('keeps recipe generation centralized in generateRecipeWithRetries for profile-based requests', async () => {
+  it('keeps profile generation centralized in the deterministic recipe engine', async () => {
     const response = await POST(new Request('http://localhost/api/recipes/from-profile', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -253,20 +241,15 @@ describe('POST /api/recipes/from-profile', () => {
     }) as never)
 
     expect(response.status).toBe(201)
-    expect(generateRecipeWithRetriesMock).toHaveBeenCalledWith(expect.objectContaining({
-      client: {},
-      openRouterUser: 'crp:test-user',
+    expect(generateRecipeMock).toHaveBeenCalledWith(expect.objectContaining({
       method: 'v60',
       bean: WASHED_LIGHT_BEAN,
-      targetVolumeMl: 250,
+      targetWaterG: 250,
+      goal: 'clarity',
     }))
   })
 
-  it('includes debug parity metadata when DEBUG_RECIPE_PARITY=1', async () => {
-    vi.stubEnv('DEBUG_RECIPE_PARITY', '1')
-    vi.stubEnv('SKILL_GRIND_PARITY_MODE', 'skill_v2')
-    vi.stubEnv('STRICT_GRINDER_TABLE_PARITY', '1')
-
+  it('does not expose removed model debug metadata', async () => {
     const response = await POST(new Request('http://localhost/api/recipes/from-profile', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -281,12 +264,7 @@ describe('POST /api/recipes/from-profile', () => {
 
     const body = await response.json()
     expect(response.status).toBe(201)
-    expect(body._debug).toEqual({
-      grind_parity_mode: 'skill_v2',
-      strict_grinder_table_parity: true,
-    })
-
-    vi.unstubAllEnvs()
+    expect(body._debug).toBeUndefined()
   })
 
   it('prevents duplicate recipe saves for concurrent identical requests', async () => {

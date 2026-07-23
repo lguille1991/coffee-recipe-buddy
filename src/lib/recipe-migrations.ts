@@ -2,7 +2,7 @@ import { RecipeWithAdjustment } from '@/types/recipe'
 import { parseKUltraRange, kUltraRangeToFellowOpus, kUltraRangeToQAir } from './grinder-converter'
 import { buildDerivedGrindSettings, deriveSecondaryGrindSettings, parseClickCount } from './grind-settings'
 
-const CURRENT_SCHEMA_VERSION = 6
+const CURRENT_SCHEMA_VERSION = 7
 
 type MigrationFn = (recipe: RecipeWithAdjustment) => RecipeWithAdjustment
 
@@ -110,6 +110,10 @@ const migrations: Record<number, MigrationFn> = {
       },
     }
   },
+
+  // v6 → v7: generation_metadata is additive. Historical recipes retain their
+  // original JSON and deliberately do not receive invented provenance.
+  6: (recipe) => recipe,
 }
 
 /**
