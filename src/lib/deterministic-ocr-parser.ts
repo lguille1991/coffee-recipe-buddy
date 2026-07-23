@@ -31,27 +31,48 @@ const LABEL_TO_FIELD: Record<string, BeanField> = {
   'proceso': 'process',
   'origin': 'origin',
   'origen': 'origin',
+  'region': 'origin',
+  'ubicacion': 'origin',
   'altitude': 'altitude_masl',
   'altitud': 'altitude_masl',
   'elevation': 'altitude_masl',
+  'cultivado a': 'altitude_masl',
   'roast': 'roast_level',
   'roast level': 'roast_level',
   'tueste': 'roast_level',
+  'tostado': 'roast_level',
   'nivel de tueste': 'roast_level',
   'tasting notes': 'tasting_notes',
   'notes': 'tasting_notes',
   'notas de cata': 'tasting_notes',
   'notas': 'tasting_notes',
+  'perfil': 'tasting_notes',
 }
 
+const SPACE_SEPARATED_LABELS = new Set([
+  'farm', 'finca', 'producer', 'productor', 'region', 'ubicacion',
+  'altitude', 'altitud', 'elevation', 'tueste', 'tostado', 'roast', 'roast level',
+])
+
 const PROCESS_ALIASES: Record<string, BeanProfile['process']> = {
-  washed: 'washed', lavado: 'washed', lavada: 'washed',
+  washed: 'washed', lavado: 'washed', lavada: 'washed', semilavado: 'washed', 'semi lavado': 'washed',
   natural: 'natural', naturals: 'natural',
-  honey: 'honey', miel: 'honey',
+  honey: 'honey', miel: 'honey', 'yellow honey': 'honey', 'black honey': 'honey',
   anaerobic: 'anaerobic', anaerobico: 'anaerobic', anaerobica: 'anaerobic',
   carbonic: 'carbonic', 'carbonic maceration': 'carbonic', 'maceracion carbonica': 'carbonic',
   'thermal shock': 'thermal_shock', 'choque termico': 'thermal_shock',
   experimental: 'experimental', experimento: 'experimental',
+}
+
+const VARIETY_ALIASES: Record<string, string> = {
+  geisha: 'Geisha',
+  gesha: 'Gesha',
+  pacamara: 'Pacamara',
+  pacas: 'Pacas',
+  'bourbon rosa': 'Bourbon Rosa',
+  'pink bourbon': 'Pink Bourbon',
+  sl28: 'SL28',
+  'sl 28': 'SL28',
 }
 
 const ROAST_ALIASES: Record<string, BeanProfile['roast_level']> = {
@@ -101,6 +122,23 @@ function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | n
   return cleanValue(value) || null
 }
 
+function parseCompactIdentity(line: string): Partial<Pick<BeanProfile, 'process' | 'variety'>> | null {
+  const normalized = normalize(line)
+  const aliases = Object.keys(PROCESS_ALIASES).toSorted((a, b) => b.length - a.length)
+  for (const alias of aliases) {
+    if (normalized === alias) return { process: PROCESS_ALIASES[alias] }
+    if (!normalized.endsWith(alias)) continue
+    const prefix = normalized.slice(0, -alias.length).replace(/[\s-]+$/, '').trim()
+    if (!prefix) continue
+
+    const process = PROCESS_ALIASES[alias]
+    const variety = VARIETY_ALIASES[prefix]
+    if (variety) return { process, variety }
+    if (/[–—-]/.test(line)) return { process }
+  }
+  return null
+}
+
 function extractLabelAndValue(line: string) {
   const normalized = normalize(line)
   const standaloneField = LABEL_TO_FIELD[normalized]
@@ -111,6 +149,14 @@ function extractLabelAndValue(line: string) {
     const field = LABEL_TO_FIELD[normalize(line.slice(0, separatorIndex))]
     const value = cleanValue(line.slice(separatorIndex + 1))
     if (field && value) return { field, value }
+  }
+
+  for (const label of SPACE_SEPARATED_LABELS) {
+    if (normalized.startsWith(`${label} `)) {
+      const field = LABEL_TO_FIELD[label]
+      const value = cleanValue(line.slice(label.length))
+      if (value) return { field, value }
+    }
   }
 
   return null
@@ -132,6 +178,15 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
+    const compactIdentity = parseCompactIdentity(block.text)
+    if (compactIdentity) {
+      bean.process = compactIdentity.process ?? bean.process
+      confidence.process = confidenceFor(block)
+      if (compactIdentity.variety) {
+        bean.variety = compactIdentity.variety
+        confidence.variety = confidenceFor(block)
+      }
+    }
     const match = extractLabelAndValue(block.text)
     if (!match) continue
 

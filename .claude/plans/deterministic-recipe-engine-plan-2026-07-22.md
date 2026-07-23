@@ -10,6 +10,10 @@
 - Approved OCR-parser review rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Approved browser-OCR review rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Approved browser-OCR validation rework (2026-07-22): no newly observed ambient dirty files; `eslint.config.mjs` added to task-owned files.
+- Approved browser-OCR relaxed-SIMD rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved bag-layout OCR rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved coffee-bag parser calibration batch (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved compact-identity false-positive rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Baseline runtime: Node `22.4.0`, npm `10.8.1`.
 - Baseline validation: `npm test` reports 245 passing tests but exits nonzero because eight jsdom workers hit a pre-existing `ERR_REQUIRE_ESM` dependency error. A completely green test run is a hard deployment requirement; this failure may not be waived for production.
 - Security prerequisite: rotate the live-looking OpenRouter credential exposed from the ignored `.env.local` file during plan review. Never commit or reproduce the credential in code, documentation, fixtures, logs, or test output.
@@ -28,6 +32,17 @@
 - [x] Replace scan-page extraction fetches with local OCR, preserve the compressed color image for optional profile saving, and reject stale scan results.
 - [x] Delete `/api/extract-bean` and its tests; add coverage proving the scan flow makes no extraction request.
 - [x] Commit-readiness validation passed: `npm test` (56 files, 285 tests), `npm run lint`, and `npm run build`.
+- [x] Relaxed-SIMD asset validation passed: `npm test` (56 files, 286 tests), `npm run lint`, and `npm run build`.
+
+## Coffee-bag parser calibration batch (proposed 2026-07-22)
+
+- [x] Add deterministic text fixtures derived from the supplied Tropicália, Crafters, Jaho, D’La Palma, and 1200 Café bag layouts; fixtures contain only label/value text, never image data.
+- [x] Extend documented English/Spanish labels and compact label/value forms for process, variety, farm, producer, origin/region, altitude, roast, and tasting notes.
+- [x] Recognize a documented compact variety/process pair (for example, `Geisha Natural`, `Pacamara Semilavado`, and `Bourbon Rosa Lavado`) as structured coffee identity, splitting only exact recognized variety and process tokens.
+- [x] When a compact layout contains an exact recognized process token but its neighboring text is ambiguous (for example, `Minas - Washed`), populate only `process: washed`; do not guess whether `Minas` is a variety, origin, or bean name.
+- [x] Keep other unlabelled display/marketing text neutral; only parse a value when an adjacent supported label or a documented compact layout establishes its field.
+- [x] Verify per-field confidence, partial results, false-positive resistance, and the original bag-layout regression fixture.
+- [x] Commit-readiness validation passed: `npm test` (56 files, 291 tests), `npm run lint`, and `npm run build`.
 
 ## Session implementation status (2026-07-22)
 

@@ -56,4 +56,76 @@ describe('parseCoffeeBagOcr', () => {
       status: 'partial',
     })
   })
+
+  it('parses the explicit Spanish layout labels and recognized compact identity on the Pacamara Yellow Honey bag', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'D’LA PALMA', confidence: 0.99 },
+      { text: 'Cultivado a: 1850 msnm', confidence: 0.95 },
+      { text: 'Finca Machuca', confidence: 0.93 },
+      { text: 'Pacamara Yellow Honey', confidence: 0.99 },
+      { text: 'Productor', confidence: 0.91 },
+      { text: 'Orlando Aguilar', confidence: 0.92 },
+      { text: 'Notas: toffee, chocolate y frutos amarillos', confidence: 0.88 },
+    ])
+
+    expect(result).toMatchObject({
+      bean: {
+        altitude_masl: 1850,
+        finca: 'Machuca',
+        producer: 'Orlando Aguilar',
+        tasting_notes: ['toffee', 'chocolate y frutos amarillos'],
+        variety: 'Pacamara',
+        process: 'honey',
+        roast_level: 'unknown',
+      },
+      status: 'partial',
+    })
+    expect(result.bean.roaster).toBeUndefined()
+  })
+
+  it('parses supported labelled fields and compact variety/process identities from the supplied bag corpus', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'Geisha Natural', confidence: 0.94 },
+      { text: 'Altitud: 1550 msnm', confidence: 0.95 },
+      { text: 'Región: Apaneca, Ilamatepec, Santa Ana', confidence: 0.92 },
+      { text: 'Tueste: Medio', confidence: 0.91 },
+      { text: 'Perfil: Toronja, Pera, Te verde, Caramelo', confidence: 0.9 },
+    ])
+
+    expect(result).toMatchObject({
+      bean: {
+        variety: 'Geisha',
+        process: 'natural',
+        altitude_masl: 1550,
+        origin: 'Apaneca, Ilamatepec, Santa Ana',
+        roast_level: 'medium',
+        tasting_notes: ['Toronja', 'Pera', 'Te verde', 'Caramelo'],
+      },
+      status: 'complete',
+    })
+  })
+
+  it('extracts a compact process without guessing an ambiguous neighboring value', () => {
+    const result = parseCoffeeBagOcr([{ text: 'Minas - Washed', confidence: 0.9 }])
+
+    expect(result.bean).toEqual({ process: 'washed', roast_level: 'unknown' })
+    expect(result.confidence).toEqual({ process: 0.9 })
+    expect(result.status).toBe('partial')
+    expect(parseCoffeeBagOcr([{ text: 'LAVADO', confidence: 0.8 }]).bean.process).toBe('washed')
+  })
+
+  it('recognizes exact compact varieties and process aliases', () => {
+    expect(parseCoffeeBagOcr([{ text: 'Pacamara Semilavado', confidence: 0.8 }]).bean)
+      .toMatchObject({ variety: 'Pacamara', process: 'washed' })
+    expect(parseCoffeeBagOcr([{ text: 'Bourbon Rosa Lavado', confidence: 0.8 }]).bean)
+      .toMatchObject({ variety: 'Bourbon Rosa', process: 'washed' })
+    expect(parseCoffeeBagOcr([{ text: 'Pacamara Black Honey', confidence: 0.8 }]).bean)
+      .toMatchObject({ variety: 'Pacamara', process: 'honey' })
+  })
+
+  it('does not mistake a labelled tasting note ending in a process word for a compact identity', () => {
+    const result = parseCoffeeBagOcr([{ text: 'Notas: sabor natural', confidence: 0.8 }])
+
+    expect(result.bean).toEqual({ process: 'unknown', roast_level: 'unknown', tasting_notes: ['sabor natural'] })
+  })
 })
