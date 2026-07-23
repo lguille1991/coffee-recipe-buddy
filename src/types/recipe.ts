@@ -20,7 +20,7 @@ export const BeanProfileSchema = z.object({
   ]),
   origin: z.string().nullable().optional(),
   altitude_masl: z.number().nullable().optional(),
-  roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark']).catch('medium'),
+  roast_level: z.enum(['light', 'medium-light', 'medium', 'medium-dark', 'dark', 'unknown']).catch('unknown'),
   tasting_notes: z.array(z.string()).nullable().optional(),
   roast_date: z.string().nullable().optional(), // ISO date string YYYY-MM-DD
 })
@@ -151,6 +151,14 @@ export const RecipeSchema = z.object({
     slow_drain: z.string(),
     fast_drain: z.string(),
   }),
+  generation_metadata: z.object({
+    engine_version: z.string().min(1),
+    evaluation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    applied_rule_ids: z.array(z.string().min(1)).refine(
+      values => new Set(values).size === values.length,
+      'applied_rule_ids must be unique',
+    ),
+  }).optional(),
 })
 
 export type Recipe = z.infer<typeof RecipeSchema>

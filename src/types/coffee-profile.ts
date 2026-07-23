@@ -51,7 +51,7 @@ export const GenerateFromProfileRequestSchema = z.object({
   method: MethodIdSchema,
   goal: BrewGoalSchema,
   water_mode: z.enum(['absolute', 'delta']),
-  water_grams: z.number().positive().optional(),
+  water_grams: z.number().int().positive().optional(),
   water_delta_grams: z.number().int().min(-200).max(500).optional(),
   recipe_mode: z.enum(['standard', 'four_six']).default('standard'),
 })
@@ -77,7 +77,7 @@ export const GenerationContextSchema = z.object({
   source: z.literal('profile'),
   goal: BrewGoalSchema,
   water_mode: z.enum(['absolute', 'delta']),
-  water_grams: z.number().positive().optional(),
+  water_grams: z.number().int().positive().optional(),
   water_delta_grams: z.number().int().optional(),
   method: MethodIdSchema,
 })

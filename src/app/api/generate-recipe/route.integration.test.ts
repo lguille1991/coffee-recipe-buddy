@@ -83,10 +83,10 @@ describe('POST /api/generate-recipe (integration validator path)', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(body.grind.k_ultra.starting_point).toBe('0.7.1')
-    expect(body.grind.k_ultra.range).toBe('66–76 clicks')
-    expect(body.range_logic.final_operating_range).toBe('66–76 clicks')
-    expect(body.parameters.temperature_c).toBe(94)
+    expect(body.grind.k_ultra.starting_point).toBe('0.7.3')
+    expect(body.grind.k_ultra.range).toBe('69–76 clicks')
+    expect(body.range_logic.final_operating_range).toBe('69–76 clicks')
+    expect(body.parameters.temperature_c).toBe(95)
   })
 
   it('returns 200 in four_six mode with real validateRecipe', async () => {
@@ -116,10 +116,10 @@ describe('POST /api/generate-recipe (integration validator path)', () => {
 
     expect(response.status).toBe(200)
     expect(body.recipe_mode).toBe('four_six')
-    expect(body.parameters.coffee_g).toBe(20)
-    expect(body.parameters.water_g).toBe(300)
-    expect(body.parameters.ratio).toBe('1:15')
-    expect(body.parameters.temperature_c).toBe(94)
-    expect(body.steps).toHaveLength(5)
+    expect(body.parameters.coffee_g).toBe(16)
+    expect(body.parameters.water_g).toBe(250)
+    expect(body.parameters.ratio).toBe('1:15.6')
+    expect(body.parameters.temperature_c).toBe(96)
+    expect(body.steps).toHaveLength(6)
   })
 })
