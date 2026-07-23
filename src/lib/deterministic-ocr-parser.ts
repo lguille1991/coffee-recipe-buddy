@@ -107,6 +107,11 @@ function parseAltitude(value: string) {
   return Math.round((low + high) / 2)
 }
 
+function parseStandaloneAltitude(value: string) {
+  if (!/\b(?:masl|msnm|m)\b/i.test(value)) return null
+  return parseAltitude(value)
+}
+
 function parseNotes(value: string) {
   const notes = value.split(/[,;/]/).map(note => cleanValue(note)).filter(Boolean)
   return notes.length ? notes : null
@@ -178,6 +183,21 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
+    const standaloneAltitude = parseStandaloneAltitude(block.text)
+    if (standaloneAltitude !== null) {
+      bean.altitude_masl = standaloneAltitude
+      confidence.altitude_masl = confidenceFor(block)
+    }
+    const standaloneRoast = ROAST_ALIASES[normalize(block.text)]
+    if (standaloneRoast) {
+      bean.roast_level = standaloneRoast
+      confidence.roast_level = confidenceFor(block)
+    }
+    const standaloneVariety = VARIETY_ALIASES[normalize(block.text)]
+    if (standaloneVariety) {
+      bean.variety = standaloneVariety
+      confidence.variety = confidenceFor(block)
+    }
     const compactIdentity = parseCompactIdentity(block.text)
     if (compactIdentity) {
       bean.process = compactIdentity.process ?? bean.process

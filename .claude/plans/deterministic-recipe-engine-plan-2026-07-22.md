@@ -14,6 +14,7 @@
 - Approved bag-layout OCR rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Approved coffee-bag parser calibration batch (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Approved compact-identity false-positive rework (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
+- Approved standalone label-value calibration batch (2026-07-22): no newly observed ambient dirty files; task-owned files unchanged.
 - Baseline runtime: Node `22.4.0`, npm `10.8.1`.
 - Baseline validation: `npm test` reports 245 passing tests but exits nonzero because eight jsdom workers hit a pre-existing `ERR_REQUIRE_ESM` dependency error. A completely green test run is a hard deployment requirement; this failure may not be waived for production.
 - Security prerequisite: rotate the live-looking OpenRouter credential exposed from the ignored `.env.local` file during plan review. Never commit or reproduce the credential in code, documentation, fixtures, logs, or test output.
@@ -43,6 +44,13 @@
 - [x] Keep other unlabelled display/marketing text neutral; only parse a value when an adjacent supported label or a documented compact layout establishes its field.
 - [x] Verify per-field confidence, partial results, false-positive resistance, and the original bag-layout regression fixture.
 - [x] Commit-readiness validation passed: `npm test` (56 files, 291 tests), `npm run lint`, and `npm run build`.
+
+## Standalone label-value calibration batch (proposed 2026-07-22)
+
+- [ ] Recognize standalone altitude values only when they include an explicit altitude unit (`m`, `masl`, or `msnm`), so weights and other bare numbers remain untouched.
+- [ ] Recognize exact standalone English/Spanish roast phrases such as `Medium Light` and `Medio Claro` without treating descriptive prose as roast data.
+- [ ] Add a D’La Palma Geisha Natural text fixture covering split OCR lines for altitude, roast, variety, process, farm, and producer.
+- [ ] Verify that all captured fields flow through Coffee Analysis and that unknown fields remain neutral.
 
 ## Session implementation status (2026-07-22)
 

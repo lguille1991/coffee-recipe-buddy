@@ -128,4 +128,34 @@ describe('parseCoffeeBagOcr', () => {
 
     expect(result.bean).toEqual({ process: 'unknown', roast_level: 'unknown', tasting_notes: ['sabor natural'] })
   })
+
+  it('parses split standalone values from the D’La Palma Geisha Natural layout', () => {
+    const result = parseCoffeeBagOcr([
+      { text: '1200 msnm', confidence: 0.98 },
+      { text: 'Medio Claro', confidence: 0.97 },
+      { text: 'Geisha', confidence: 0.99 },
+      { text: 'Natural', confidence: 0.98 },
+      { text: 'Finca Loma Verde', confidence: 0.96 },
+      { text: 'Esperanza Aguilar', confidence: 0.95 },
+    ])
+
+    expect(result).toMatchObject({
+      bean: {
+        altitude_masl: 1200,
+        roast_level: 'medium-light',
+        process: 'natural',
+        variety: 'Geisha',
+        finca: 'Loma Verde',
+      },
+      confidence: {
+        altitude_masl: 0.98,
+        roast_level: 0.97,
+        process: 0.98,
+        variety: 0.99,
+        finca: 0.96,
+      },
+      status: 'complete',
+    })
+    expect(result.bean.producer).toBeUndefined()
+  })
 })
