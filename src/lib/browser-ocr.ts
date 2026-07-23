@@ -11,8 +11,9 @@ const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 // Tesseract sparse-text mode preserves their independently positioned fields.
 export const OCR_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
 export const OCR_DEFAULT_PAGE_SEGMENTATION_MODE: PSM = '3' as PSM
-export const OCR_IDENTITY_PAGE_SEGMENTATION_MODE: PSM = '6' as PSM
+export const OCR_IDENTITY_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
 export const OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE: PSM = '7' as PSM
+const MAX_RECOGNITION_PASSES = 8
 
 export type OcrProgress = {
   progress: number
@@ -95,16 +96,156 @@ export function blocksFromOcrData(
 }
 
 export function mergeOcrBlocks(...runs: readonly OcrTextBlock[][]): OcrTextBlock[] {
-  const merged = new Map<string, OcrTextBlock>()
+  const merged: OcrTextBlock[] = []
   for (const block of runs.flat()) {
-    const key = block.text.toLowerCase().replace(/\s+/g, ' ').trim()
+    const key = normalizeBlockText(block.text)
     if (!key) continue
-    const existing = merged.get(key)
-    if (!existing || (block.confidence ?? 0) > (existing.confidence ?? 0)) {
-      merged.set(key, block)
+    const existingIndex = merged.findIndex(candidate => (
+      normalizeBlockText(candidate.text) === key
+      && blocksShareLocation(candidate, block)
+    ))
+    if (existingIndex < 0) {
+      merged.push(block)
+    } else if ((block.confidence ?? 0) > (merged[existingIndex].confidence ?? 0)) {
+      merged[existingIndex] = block
     }
   }
-  return [...merged.values()]
+  return addAdjacentFragmentAlternates(merged)
+}
+
+function normalizeBlockText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+function blocksShareLocation(left: OcrTextBlock, right: OcrTextBlock) {
+  if (!left.bbox || !right.bbox) return true
+  const intersectionWidth = Math.max(0, Math.min(left.bbox.x1, right.bbox.x1) - Math.max(left.bbox.x0, right.bbox.x0))
+  const intersectionHeight = Math.max(0, Math.min(left.bbox.y1, right.bbox.y1) - Math.max(left.bbox.y0, right.bbox.y0))
+  const intersection = intersectionWidth * intersectionHeight
+  const leftArea = (left.bbox.x1 - left.bbox.x0) * (left.bbox.y1 - left.bbox.y0)
+  const rightArea = (right.bbox.x1 - right.bbox.x0) * (right.bbox.y1 - right.bbox.y0)
+  const union = leftArea + rightArea - intersection
+  if (union > 0 && intersection / union >= 0.3) return true
+
+  const leftCenterX = (left.bbox.x0 + left.bbox.x1) / 2
+  const leftCenterY = (left.bbox.y0 + left.bbox.y1) / 2
+  const rightCenterX = (right.bbox.x0 + right.bbox.x1) / 2
+  const rightCenterY = (right.bbox.y0 + right.bbox.y1) / 2
+  return Math.abs(leftCenterX - rightCenterX) <= 0.015
+    && Math.abs(leftCenterY - rightCenterY) <= 0.015
+}
+
+const SOURCE_VERTICAL_RANGES: Record<string, readonly [number, number]> = {
+  full: [0, 1],
+  top: [0, 0.43],
+  middle: [0.25, 0.75],
+  bottom: [0.57, 1],
+  identity: [0.14, 0.54],
+  variety: [0.22, 0.4],
+}
+
+function sourceFamily(source: string) {
+  return source.replace(/-(?:color|grayscale)$/, '')
+}
+
+function compatibleFragmentSources(left: OcrTextBlock, right: OcrTextBlock) {
+  if (!left.source || !right.source || !left.bbox || !right.bbox) return false
+  const leftFamily = sourceFamily(left.source)
+  const rightFamily = sourceFamily(right.source)
+  if (leftFamily === rightFamily) return true
+  const leftRange = SOURCE_VERTICAL_RANGES[leftFamily]
+  const rightRange = SOURCE_VERTICAL_RANGES[rightFamily]
+  if (!leftRange || !rightRange) return false
+  const sharedTop = Math.max(leftRange[0], rightRange[0])
+  const sharedBottom = Math.min(leftRange[1], rightRange[1])
+  const leftCenterY = (left.bbox.y0 + left.bbox.y1) / 2
+  const rightCenterY = (right.bbox.y0 + right.bbox.y1) / 2
+  return sharedTop <= sharedBottom
+    && leftCenterY >= sharedTop
+    && leftCenterY <= sharedBottom
+    && rightCenterY >= sharedTop
+    && rightCenterY <= sharedBottom
+}
+
+function sharesBaseline(left: OcrTextBlock, right: OcrTextBlock) {
+  if (!left.bbox || !right.bbox) return false
+  const leftHeight = left.bbox.y1 - left.bbox.y0
+  const rightHeight = right.bbox.y1 - right.bbox.y0
+  const verticalOverlap = Math.min(left.bbox.y1, right.bbox.y1) - Math.max(left.bbox.y0, right.bbox.y0)
+  return verticalOverlap >= Math.min(leftHeight, rightHeight) * 0.4
+}
+
+function adjacentOnBaseline(left: OcrTextBlock, right: OcrTextBlock) {
+  if (!left.bbox || !right.bbox || !compatibleFragmentSources(left, right) || !sharesBaseline(left, right)) return false
+  const leftHeight = left.bbox.y1 - left.bbox.y0
+  const rightHeight = right.bbox.y1 - right.bbox.y0
+  const horizontalGap = right.bbox.x0 - left.bbox.x1
+  return horizontalGap >= -0.004
+    && horizontalGap <= Math.max(0.04, Math.min(leftHeight, rightHeight) * 1.5)
+}
+
+function normalizedBlockConfidence(block: OcrTextBlock) {
+  if (typeof block.confidence !== 'number' || !Number.isFinite(block.confidence)) return 0
+  return Math.max(0, Math.min(1, block.confidence > 1 ? block.confidence / 100 : block.confidence))
+}
+
+function joinedFragmentText(left: OcrTextBlock, right: OcrTextBlock) {
+  if (normalizedBlockConfidence(left) < 0.5 || normalizedBlockConfidence(right) < 0.5) return null
+  const leftText = left.text.trim()
+  const rightText = right.text.trim()
+  if (!/^[\p{L}\p{N}'-]+$/u.test(leftText) || !/^[\p{L}\p{N}'-]+$/u.test(rightText)) return null
+
+  const altitudeParts = /^\d{3,4}$/.test(leftText) && /^\p{L}{1,5}$/u.test(rightText)
+  const splitWord = /^\p{L}{1,4}$/u.test(leftText)
+    && /^\p{Ll}{1,5}$/u.test(rightText)
+  const properNameParts = /^\p{Lu}[\p{L}'-]{1,3}$/u.test(leftText)
+    && /^\p{Lu}[\p{L}'-]{2,14}$/u.test(rightText)
+    && leftText !== leftText.toLocaleUpperCase()
+    && rightText !== rightText.toLocaleUpperCase()
+  if (!altitudeParts && !splitWord && !properNameParts) return null
+  return `${leftText}${splitWord ? '' : ' '}${rightText}`
+}
+
+function addAdjacentFragmentAlternates(blocks: readonly OcrTextBlock[]) {
+  const result = [...blocks]
+  const positioned = blocks
+    .filter((block): block is OcrTextBlock & { bbox: NonNullable<OcrTextBlock['bbox']> } => (
+      Boolean(block.bbox) && !block.source?.startsWith('joined:')
+    ))
+    .toSorted((left, right) => (
+      (left.bbox.y0 + left.bbox.y1) - (right.bbox.y0 + right.bbox.y1)
+      || left.bbox.x0 - right.bbox.x0
+    ))
+  const rows: Array<typeof positioned> = []
+  for (const block of positioned) {
+    const row = rows.findLast(candidate => candidate.some(anchor => sharesBaseline(anchor, block)))
+    if (row) row.push(block)
+    else rows.push([block])
+  }
+  for (const row of rows) {
+    const ordered = row.toSorted((left, right) => left.bbox.x0 - right.bbox.x0)
+    for (let index = 0; index + 1 < ordered.length; index += 1) {
+      const left = ordered[index]
+      const right = ordered.slice(index + 1).find(candidate => candidate.bbox.x0 >= left.bbox.x1 - 0.004)
+      if (!right || !adjacentOnBaseline(left, right)) continue
+      const text = joinedFragmentText(left, right)
+      if (!text) continue
+      if (result.some(candidate => normalizeBlockText(candidate.text) === normalizeBlockText(text))) continue
+      result.push({
+        text,
+        confidence: Math.min(left.confidence ?? 0, right.confidence ?? 0),
+        source: `joined:${left.source ?? 'unknown'}+${right.source ?? 'unknown'}`,
+        order: Math.min(left.order ?? 0, right.order ?? 0),
+        bbox: {
+          x0: Math.min(left.bbox.x0, right.bbox.x0),
+          y0: Math.min(left.bbox.y0, right.bbox.y0),
+          x1: Math.max(left.bbox.x1, right.bbox.x1),
+          y1: Math.max(left.bbox.y1, right.bbox.y1),
+        },
+      })
+    }
+  }
+  return result
 }
 
 export function identityCropForPortraitBag(width: number, height: number) {
@@ -113,7 +254,7 @@ export function identityCropForPortraitBag(width: number, height: number) {
     left: Math.round(width * 0.15),
     top: Math.round(height * 0.14),
     width: Math.round(width * 0.73),
-    height: Math.round(height * 0.25),
+    height: Math.round(height * 0.4),
   }
 }
 
@@ -135,13 +276,17 @@ type PreparedOcrImage = {
   grayscale: Blob
   width: number
   height: number
-  bands: Array<{
-    image: Blob
-    source: string
-    rectangle: OcrRectangle
-    renderedWidth: number
-    renderedHeight: number
-  }>
+  bands: PreparedOcrCrop[]
+  identity: PreparedOcrCrop[]
+  variety?: PreparedOcrCrop
+}
+
+type PreparedOcrCrop = {
+  image: Blob
+  source: string
+  rectangle: OcrRectangle
+  renderedWidth: number
+  renderedHeight: number
 }
 
 function canvasBlob(canvas: HTMLCanvasElement) {
@@ -150,7 +295,7 @@ function canvasBlob(canvas: HTMLCanvasElement) {
   })
 }
 
-function drawScaledCrop(
+export function drawScaledCrop(
   source: HTMLCanvasElement,
   rectangle: OcrRectangle,
   targetLongEdge = 2000,
@@ -213,29 +358,56 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
       { source: 'middle', top: 0.25, height: 0.5 },
       { source: 'bottom', top: 0.57, height: 0.43 },
     ]
-    const bands = await Promise.all(bandDefinitions.map(async definition => {
+    const prepareCrop = async (
+      sourceCanvas: HTMLCanvasElement,
+      rectangle: OcrRectangle,
+      source: string,
+    ): Promise<PreparedOcrCrop> => {
+      const cropCanvas = drawScaledCrop(sourceCanvas, rectangle)
+      return {
+        image: await canvasBlob(cropCanvas),
+        source,
+        rectangle,
+        renderedWidth: cropCanvas.width,
+        renderedHeight: cropCanvas.height,
+      }
+    }
+    const bandsPromise = Promise.all(bandDefinitions.map(definition => {
       const rectangle = {
         left: 0,
         top: Math.round(height * definition.top),
         width,
         height: Math.min(height, Math.round(height * definition.height)),
       }
-      const bandCanvas = drawScaledCrop(colorCanvas, rectangle)
-      return {
-        image: await canvasBlob(bandCanvas),
-        source: definition.source,
-        rectangle,
-        renderedWidth: bandCanvas.width,
-        renderedHeight: bandCanvas.height,
-      }
+      return prepareCrop(colorCanvas, rectangle, definition.source)
     }))
+    const identityRectangle = identityCropForPortraitBag(width, height)
+    const varietyRectangle = varietyCropForPortraitBag(width, height)
+    const [color, grayscale, bands, identityColor, identityGrayscale, variety] = await Promise.all([
+      canvasBlob(colorCanvas),
+      canvasBlob(grayscaleCanvas),
+      bandsPromise,
+      identityRectangle
+        ? prepareCrop(colorCanvas, identityRectangle, 'identity-color')
+        : Promise.resolve(undefined),
+      identityRectangle
+        ? prepareCrop(grayscaleCanvas, identityRectangle, 'identity-grayscale')
+        : Promise.resolve(undefined),
+      varietyRectangle
+        ? prepareCrop(grayscaleCanvas, varietyRectangle, 'variety-grayscale')
+        : Promise.resolve(undefined),
+    ])
 
     return {
-      color: await canvasBlob(colorCanvas),
-      grayscale: await canvasBlob(grayscaleCanvas),
+      color,
+      grayscale,
       width,
       height,
       bands,
+      identity: [identityColor, identityGrayscale].filter(
+        (crop): crop is PreparedOcrCrop => Boolean(crop),
+      ),
+      variety,
     }
   } finally {
     bitmap.close()
@@ -258,7 +430,7 @@ export async function recognizeCoffeeBag(
   const reportProgress = (progress: number, status: string) => {
     const candidate = activePass < 0
       ? progress * 0.1
-      : 0.1 + ((activePass + progress) / 6) * 0.9
+      : 0.1 + ((activePass + progress) / MAX_RECOGNITION_PASSES) * 0.9
     reportedProgress = Math.max(reportedProgress, Math.min(1, candidate))
     options.onProgress?.({ progress: reportedProgress, status })
   }
@@ -279,16 +451,20 @@ export async function recognizeCoffeeBag(
       gzip: true,
       logger: message => reportProgress(message.progress, message.status),
     })
+    const throwIfAborted = () => {
+      if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
+    }
     const recognizePass = async (image: Blob) => {
+      throwIfAborted()
       activePass += 1
-      return worker!.recognize(image, {}, { blocks: true })
+      const result = await worker!.recognize(image, {}, { blocks: true })
+      throwIfAborted()
+      return result
     }
     await worker.setParameters({ tessedit_pageseg_mode: OCR_DEFAULT_PAGE_SEGMENTATION_MODE })
     const automaticResult = await recognizePass(prepared.color)
     await worker.setParameters({ tessedit_pageseg_mode: OCR_PAGE_SEGMENTATION_MODE })
-    if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
     const sparseResult = await recognizePass(prepared.grayscale)
-    if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
     let blocks = mergeOcrBlocks(
       blocksFromOcrData(automaticResult.data, {
         source: 'full-color',
@@ -313,7 +489,6 @@ export async function recognizeCoffeeBag(
       await worker.setParameters({ tessedit_pageseg_mode: OCR_PAGE_SEGMENTATION_MODE })
       for (const band of prepared.bands) {
         const result = await recognizePass(band.image)
-        if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
         blocks = mergeOcrBlocks(blocks, blocksFromOcrData(result.data, {
           source: band.source,
           imageWidth: prepared.width,
@@ -326,29 +501,39 @@ export async function recognizeCoffeeBag(
       }
     }
 
-    const identityCrop = !extraction.bean.variety && identityCropForPortraitBag(prepared.width, prepared.height)
-    if (identityCrop) {
-      const identityCanvas = {
-        image: prepared.bands[0].image,
-        source: prepared.bands[0].source,
-        rectangle: prepared.bands[0].rectangle,
-        renderedWidth: prepared.bands[0].renderedWidth,
-        renderedHeight: prepared.bands[0].renderedHeight,
-      }
+    if (
+      prepared.identity.length
+      && (!extraction.bean.variety || extraction.bean.process === 'unknown')
+    ) {
       await worker.setParameters({ tessedit_pageseg_mode: OCR_IDENTITY_PAGE_SEGMENTATION_MODE })
-      const identityResult = await recognizePass(identityCanvas.image)
-      if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
-      blocks = mergeOcrBlocks(blocks, blocksFromOcrData(identityResult.data, {
-        source: `${identityCanvas.source}-identity`,
+      for (const identity of prepared.identity) {
+        const identityResult = await recognizePass(identity.image)
+        blocks = mergeOcrBlocks(blocks, blocksFromOcrData(identityResult.data, {
+          source: identity.source,
+          imageWidth: prepared.width,
+          imageHeight: prepared.height,
+          renderedWidth: identity.renderedWidth,
+          renderedHeight: identity.renderedHeight,
+          rectangle: identity.rectangle,
+        }))
+        extraction = parseCoffeeBagOcr(blocks)
+      }
+    }
+
+    if (!extraction.bean.variety && prepared.variety) {
+      await worker.setParameters({ tessedit_pageseg_mode: OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE })
+      const varietyResult = await recognizePass(prepared.variety.image)
+      blocks = mergeOcrBlocks(blocks, blocksFromOcrData(varietyResult.data, {
+        source: prepared.variety.source,
         imageWidth: prepared.width,
         imageHeight: prepared.height,
-        renderedWidth: identityCanvas.renderedWidth,
-        renderedHeight: identityCanvas.renderedHeight,
-        rectangle: identityCanvas.rectangle,
+        renderedWidth: prepared.variety.renderedWidth,
+        renderedHeight: prepared.variety.renderedHeight,
+        rectangle: prepared.variety.rectangle,
       }))
       extraction = parseCoffeeBagOcr(blocks)
     }
-    activePass = 5
+    activePass = MAX_RECOGNITION_PASSES - 1
     reportProgress(1, 'complete')
     return extraction
   } finally {

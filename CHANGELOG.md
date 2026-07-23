@@ -1,3 +1,8 @@
+## 2.0.5 - 2026-07-23
+
+- Improved local OCR reliability for original-resolution coffee bag photos, including curved process text, split altitude and producer details, table layouts, and redundant tasting notes.
+- Added metadata-safe production-equivalent fixtures alongside the optimized six-bag Scan-to-Analysis regression matrix.
+
 ## 2.0.4 - 2026-07-23
 
 - Improved local coffee-bag scanning with complementary color and contrast OCR passes, layout-aware field mapping, and more reliable extraction of wrapped or stylized details.

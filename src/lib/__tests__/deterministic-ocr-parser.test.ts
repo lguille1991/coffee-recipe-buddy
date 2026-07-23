@@ -181,6 +181,9 @@ describe('parseCoffeeBagOcr', () => {
 
     expect(result.bean.altitude_masl).toBe(1450)
     expect(result.confidence.altitude_masl).toBe(0.88)
+    expect(parseCoffeeBagOcr([
+      { text: '1200 ma', confidence: 65 },
+    ]).bean.altitude_masl).toBe(1200)
   })
 
   it('collects multiline tasting notes and a wrapped labelled origin', () => {
@@ -215,6 +218,72 @@ describe('parseCoffeeBagOcr', () => {
     })
   })
 
+  it('maps independently recognized table columns by geometry instead of block order', () => {
+    const result = parseCoffeeBagOcr([
+      {
+        text: 'FINCA',
+        confidence: 88,
+        bbox: { x0: 0.7, y0: 0.2, x1: 0.86, y1: 0.24 },
+      },
+      {
+        text: 'ACEVEDO-HUILA',
+        confidence: 91,
+        bbox: { x0: 0.39, y0: 0.27, x1: 0.62, y1: 0.31 },
+      },
+      {
+        text: 'CAFICULTORA',
+        confidence: 82,
+        bbox: { x0: 0.08, y0: 0.2, x1: 0.3, y1: 0.24 },
+      },
+      {
+        text: 'BELLAVISTA',
+        confidence: 90,
+        bbox: { x0: 0.7, y0: 0.27, x1: 0.86, y1: 0.31 },
+      },
+      {
+        text: 'TERRITORIO',
+        confidence: 85,
+        bbox: { x0: 0.4, y0: 0.2, x1: 0.61, y1: 0.24 },
+      },
+      {
+        text: 'FAMILIA PLAZAS',
+        confidence: 93,
+        bbox: { x0: 0.08, y0: 0.27, x1: 0.31, y1: 0.31 },
+      },
+    ])
+
+    expect(result.bean).toMatchObject({
+      producer: 'Familia Plazas',
+      origin: 'Acevedo-Huila',
+      finca: 'Bella Vista',
+    })
+  })
+
+  it('keeps a shared table value row above its headers instead of mixing nearby identity text', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'CASICUL TORA _', confidence: 64, bbox: { x0: 0.3, y0: 0.4, x1: 0.42, y1: 0.42 } },
+      { text: '| TERRITORIO', confidence: 77, bbox: { x0: 0.47, y0: 0.4, x1: 0.58, y1: 0.42 } },
+      { text: 'FAMILIA PLAZAS', confidence: 96, bbox: { x0: 0.3, y0: 0.37, x1: 0.43, y1: 0.39 } },
+      { text: 'ACEVEDO-HUILA.', confidence: 91, bbox: { x0: 0.47, y0: 0.37, x1: 0.59, y1: 0.39 } },
+      { text: 'Cafes Especiales Del Trópico', confidence: 94, bbox: { x0: 0.28, y0: 0.34, x1: 0.46, y1: 0.36 } },
+      { text: '| uva', confidence: 36, bbox: { x0: 0.47, y0: 0.43, x1: 0.54, y1: 0.45 } },
+    ])
+
+    expect(result.bean.producer).toBe('Familia Plazas')
+    expect(result.bean.origin).toBe('Acevedo-Huila')
+  })
+
+  it('rejects header and process fragments as table values', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'CAFICULTORA | TERRITORIO | FINCA', confidence: 88, source: 'grid', order: 0 },
+      { text: 'FAMILIA PLAZAS | CAFICULTORA | LAVADO', confidence: 91, source: 'grid', order: 1 },
+    ])
+
+    expect(result.bean.producer).toBe('Familia Plazas')
+    expect(result.bean.origin).toBeUndefined()
+    expect(result.bean.finca).toBeUndefined()
+  })
+
   it('recognizes bounded process OCR variants only in an identity context', () => {
     const identity = parseCoffeeBagOcr([
       { text: 'Pacas', confidence: 96, source: 'identity', order: 0 },
@@ -230,6 +299,40 @@ describe('parseCoffeeBagOcr', () => {
       { text: 'Pacas', confidence: 96, source: 'identity', order: 0 },
       { text: 'Va TURP', confidence: 30, source: 'identity', order: 1 },
     ]).bean.process).toBe('unknown')
+    expect(parseCoffeeBagOcr([
+      { text: 'Pacas', confidence: 96, source: 'identity', order: 0 },
+      { text: 'landscape', confidence: 99, source: 'identity', order: 1 },
+    ]).bean.process).toBe('unknown')
+    expect(parseCoffeeBagOcr([
+      { text: 'Bourbon Rosa', confidence: 94, source: 'identity', order: 0 },
+      { text: '| Lavabo', confidence: 59, source: 'identity', order: 1 },
+    ]).bean.process).toBe('washed')
+    expect(parseCoffeeBagOcr([
+      { text: 'Pacas', confidence: 91, source: 'identity', order: 0 },
+      { text: 'Va rue', confidence: 56, source: 'identity', order: 1 },
+    ]).bean.process).toBe('natural')
+    expect(parseCoffeeBagOcr([
+      { text: 'Pacas', confidence: 91, source: 'identity', order: 0 },
+      { text: 'ya que', confidence: 92, source: 'marketing', order: 0 },
+    ]).bean.process).toBe('unknown')
+  })
+
+  it('keeps geometric table matching inside each local header row', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'CAFICULTORA', confidence: 88, bbox: { x0: 0.1, y0: 0.4, x1: 0.3, y1: 0.43 } },
+      { text: 'TERRITORIO', confidence: 87, bbox: { x0: 0.4, y0: 0.4, x1: 0.6, y1: 0.43 } },
+      { text: 'FAMILIA PLAZAS', confidence: 93, bbox: { x0: 0.1, y0: 0.36, x1: 0.3, y1: 0.39 } },
+      { text: 'ACEVEDO-HUILA', confidence: 91, bbox: { x0: 0.4, y0: 0.36, x1: 0.6, y1: 0.39 } },
+      { text: 'Finca', confidence: 90, source: 'details', order: 0, bbox: { x0: 0.7, y0: 0.7, x1: 0.82, y1: 0.73 } },
+      { text: 'El Roble', confidence: 92, source: 'details', order: 1, bbox: { x0: 0.7, y0: 0.74, x1: 0.84, y1: 0.77 } },
+      { text: 'Marketing Lot', confidence: 97, bbox: { x0: 0.7, y0: 0.66, x1: 0.86, y1: 0.69 } },
+    ])
+
+    expect(result.bean).toMatchObject({
+      producer: 'Familia Plazas',
+      origin: 'Acevedo-Huila',
+      finca: 'El Roble',
+    })
   })
 
   it('uses the unlabelled person line between a farm and identity as producer', () => {
@@ -254,6 +357,44 @@ describe('parseCoffeeBagOcr', () => {
 
     expect(result.bean.producer).toBe('Saúl Gutierrez')
     expect(result.confidence.producer).toBe(0.94)
+  })
+
+  it('reconciles a producer surname only inside labelled producer context', () => {
+    const result = parseCoffeeBagOcr([
+      {
+        text: 'Productor: Saúl',
+        confidence: 94,
+        source: 'identity',
+        order: 0,
+        bbox: { x0: 0.2, y0: 0.3, x1: 0.43, y1: 0.34 },
+      },
+      {
+        text: 'Gutierrez',
+        confidence: 86,
+        source: 'identity',
+        order: 1,
+        bbox: { x0: 0.44, y0: 0.3, x1: 0.58, y1: 0.34 },
+      },
+    ])
+
+    expect(result.bean.producer).toBe('Saúl Gutierrez')
+  })
+
+  it('prefers the longest recognized tasting-note phrase globally', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'Notas: naranja dulce, naranja, avellana', confidence: 90 },
+    ])
+
+    expect(result.bean.tasting_notes).toEqual(['naranja dulce', 'avellana'])
+  })
+
+  it('prefers a recognized variety over a damaged labelled reading', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'Variedad: Se a', confidence: 96 },
+      { text: 'BOURBON ROSA', confidence: 82 },
+    ])
+
+    expect(result.bean.variety).toBe('Bourbon Rosa')
   })
 
   it('does not treat weights, roast dates, marketing copy, or unsupported roast wording as metadata', () => {

@@ -97,9 +97,17 @@ const PROCESS_ALIASES: Record<string, BeanProfile['process']> = {
   experimento: 'experimental',
 }
 
-const FUZZY_NATURAL_ALIASES = new Set(['naturp', 'vaturp', 'va turp', 'va turd', 'vat ye', 'va rue', 'varye', 'var ye'])
 const MIN_FUZZY_CONFIDENCE = 0.5
 const MIN_INFERRED_PRODUCER_CONFIDENCE = 0.7
+const FUZZY_PROCESS_TARGETS: Array<[string, BeanProfile['process']]> = [
+  ['natural', 'natural'],
+  ['washed', 'washed'],
+  ['lavado', 'washed'],
+  ['honey', 'honey'],
+  ['anaerobic', 'anaerobic'],
+  ['carbonic', 'carbonic'],
+  ['experimental', 'experimental'],
+]
 
 const VARIETY_ALIASES: Record<string, string> = {
   geisha: 'Geisha',
@@ -196,7 +204,7 @@ function parseAltitude(value: string) {
 }
 
 function parseStandaloneAltitude(value: string) {
-  if (!/(?:^|[\d\s])(?:masl|msnm|m)\b/i.test(value)) return null
+  if (!/(?:^|[\d\s])(?:masl|msnm|ma|m)\b/i.test(value)) return null
   return parseAltitude(value)
 }
 
@@ -216,8 +224,13 @@ function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | n
   if (field === 'altitude_masl') return parseAltitude(value)
   if (field === 'tasting_notes') return parseNotes(value)
   if (field === 'variety') return VARIETY_ALIASES[normalized] ?? titleCaseUppercase(value)
-  if (field === 'origin' && (/^(?:finca|farm|altitud|altitude)\b/.test(normalized) || /\b(?:masl|msnm)\b/.test(normalized))) return null
+  if (field === 'origin' && (
+    /^(?:finca|farm|altitud|altitude)\b/.test(normalized)
+    || /\b(?:masl|msnm)\b/.test(normalized)
+    || tableHeaderField(value)
+  )) return null
   if (field === 'origin') return cleanValue(value).replace(/\bllamatepec\b/gi, 'Ilamatepec')
+  if (field === 'finca') return cleanValue(value).replace(/^Bellavista$/i, 'Bella Vista')
   return cleanValue(value) || null
 }
 
@@ -309,6 +322,194 @@ function likelyPersonName(value: string) {
   return words.length >= 2 && words.length <= 4
 }
 
+function plausiblePersonIdentity(value: string) {
+  const cleaned = cleanValue(value.replace(/^de\s+/i, ''))
+  const normalized = normalize(cleaned).replace(/^[|:.,\-/\s]+|[|:.,\-/\s]+$/g, '')
+  const words = cleaned.split(/\s+/)
+  const personLikeCasing = cleaned === cleaned.toLocaleUpperCase()
+    || words.every(word => /^\p{Lu}/u.test(word))
+  return likelyPersonName(value)
+    && personLikeCasing
+    && !VARIETY_ALIASES[normalized]
+    && !Object.keys(VARIETY_ALIASES).some(alias => (
+      new RegExp(`(?:^|\\s)${alias.replace(' ', '\\s+')}(?:\\s|$)`).test(normalized)
+    ))
+    && !PROCESS_ALIASES[normalized]
+    && !ROAST_ALIASES[normalized]
+    && !fuzzyIdentityProcess(value)
+    && !tableHeaderField(value)
+    && !COUNTRY_ORIGIN.test(normalized)
+}
+
+function tableHeaderField(value: string): 'producer' | 'origin' | 'finca' | null {
+  const normalized = normalize(value).replace(/^[|:.,\-/\s]+|[|:.,\-/\s]+$/g, '')
+  if (extractLabelAndValue(value)?.value) return null
+  if (/^(?:ca[fs]icul\s*tora|ca[fs]icult\w*|cultora|agricult\w*|producer|productor)$/.test(normalized)) return 'producer'
+  if (/^(?:territorio|origin|origen|region)$/.test(normalized)) return 'origin'
+  if (/^(?:finca|farm)$/.test(normalized)) return 'finca'
+  return null
+}
+
+function plausibleTableValue(field: 'producer' | 'origin' | 'finca', value: string) {
+  const normalized = normalize(value).replace(/^[|:.,\-/\s]+|[|:.,\-/\s]+$/g, '')
+  if (
+    !normalized
+    || normalized.length > 50
+    || tableHeaderField(value)
+    || extractLabelAndValue(value)
+    || parseAltitude(value) !== null
+    || PROCESS_ALIASES[normalized]
+    || ROAST_ALIASES[normalized]
+    || VARIETY_ALIASES[normalized]
+    || fuzzyIdentityProcess(value)
+  ) return false
+  if (field === 'producer') return plausiblePersonIdentity(value.replace(/^de\s+/i, ''))
+  if (!/[a-z]/.test(normalized) || normalized.split(' ').length > 5) return false
+  if (field === 'origin') return !/^(?:finca|farm|caficult|productor|producer)\b/.test(normalized)
+  return !COUNTRY_ORIGIN.test(normalized)
+}
+
+function geometricTableValues(blocks: readonly OcrTextBlock[]) {
+  const detectedHeaders = blocks.flatMap(block => {
+    const field = tableHeaderField(block.text)
+    return field && block.bbox && !block.source?.startsWith('joined:') ? [{ block, field }] : []
+  })
+  type TableField = 'producer' | 'origin' | 'finca'
+  type TableDirection = 'above' | 'below'
+  type TableMatch = {
+    field: TableField
+    block: OcrTextBlock & { bbox: OcrBoundingBox }
+    direction: TableDirection
+    score: number
+  }
+  const headerRows: Array<typeof detectedHeaders> = []
+  const sortedHeaders = detectedHeaders.toSorted((left, right) => (
+    (left.block.bbox!.y0 + left.block.bbox!.y1) - (right.block.bbox!.y0 + right.block.bbox!.y1)
+  ))
+  for (const header of sortedHeaders) {
+    const centerY = (header.block.bbox!.y0 + header.block.bbox!.y1) / 2
+    const row = headerRows.findLast(candidate => {
+      const anchor = candidate[0].block.bbox!
+      return Math.abs(centerY - (anchor.y0 + anchor.y1) / 2) <= 0.04
+    })
+    if (row) row.push(header)
+    else headerRows.push([header])
+  }
+
+  const selectedValues = new Map<TableField, TableMatch>()
+  for (const row of headerRows) {
+    const strongestByField = new Map<TableField, (typeof row)[number]>()
+    for (const header of row) {
+      const current = strongestByField.get(header.field)
+      if (!current || confidenceFor(header.block) > confidenceFor(current.block)) {
+        strongestByField.set(header.field, header)
+      }
+    }
+    if (strongestByField.size < 2) continue
+    const headers = [...strongestByField.values()].toSorted((left, right) => (
+      (left.block.bbox!.x0 + left.block.bbox!.x1) - (right.block.bbox!.x0 + right.block.bbox!.x1)
+    ))
+    const matches: TableMatch[] = []
+    for (let headerIndex = 0; headerIndex < headers.length; headerIndex += 1) {
+      const header = headers[headerIndex]
+      const headerCenter = (header.block.bbox!.x0 + header.block.bbox!.x1) / 2
+      const leftBoundary = headerIndex > 0
+        ? (headerCenter + (headers[headerIndex - 1].block.bbox!.x0 + headers[headerIndex - 1].block.bbox!.x1) / 2) / 2
+        : Math.max(0, header.block.bbox!.x0 - 0.15)
+      const rightBoundary = headerIndex + 1 < headers.length
+        ? (headerCenter + (headers[headerIndex + 1].block.bbox!.x0 + headers[headerIndex + 1].block.bbox!.x1) / 2) / 2
+        : Math.min(1, header.block.bbox!.x1 + 0.15)
+      for (const block of blocks) {
+        if (
+          block === header.block
+          || !block.bbox
+          || block.source?.startsWith('joined:')
+          || !plausibleTableValue(header.field, block.text)
+        ) continue
+        const center = (block.bbox.x0 + block.bbox.x1) / 2
+        const verticalGap = Math.max(
+          0,
+          block.bbox.y0 - header.block.bbox!.y1,
+          header.block.bbox!.y0 - block.bbox.y1,
+        )
+        if (
+          verticalGap > 0.08
+          || center < leftBoundary - 0.02
+          || center > rightBoundary + 0.02
+        ) continue
+        const blockCenterY = (block.bbox.y0 + block.bbox.y1) / 2
+        const headerCenterY = (header.block.bbox!.y0 + header.block.bbox!.y1) / 2
+        matches.push({
+          field: header.field,
+          block: block as OcrTextBlock & { bbox: OcrBoundingBox },
+          direction: blockCenterY < headerCenterY ? 'above' : 'below',
+          score: confidenceFor(block) - verticalGap * 3 - Math.abs(center - headerCenter),
+        })
+      }
+    }
+
+    const bestByDirection = (direction: TableDirection) => {
+      const values = new Map<TableField, TableMatch>()
+      for (const match of matches) {
+        if (match.direction !== direction) continue
+        const current = values.get(match.field)
+        if (!current || match.score > current.score) values.set(match.field, match)
+      }
+      return values
+    }
+    const above = bestByDirection('above')
+    const below = bestByDirection('below')
+    const totalScore = (values: Map<TableField, TableMatch>) => (
+      [...values.values()].reduce((sum, match) => sum + match.score, 0)
+    )
+    const selected = above.size > below.size
+      || (above.size === below.size && totalScore(above) > totalScore(below))
+      ? above
+      : below
+    for (const [field, match] of selected) {
+      const current = selectedValues.get(field)
+      if (!current || match.score > current.score) selectedValues.set(field, match)
+    }
+  }
+  return new Map([...selectedValues].map(([field, match]) => [field, match.block]))
+}
+
+function producerContinuation(
+  blocks: readonly OcrTextBlock[],
+  labelBlock: OcrTextBlock,
+  valueBlock: OcrTextBlock,
+) {
+  return blocks
+    .filter(candidate => {
+      const normalized = normalize(candidate.text)
+      if (
+        candidate === labelBlock
+        || candidate === valueBlock
+        || !/^[a-z][a-z'-]{2,}$/i.test(normalized)
+        || confidenceFor(candidate) < MIN_INFERRED_PRODUCER_CONFIDENCE
+        || extractLabelAndValue(candidate.text)
+        || tableHeaderField(candidate.text)
+      ) return false
+      if (valueBlock.bbox && candidate.bbox) {
+        const verticalOverlap = Math.min(valueBlock.bbox.y1, candidate.bbox.y1)
+          - Math.max(valueBlock.bbox.y0, candidate.bbox.y0)
+        const minimumHeight = Math.min(
+          valueBlock.bbox.y1 - valueBlock.bbox.y0,
+          candidate.bbox.y1 - candidate.bbox.y0,
+        )
+        return verticalOverlap >= minimumHeight * 0.35
+          && candidate.bbox.x0 >= valueBlock.bbox.x0
+          && candidate.bbox.x0 - valueBlock.bbox.x1 <= 0.08
+      }
+      return sameRun(valueBlock, candidate)
+        && typeof valueBlock.order === 'number'
+        && typeof candidate.order === 'number'
+        && candidate.order > valueBlock.order
+        && candidate.order - valueBlock.order <= 2
+    })
+    .toSorted((left, right) => (left.bbox?.x0 ?? left.order ?? 0) - (right.bbox?.x0 ?? right.order ?? 0))[0]
+}
+
 function countryOrigin(value: string) {
   const match = value.match(COUNTRY_ORIGIN)
   return match ? titleCaseUppercase(match[0]) : null
@@ -319,6 +520,7 @@ function recognizedTastingNotes(value: string) {
     .replace(/\bmanzara\b/g, 'manzana')
     .replace(/\branger\b/g, 'mandarina')
     .replace(/\bman\s+darina\b/g, 'mandarina')
+    .replace(/\bhi\s+igo\b/g, 'higo')
     .replace(/\bchoc\s+olate\b/g, 'chocolate')
     .replace(/\bcho\s+colate\b/g, 'chocolate')
     .replace(/\bavellan\b/g, 'avellana')
@@ -327,6 +529,55 @@ function recognizedTastingNotes(value: string) {
     if (new RegExp(`(?:^|[^a-z])${alias.replace(' ', '\\s+')}([^a-z]|$)`).test(corrected)) found.push(canonical)
   }
   return found
+}
+
+function preferLongestNotes(notes: readonly string[]) {
+  const unique = notes.filter((note, index) => (
+    notes.findIndex(candidate => normalize(candidate) === normalize(note)) === index
+  ))
+  return unique.filter(note => !unique.some(candidate => {
+    const normalizedNote = normalize(note)
+    const normalizedCandidate = normalize(candidate)
+    return normalizedCandidate !== normalizedNote
+      && normalizedCandidate.length > normalizedNote.length
+      && new RegExp(`(?:^|\\s)${normalizedNote.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`).test(normalizedCandidate)
+  }))
+}
+
+function editDistance(left: string, right: string) {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index)
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex]
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        previous[rightIndex] + 1,
+        current[rightIndex - 1] + 1,
+        previous[rightIndex - 1] + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      )
+    }
+    previous.splice(0, previous.length, ...current)
+  }
+  return previous[right.length]
+}
+
+function fuzzyIdentityProcess(value: string) {
+  const normalized = normalize(value).replace(/^[|:.,\-/\s]+|[|:.,\-/\s]+$/g, '')
+  if (!/^[a-z]+(?:\s+[a-z]+)?$/.test(normalized)) return null
+  const compact = normalized.replace(/\s+/g, '')
+  if (compact.length < 5 || compact.length > 12) return null
+  for (const [target, process] of FUZZY_PROCESS_TARGETS) {
+    const distance = editDistance(compact, target)
+    const maximumDistance = target.length >= 6 ? 3 : 2
+    if (distance <= maximumDistance && distance / Math.max(compact.length, target.length) <= 0.43) {
+      return { process, requiresSameRun: false }
+    }
+    if (
+      target === 'natural'
+      && distance <= 5
+      && /^[vny]a\s+[a-z]{3}$/.test(normalized)
+    ) return { process, requiresSameRun: true }
+  }
+  return null
 }
 
 function confidenceForJoinedNote(blocks: readonly OcrTextBlock[], note: string) {
@@ -385,6 +636,7 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
   const confidence: Record<string, number> = {}
   const candidates = new Map<BeanField, Candidate>()
   const unlabelledNotes = new Map<string, number>()
+  const tableValues = geometricTableValues(blocks)
 
   const setCandidate = (
     field: BeanField,
@@ -428,9 +680,15 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     ) {
       const values = following[0] ? splitTableRow(following[0].text) : []
       if (values.length >= 3) {
-        setCandidate('producer', titleCaseUppercase(values[0]), following[0], 4)
-        setCandidate('origin', titleCaseUppercase(values[1]), following[0], 4)
-        setCandidate('finca', titleCaseUppercase(values[2]).replace(/^Bellavista$/i, 'Bella Vista'), following[0], 4)
+        if (plausibleTableValue('producer', values[0])) {
+          setCandidate('producer', titleCaseUppercase(values[0]), following[0], 4)
+        }
+        if (plausibleTableValue('origin', values[1])) {
+          setCandidate('origin', titleCaseUppercase(values[1]), following[0], 4)
+        }
+        if (plausibleTableValue('finca', values[2])) {
+          setCandidate('finca', titleCaseUppercase(values[2]).replace(/^Bellavista$/i, 'Bella Vista'), following[0], 4)
+        }
       }
     }
 
@@ -449,9 +707,15 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
         && Math.abs(other.bbox.y0 - block.bbox.y0) <= 0.025
         && other.bbox.x0 > block.bbox.x1
       ))?.text
-      setCandidate('producer', titleCaseUppercase(rowValues[0].replace(/^de\s+/i, '')), block, 3)
-      setCandidate('origin', titleCaseUppercase(rowValues[1]), block, 3)
-      if (thirdValue) setCandidate('finca', titleCaseUppercase(thirdValue).replace(/^Bellavista$/i, 'Bella Vista'), block, 3)
+      if (plausibleTableValue('producer', rowValues[0])) {
+        setCandidate('producer', titleCaseUppercase(rowValues[0].replace(/^de\s+/i, '')), block, 3)
+      }
+      if (plausibleTableValue('origin', rowValues[1])) {
+        setCandidate('origin', titleCaseUppercase(rowValues[1]), block, 3)
+      }
+      if (thirdValue && plausibleTableValue('finca', thirdValue)) {
+        setCandidate('finca', titleCaseUppercase(thirdValue).replace(/^Bellavista$/i, 'Bella Vista'), block, 3)
+      }
     }
 
     const standaloneAltitude = parseStandaloneAltitude(block.text)
@@ -459,11 +723,11 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     const bareAltitude = /^\d{3,4}$/.test(normalized) ? parseAltitude(block.text) : null
     if (bareAltitude !== null && blocks.some(other => (
       other !== block
-      && /^(?:m|ms|masl|msnm)$/.test(normalize(other.text))
+      && /^(?:m|ma|ms|masl|msnm)$/.test(normalize(other.text))
       && (
         (block.bbox && other.bbox
-          && Math.abs(other.bbox.y0 - block.bbox.y0) <= 0.035
-          && Math.max(0, block.bbox.x0 - other.bbox.x1, other.bbox.x0 - block.bbox.x1) <= 0.05)
+          && Math.abs(other.bbox.y0 - block.bbox.y0) <= 0.05
+          && Math.max(0, block.bbox.x0 - other.bbox.x1, other.bbox.x0 - block.bbox.x1) <= 0.1)
         || (
           sameRun(block, other)
           && typeof block.order === 'number'
@@ -479,23 +743,29 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     if (standaloneRoast) setCandidate('roast_level', standaloneRoast, block, 2)
 
     const standaloneVariety = VARIETY_ALIASES[normalized]
-    if (standaloneVariety) setCandidate('variety', standaloneVariety, block, 2)
+    if (standaloneVariety) setCandidate('variety', standaloneVariety, block, 5)
 
     const compactIdentity = parseCompactIdentity(block.text)
     if (compactIdentity) {
       if (compactIdentity.process) setCandidate('process', compactIdentity.process, block, 2)
-      if (compactIdentity.variety) setCandidate('variety', compactIdentity.variety, block, 3)
+      if (compactIdentity.variety) setCandidate('variety', compactIdentity.variety, block, 5)
       if (compactIdentity.bean_name) setCandidate('bean_name', compactIdentity.bean_name, block, 2)
     }
 
-    const hasIdentityContext = Boolean(candidates.get('variety'))
-      || blocks.some(other => sameRun(block, other) && Boolean(VARIETY_ALIASES[normalize(other.text)]))
+    const sameRunIdentityContext = Boolean(block.source) && blocks.some(other => (
+      other !== block
+      && other.source === block.source
+      && Boolean(VARIETY_ALIASES[normalize(other.text)])
+    ))
+    const hasIdentityContext = Boolean(candidates.get('variety')) || sameRunIdentityContext
+    const fuzzyProcess = fuzzyIdentityProcess(block.text)
     if (
       hasIdentityContext
       && confidenceFor(block) >= MIN_FUZZY_CONFIDENCE
-      && FUZZY_NATURAL_ALIASES.has(normalized)
+      && fuzzyProcess
+      && (!fuzzyProcess.requiresSameRun || sameRunIdentityContext)
     ) {
-      setCandidate('process', 'natural', block, 1)
+      setCandidate('process', fuzzyProcess.process, block, 1)
     }
 
     const singleOrigin = normalized.match(/^single origin\s+(.+)$/)
@@ -510,6 +780,11 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
 
     const match = extractLabelAndValue(block.text)
     if (!match) continue
+    if (
+      block.bbox
+      && tableHeaderField(block.text) === match.field
+      && tableValues.has(match.field as 'producer' | 'origin' | 'finca')
+    ) continue
 
     let valueBlock = block
     let rawValue = match.value
@@ -559,7 +834,21 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
       if (continuation && /[,/-]\s*$/.test(rawValue)) rawValue = `${rawValue} ${continuation.text}`
     }
 
+    if (match.field === 'producer' && rawValue && normalize(rawValue).split(' ').length <= 3) {
+      const continuation = producerContinuation(blocks, block, valueBlock)
+      if (continuation && !normalize(rawValue).includes(normalize(continuation.text))) {
+        rawValue = `${rawValue} ${continuation.text}`
+      }
+    }
+
     setCandidate(match.field, parseValue(match.field, rawValue), valueBlock, 4)
+  }
+
+  for (const [field, block] of tableValues) {
+    const value = titleCaseUppercase(block.text.replace(/^de\s+/i, ''))
+    if (field === 'producer') setCandidate('producer', value, block, 4)
+    if (field === 'origin') setCandidate('origin', value, block, 4)
+    if (field === 'finca') setCandidate('finca', value.replace(/^Bellavista$/i, 'Bella Vista'), block, 4)
   }
 
   for (let index = 0; index + 2 < blocks.length; index += 1) {
@@ -569,7 +858,7 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     if (
       farm?.field === 'finca'
       && farm.value
-      && likelyPersonName(person.text)
+      && plausiblePersonIdentity(person.text)
       && confidenceFor(person) >= MIN_INFERRED_PRODUCER_CONFIDENCE
       && sameRun(blocks[index], person)
       && sameRun(person, identity)
@@ -589,7 +878,7 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
         && candidate.bbox.y0 >= farmBlock.bbox!.y1
         && candidate.bbox.y0 - farmBlock.bbox!.y1 <= 0.06
         && Math.max(0, farmBlock.bbox!.x0 - candidate.bbox.x1, candidate.bbox.x0 - farmBlock.bbox!.x1) <= 0.08
-        && likelyPersonName(candidate.text)
+        && plausiblePersonIdentity(candidate.text)
         && confidenceFor(candidate) >= MIN_INFERRED_PRODUCER_CONFIDENCE
         && !extractLabelAndValue(candidate.text)
       ))
@@ -632,6 +921,10 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     const averageConfidence = [...unlabelledNotes.values()].reduce((sum, value) => sum + value, 0) / unlabelledNotes.size
     const noteBlock = { text: notes.join(', '), confidence: averageConfidence }
     setCandidate('tasting_notes', notes, noteBlock, candidates.has('tasting_notes') ? 5 : 1)
+  }
+
+  if (Array.isArray(bean.tasting_notes)) {
+    bean.tasting_notes = preferLongestNotes(bean.tasting_notes)
   }
 
   const foundFields = Object.keys(confidence)

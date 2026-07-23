@@ -7,7 +7,22 @@ import { chromium } from 'playwright'
 const port = Number(process.env.OCR_E2E_PORT ?? '3001')
 const origin = `http://localhost:${port}`
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
-const bagDirectory = process.env.OCR_BAG_DIR ?? join(scriptDirectory, '..', 'tests', 'fixtures', 'coffee-bags')
+const fixtureRoot = join(scriptDirectory, '..', 'tests', 'fixtures')
+const fixtureSetSelection = process.env.OCR_E2E_FIXTURE_SET ?? 'all'
+const supportedFixtureSetSelections = new Set(['all', 'optimized', 'original'])
+
+if (!process.env.OCR_BAG_DIR && !supportedFixtureSetSelections.has(fixtureSetSelection)) {
+  throw new Error(
+    `Unsupported OCR_E2E_FIXTURE_SET ${JSON.stringify(fixtureSetSelection)}. Expected one of: ${[...supportedFixtureSetSelections].join(', ')}.`,
+  )
+}
+
+const fixtureSets = process.env.OCR_BAG_DIR
+  ? [{ name: 'custom', directory: process.env.OCR_BAG_DIR }]
+  : [
+      { name: 'optimized', directory: join(fixtureRoot, 'coffee-bags') },
+      { name: 'original', directory: join(fixtureRoot, 'coffee-bags-original') },
+    ].filter(({ name }) => fixtureSetSelection === 'all' || fixtureSetSelection === name)
 
 const cases = [
   {
@@ -75,6 +90,12 @@ const selectedCases = process.env.OCR_E2E_CASE
   ? cases.filter(testCase => testCase.file.includes(process.env.OCR_E2E_CASE))
   : cases
 
+if (selectedCases.length === 0) {
+  throw new Error(
+    `OCR_E2E_CASE ${JSON.stringify(process.env.OCR_E2E_CASE)} matched no coffee bags. Available files: ${cases.map(testCase => testCase.file).join(', ')}.`,
+  )
+}
+
 async function waitForServer(child) {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     if (child.exitCode !== null) throw new Error(`E2E app stopped before it was ready (exit ${child.exitCode}).`)
@@ -124,6 +145,26 @@ function assertBeanFields(file, actual, expected) {
   }
 }
 
+function assertExtraction(file, actual, testCase) {
+  assertBeanFields(file, actual, {
+    ...testCase.bean,
+    process: testCase.process,
+    roast_level: testCase.roast,
+  })
+  assertIncludes(`${file} extraction.origin`, actual?.origin ?? '', testCase.originIncludes)
+  assertEqual(
+    `${file} extraction.altitude_masl`,
+    actual?.altitude_masl === undefined ? '' : String(actual.altitude_masl),
+    testCase.altitude,
+  )
+  const notes = Array.isArray(actual?.tasting_notes)
+    ? actual.tasting_notes.join(' ').toLocaleLowerCase()
+    : ''
+  for (const note of testCase.notes) {
+    assertIncludes(`${file} extraction.tasting_notes`, notes, note)
+  }
+}
+
 const app = spawn('npm', ['run', 'dev', '--', '--port', String(port)], {
   env: { ...process.env, OCR_E2E_TEST_MODE: '1', NEXT_PUBLIC_E2E_TEST_AUTH: '1' },
   stdio: 'inherit',
@@ -137,6 +178,7 @@ try {
   const page = await browser.newPage()
   const unexpectedRequests = []
   const extractionRequests = []
+  const failures = []
   page.on('request', request => {
     const url = request.url()
     if (new URL(url).pathname === '/api/extract-bean') extractionRequests.push(url)
@@ -144,36 +186,43 @@ try {
     unexpectedRequests.push(url)
   })
 
-  for (const testCase of selectedCases) {
-    const filePath = join(bagDirectory, testCase.file)
-    await access(filePath)
-    await page.goto(`${origin}/scan`)
-    await page.locator('[data-testid="coffee-photo-file-input"]').setInputFiles(filePath)
-    await page.waitForURL(`${origin}/analysis`, { timeout: 120_000 })
+  for (const fixtureSet of fixtureSets) {
+    for (const testCase of selectedCases) {
+      const label = `${fixtureSet.name}/${testCase.file}`
+      try {
+        const filePath = join(fixtureSet.directory, testCase.file)
+        await access(filePath)
+        await page.goto(`${origin}/scan`)
+        await page.locator('[data-testid="coffee-photo-file-input"]').setInputFiles(filePath)
+        await page.waitForURL(`${origin}/analysis`, { timeout: 120_000 })
 
-    const extraction = await page.evaluate(() => {
-      const stored = sessionStorage.getItem('extractionResult')
-      return stored ? JSON.parse(stored) : null
-    })
-    console.log(`${testCase.file}: ${JSON.stringify(extraction?.bean)}`)
-    assertEqual(`${testCase.file} coffee name`, await page.locator('[data-testid="coffee-name"]').inputValue(), testCase.name)
-    assertIncludes(`${testCase.file} origin`, await page.locator('[data-testid="bean-origin"]').inputValue(), testCase.originIncludes)
-    assertEqual(`${testCase.file} process`, await page.locator('[data-testid="bean-process"]').inputValue(), testCase.process)
-    assertEqual(`${testCase.file} roast`, await page.locator('[data-testid="roast-level-input"]').inputValue(), testCase.roast)
-    assertEqual(`${testCase.file} altitude`, await page.locator('[data-testid="altitude"]').inputValue(), testCase.altitude)
-
-    assertBeanFields(testCase.file, extraction?.bean, testCase.bean)
-    const notes = Array.isArray(extraction?.bean?.tasting_notes)
-      ? extraction.bean.tasting_notes.join(' ').toLocaleLowerCase()
-      : ''
-    for (const note of testCase.notes) {
-      assertIncludes(`${testCase.file} tasting notes`, notes, note)
+        const extraction = await page.evaluate(() => {
+          const stored = sessionStorage.getItem('extractionResult')
+          return stored ? JSON.parse(stored) : null
+        })
+        console.log(`${label}: ${JSON.stringify(extraction?.bean)}`)
+        assertExtraction(label, extraction?.bean, testCase)
+        assertEqual(`${label} coffee name`, await page.locator('[data-testid="coffee-name"]').inputValue(), testCase.name)
+        assertIncludes(`${label} origin`, await page.locator('[data-testid="bean-origin"]').inputValue(), testCase.originIncludes)
+        assertEqual(`${label} process`, await page.locator('[data-testid="bean-process"]').inputValue(), testCase.process)
+        assertEqual(`${label} roast`, await page.locator('[data-testid="roast-level-input"]').inputValue(), testCase.roast)
+        assertEqual(`${label} altitude`, await page.locator('[data-testid="altitude"]').inputValue(), testCase.altitude)
+        const renderedNotes = await page.getByRole('heading', { name: 'Flavor Notes' }).locator('..').innerText()
+        for (const note of testCase.notes) {
+          assertIncludes(`${label} tasting notes`, renderedNotes, note)
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        failures.push(`${label}: ${message}`)
+        console.error(`${label}: FAILED: ${message}`)
+      }
     }
   }
 
   if (extractionRequests.length) throw new Error(`OCR UI called the removed extraction endpoint: ${extractionRequests.join(', ')}`)
   if (unexpectedRequests.length) throw new Error(`OCR UI made unexpected non-local requests: ${unexpectedRequests.join(', ')}`)
-  console.log(`Verified ${selectedCases.length} coffee bags through the authenticated Scan → Analysis UI.`)
+  if (failures.length) throw new Error(`OCR UI failures:\n${failures.join('\n')}`)
+  console.log(`Verified ${selectedCases.length * fixtureSets.length} coffee bags through the authenticated Scan → Analysis UI.`)
 } finally {
   await browser?.close()
   await stopServer(app)
