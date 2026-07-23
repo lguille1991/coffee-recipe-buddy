@@ -50,6 +50,35 @@ describe('browser OCR helpers', () => {
     })).toEqual([{ text: 'Proceso: Lavado', confidence: 82 }])
   })
 
+  it('preserves line layout and maps crop coordinates into the full image', () => {
+    expect(blocksFromOcrData({
+      text: 'ignored',
+      confidence: 10,
+      blocks: [{
+        text: 'ignored block text',
+        confidence: 70,
+        paragraphs: [{
+          lines: [{
+            text: 'Origin: El Salvador',
+            confidence: 92,
+            bbox: { x0: 10, y0: 20, x1: 190, y1: 40 },
+          }],
+        }],
+      }],
+    }, {
+      source: 'bottom',
+      imageWidth: 400,
+      imageHeight: 800,
+      rectangle: { left: 0, top: 400, width: 200, height: 400 },
+    })).toEqual([{
+      text: 'Origin: El Salvador',
+      confidence: 92,
+      source: 'bottom',
+      order: 0,
+      bbox: { x0: 0.025, y0: 0.525, x1: 0.475, y1: 0.55 },
+    }])
+  })
+
   it('splits multi-line layout blocks without losing their confidence', () => {
     expect(blocksFromOcrData({
       text: 'ignored', confidence: 10,

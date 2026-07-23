@@ -1,3 +1,8 @@
+## 2.0.4 - 2026-07-23
+
+- Improved local coffee-bag scanning with complementary color and contrast OCR passes, layout-aware field mapping, and more reliable extraction of wrapped or stylized details.
+- Added a six-bag browser regression matrix covering the complete Scan-to-Analysis flow without external extraction requests.
+
 ## 2.0.3 - 2026-07-23
 
 - Switched the local development server to Webpack to avoid a Turbopack CSS-generation failure; production builds are unchanged.
