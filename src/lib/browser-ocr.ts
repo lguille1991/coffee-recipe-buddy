@@ -2,9 +2,16 @@
 
 import { parseCoffeeBagOcr, type OcrTextBlock } from '@/lib/deterministic-ocr-parser'
 import type { ExtractionResponse } from '@/types/recipe'
+import type { PSM } from 'tesseract.js'
 
 const OCR_ASSET_ROOT = '/ocr/v7'
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+// Coffee bags are composed labels rather than one continuous document column.
+// Tesseract sparse-text mode preserves their independently positioned fields.
+export const OCR_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
+export const OCR_DEFAULT_PAGE_SEGMENTATION_MODE: PSM = '3' as PSM
+export const OCR_IDENTITY_PAGE_SEGMENTATION_MODE: PSM = '6' as PSM
 
 export type OcrProgress = {
   progress: number
@@ -27,7 +34,30 @@ export function blocksFromOcrData(data: { text: string; confidence: number; bloc
   return data.text.split(/\r?\n/).filter(Boolean).map(text => ({ text, confidence: data.confidence }))
 }
 
-async function preprocessForOcr(file: File): Promise<Blob> {
+export function mergeOcrBlocks(...runs: readonly OcrTextBlock[][]): OcrTextBlock[] {
+  const merged = new Map<string, OcrTextBlock>()
+  for (const block of runs.flat()) {
+    const key = block.text.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!key) continue
+    const existing = merged.get(key)
+    if (!existing || (block.confidence ?? 0) > (existing.confidence ?? 0)) {
+      merged.set(key, block)
+    }
+  }
+  return [...merged.values()]
+}
+
+export function identityCropForPortraitBag(width: number, height: number) {
+  if (height / width < 1.1) return null
+  return {
+    left: Math.round(width * 0.15),
+    top: Math.round(height * 0.14),
+    width: Math.round(width * 0.73),
+    height: Math.round(height * 0.25),
+  }
+}
+
+async function preprocessForOcr(file: File): Promise<{ image: Blob; width: number; height: number }> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
     const scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height))
@@ -50,9 +80,10 @@ async function preprocessForOcr(file: File): Promise<Blob> {
     }
     context.putImageData(image, 0, 0)
 
-    return await new Promise<Blob>((resolve, reject) => {
+    const preparedImage = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not prepare this photo for OCR.')), 'image/png')
     })
+    return { image: preparedImage, width, height }
   } finally {
     bitmap.close()
   }
@@ -63,7 +94,7 @@ export async function recognizeCoffeeBag(
   options: { onProgress?: (progress: OcrProgress) => void; signal?: AbortSignal } = {},
 ): Promise<ExtractionResponse> {
   assertSupportedOcrImage(file)
-  const image = await preprocessForOcr(file)
+  const prepared = await preprocessForOcr(file)
   if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
 
   const { createWorker } = await import('tesseract.js')
@@ -86,10 +117,26 @@ export async function recognizeCoffeeBag(
       gzip: true,
       logger: message => options.onProgress?.({ progress: message.progress, status: message.status }),
     })
+    await worker.setParameters({ tessedit_pageseg_mode: OCR_DEFAULT_PAGE_SEGMENTATION_MODE })
+    const automaticResult = await worker.recognize(prepared.image, {}, { blocks: true })
+    await worker.setParameters({ tessedit_pageseg_mode: OCR_PAGE_SEGMENTATION_MODE })
     if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
-    const result = await worker.recognize(image, {}, { blocks: true })
+    const sparseResult = await worker.recognize(prepared.image, {}, { blocks: true })
     if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
-    return parseCoffeeBagOcr(blocksFromOcrData(result.data))
+    let blocks = mergeOcrBlocks(
+      blocksFromOcrData(automaticResult.data),
+      blocksFromOcrData(sparseResult.data),
+    )
+    let extraction = parseCoffeeBagOcr(blocks)
+    const identityCrop = !extraction.bean.variety && identityCropForPortraitBag(prepared.width, prepared.height)
+    if (identityCrop) {
+      await worker.setParameters({ tessedit_pageseg_mode: OCR_IDENTITY_PAGE_SEGMENTATION_MODE })
+      const identityResult = await worker.recognize(prepared.image, { rectangle: identityCrop }, { blocks: true })
+      if (options.signal?.aborted) throw new DOMException('Scan cancelled', 'AbortError')
+      blocks = mergeOcrBlocks(blocks, blocksFromOcrData(identityResult.data))
+      extraction = parseCoffeeBagOcr(blocks)
+    }
+    return extraction
   } finally {
     options.signal?.removeEventListener('abort', stop)
     await terminate()

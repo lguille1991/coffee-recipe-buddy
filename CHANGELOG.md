@@ -1,3 +1,7 @@
+## 2.0.1 - 2026-07-22
+
+- Improved on-device coffee-bag OCR for independently positioned package labels, yielding more reliable field extraction in Coffee Analysis.
+
 ## 2.0.0 - 2026-07-22
 
 - Added on-device English/Spanish coffee-bag OCR with deterministic, label-only parsing; scan images no longer go to an extraction AI route.

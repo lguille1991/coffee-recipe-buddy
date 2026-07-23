@@ -1,9 +1,39 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { assertSupportedOcrImage, blocksFromOcrData } from '../browser-ocr'
+import {
+  assertSupportedOcrImage,
+  blocksFromOcrData,
+  identityCropForPortraitBag,
+  mergeOcrBlocks,
+  OCR_DEFAULT_PAGE_SEGMENTATION_MODE,
+  OCR_IDENTITY_PAGE_SEGMENTATION_MODE,
+  OCR_PAGE_SEGMENTATION_MODE,
+} from '../browser-ocr'
 
 describe('browser OCR helpers', () => {
+  it('uses sparse-text segmentation for independently positioned bag labels', () => {
+    expect(OCR_DEFAULT_PAGE_SEGMENTATION_MODE).toBe('3')
+    expect(OCR_PAGE_SEGMENTATION_MODE).toBe('11')
+    expect(OCR_IDENTITY_PAGE_SEGMENTATION_MODE).toBe('6')
+  })
+
+  it('targets the central identity strip only for portrait bags', () => {
+    expect(identityCropForPortraitBag(960, 1280)).toEqual({ left: 144, top: 179, width: 701, height: 320 })
+    expect(identityCropForPortraitBag(1280, 960)).toBeNull()
+  })
+
+  it('merges complementary OCR passes without duplicating a stronger shared line', () => {
+    expect(mergeOcrBlocks(
+      [{ text: 'Process: Washed', confidence: 42 }, { text: 'Variety: Geisha', confidence: 80 }],
+      [{ text: ' process:   washed ', confidence: 92 }, { text: 'Roast: Medium Light', confidence: 85 }],
+    )).toEqual([
+      { text: ' process:   washed ', confidence: 92 },
+      { text: 'Variety: Geisha', confidence: 80 },
+      { text: 'Roast: Medium Light', confidence: 85 },
+    ])
+  })
+
   it('keeps Tesseract block confidence for deterministic parsing', () => {
     expect(blocksFromOcrData({
       text: 'ignored',

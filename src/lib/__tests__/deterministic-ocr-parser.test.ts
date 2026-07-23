@@ -114,6 +114,17 @@ describe('parseCoffeeBagOcr', () => {
     expect(parseCoffeeBagOcr([{ text: 'LAVADO', confidence: 0.8 }]).bean.process).toBe('washed')
   })
 
+  it('recognizes the explicit roast wording read from the Jaho label', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'MINAS', confidence: 0.88 },
+      { text: 'WASHED', confidence: 0.92 },
+      { text: 'MEDIUM ROAST', confidence: 0.91 },
+    ])
+
+    expect(result.bean).toMatchObject({ process: 'washed', roast_level: 'medium' })
+    expect(result.bean.origin).toBeUndefined()
+  })
+
   it('recognizes exact compact varieties and process aliases', () => {
     expect(parseCoffeeBagOcr([{ text: 'Pacamara Semilavado', confidence: 0.8 }]).bean)
       .toMatchObject({ variety: 'Pacamara', process: 'washed' })

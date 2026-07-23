@@ -5,6 +5,7 @@ import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import type { ExtractionResponse } from '@/types/recipe'
+import { parseCoffeeBagOcr } from '@/lib/deterministic-ocr-parser'
 
 const pushMock = vi.fn()
 const replaceMock = vi.fn()
@@ -209,5 +210,24 @@ describe('AnalysisPage editability and validation', () => {
     expect(roast.value).toBe('unknown')
     expect(Array.from(roast.options).map(option => option.textContent)).toContain('Unknown')
     expect(container.textContent).toContain('low confidence')
+  })
+
+  it.each([
+    { label: 'D’La Palma Geisha Natural', blocks: ['Medium Light', 'Geisha', 'Finca Loma Verde'], expectedName: 'Geisha · Loma Verde', process: 'unknown', roast: 'medium-light', altitude: '' },
+    { label: 'Tropicália Bourbon Rosa Lavado', blocks: ['BOURBON ROSA', 'LAVADO'], expectedName: 'Bourbon Rosa', process: 'washed', roast: 'unknown', altitude: '' },
+    { label: 'Jaho Minas Washed', blocks: ['MINAS', 'WASHED', 'MEDIUM ROAST'], expectedName: '', process: 'washed', roast: 'medium', altitude: '' },
+    { label: 'D’La Palma Pacamara Yellow Honey', blocks: ['Finca Machuca', 'Pacamara', 'YELLOW HONEY'], expectedName: 'Pacamara · Machuca', process: 'honey', roast: 'unknown', altitude: '' },
+    { label: '1200 Café Kenya SL28', blocks: ['Proceso: Natural', 'Finca: La Divina', 'Productor: Roberto Ulloa', 'Altitud: 1550 msnm', 'Tueste: Brew'], expectedName: 'La Divina · Roberto Ulloa', process: 'natural', roast: 'unknown', altitude: '1550' },
+  ])('maps $label OCR fields to their Coffee Analysis controls', ({ blocks, expectedName, process, roast, altitude }) => {
+    getExtractionResultMock.mockReturnValue(parseCoffeeBagOcr(blocks.map(text => ({ text, confidence: 90 }))))
+
+    act(() => {
+      root.render(<AnalysisPage />)
+    })
+
+    expect((container.querySelector('[data-testid="coffee-name"]') as HTMLInputElement).value).toBe(expectedName)
+    expect((container.querySelector('[data-testid="bean-process"]') as HTMLSelectElement).value).toBe(process)
+    expect((container.querySelector('[data-testid="roast-level-input"]') as HTMLSelectElement).value).toBe(roast)
+    expect((container.querySelector('[data-testid="altitude"]') as HTMLInputElement).value).toBe(altitude)
   })
 })

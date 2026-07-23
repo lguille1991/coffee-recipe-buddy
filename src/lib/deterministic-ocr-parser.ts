@@ -76,11 +76,11 @@ const VARIETY_ALIASES: Record<string, string> = {
 }
 
 const ROAST_ALIASES: Record<string, BeanProfile['roast_level']> = {
-  light: 'light', claro: 'light',
-  'medium light': 'medium-light', 'medio claro': 'medium-light',
-  medium: 'medium', medio: 'medium',
-  'medium dark': 'medium-dark', 'medio oscuro': 'medium-dark',
-  dark: 'dark', oscuro: 'dark',
+  light: 'light', 'light roast': 'light', claro: 'light',
+  'medium light': 'medium-light', 'medium light roast': 'medium-light', 'medio claro': 'medium-light',
+  medium: 'medium', 'medium roast': 'medium', medio: 'medium',
+  'medium dark': 'medium-dark', 'medium dark roast': 'medium-dark', 'medio oscuro': 'medium-dark',
+  dark: 'dark', 'dark roast': 'dark', oscuro: 'dark',
 }
 
 function normalize(value: string) {

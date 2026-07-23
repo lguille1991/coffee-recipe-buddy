@@ -258,3 +258,22 @@ Canonical units and compatibility rules:
   - Rolling back does not require a destructive database migration.
 - [ ] Stage rollout and monitor privacy-safe metrics by engine version: generation success/failure code, capacity rejection rate, OCR empty/partial rate, OCR duration/failure, Auto Adjust invariant failure, and save completion. Do not log bag images, OCR text, tasting notes, bean names, or other user-entered profile content.
 - [ ] Production launch gate: rotated credential, no OpenRouter deployment secrets, green tests/lint/build/E2E, completed physical brew sign-off, asset/license audit, acceptable performance budgets, preview rollback check, and no blocking review findings.
+
+## Five-bag browser OCR verification and calibration batch (proposed 2026-07-22)
+
+- [x] Establish a repeatable browser-engine scan matrix using at least five supplied bag photos that cover D'La Palma split identity labels, a structured label grid, English-only label text, Spanish-only label text, and a dark/high-contrast package.
+- [x] For each scan, record the raw OCR field result and the Coffee Analysis field mapping, then compare only explicit package facts: variety, process, altitude, roast, farm, producer, origin/region, and tasting notes when visibly labelled.
+- [x] Classify every mismatch as OCR transcription, deterministic parser mapping, or Scan-to-Analysis persistence/rendering, and add focused regression coverage for any parser or UI mapping defect.
+- [x] Apply the smallest privacy-preserving calibration changes needed to make the representative matrix reliable; preserve the rule that unlabeled marketing text and ambiguous values remain unknown.
+- [x] Run the required review loop after each approved fix batch, then re-run the full five-bag matrix until all explicitly supported fields map correctly or a documented OCR limitation prevents deterministic extraction.
+- [x] Commit-readiness validation passed: `npm test` (56 files, 301 tests), `npm run lint`, and `npm run build`.
+
+### Five-bag evidence (2026-07-22)
+
+- D'La Palma Geisha Natural: automatic plus sparse OCR read `Medium Light` and `Finca Loma Verde`; the portrait identity-strip pass read `Geisha`. The highly stylized `Natural` word and unit after `1200` were not transcribed reliably, so those fields remain neutral rather than guessed.
+- Tropicália Bourbon Rosa Lavado: OCR read `BOURBON ROSA` and `LAVADO`; parser maps these to `variety: Bourbon Rosa` and `process: washed`.
+- Jaho Minas Washed: OCR read `MINAS`, `WASHED`, and `MEDIUM ROAST`; parser maps only the explicit process and roast, leaving `Minas` neutral rather than treating it as a variety or origin.
+- D'La Palma Pacamara Yellow Honey: complementary passes read `Finca Machuca`, `Pacamara`, and `YELLOW HONEY`; parser maps farm, variety, and honey process.
+- 1200 Café Kenya SL28: OCR read the labelled process, farm, producer, region, altitude, and profile fields; parser maps those labelled values. `Tueste: Brew` correctly remains unknown because Brew is not a roast level.
+- The authenticated browser UI could not be opened from the clean automation browser session; the same parser-to-Coffee Analysis mapping is covered by five focused component cases. Manual authenticated scan verification remains useful for the exact device/browser photo pipeline.
+- Approved review rework (2026-07-22): normalize OCR de-duplication with locale-independent `toLowerCase()`; no newly observed ambient dirty files.
