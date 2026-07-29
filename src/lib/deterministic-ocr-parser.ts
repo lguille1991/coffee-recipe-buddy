@@ -144,9 +144,12 @@ const COUNTRY_ORIGIN = /\b(?:el salvador|brazil|brasil|colombia|guatemala|hondur
 
 const TASTING_NOTE_ALIASES: Array<[string, string]> = [
   ['strawberry fruit tart', 'strawberry fruit tart'],
+  ['mermelada de frutos del bosque', 'mermelada de frutos del bosque'],
+  ['forest fruit jam', 'mermelada de frutos del bosque'],
   ['wildflower honey', 'wildflower honey'],
   ['concord grape', 'concord grape'],
   ['naranja dulce', 'naranja dulce'],
+  ['pu-erh tea', 'pu-erh tea'],
   ['blue berry', 'blue berry'],
   ['blueberry', 'blueberry'],
   ['frambuesa', 'frambuesa'],
@@ -216,6 +219,15 @@ function parseNotes(value: string) {
   return notes.length ? notes : null
 }
 
+function canonicalOriginText(value: string) {
+  return cleanValue(value)
+    .replace(/\bcentroam[eé]rica\b/gi, 'Central America')
+    .replace(/\bta palma\b/gi, 'La Palma')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/,\s*C\.?\s*A\.?\s*$/i, '')
+    .trim()
+}
+
 function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | null {
   if (!value) return null
   const normalized = normalize(value)
@@ -229,7 +241,7 @@ function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | n
     || /\b(?:masl|msnm)\b/.test(normalized)
     || tableHeaderField(value)
   )) return null
-  if (field === 'origin') return cleanValue(value).replace(/\bllamatepec\b/gi, 'Ilamatepec')
+  if (field === 'origin') return canonicalOriginText(value).replace(/\bllamatepec\b/gi, 'Ilamatepec')
   if (field === 'finca') return cleanValue(value).replace(/^Bellavista$/i, 'Bella Vista')
   return cleanValue(value) || null
 }
@@ -515,6 +527,42 @@ function countryOrigin(value: string) {
   return match ? titleCaseUppercase(match[0]) : null
 }
 
+function countryOriginForBlock(block: OcrTextBlock) {
+  const exact = countryOrigin(block.text)
+  if (exact) return exact
+  const normalized = normalize(block.text)
+  if (
+    block.source?.startsWith('country-seal')
+    && confidenceFor(block) >= 0.25
+    && /^salv[a-z]{1,4}$/.test(normalized)
+  ) return 'El Salvador'
+  return null
+}
+
+const ORIGIN_PROSE_WORDS = /\b(?:cafe|coffee|cultivad[oa]|desde|from|grown|hecho|imported|made|roast(?:ed)?|sourced|tostad[oa]|with)\b/
+
+function locationShapedOriginComponent(value: string) {
+  const normalized = normalize(value)
+  return normalized.length > 0
+    && normalized.split(/\s+/).length <= 3
+    && !/[\d:]/.test(normalized)
+    && !ORIGIN_PROSE_WORDS.test(normalized)
+}
+
+function countryBearingOrigin(value: string) {
+  const country = countryOrigin(value)
+  if (!country) return null
+  const canonical = canonicalOriginText(value)
+  const components = canonical.split(',').map(component => component.trim()).filter(Boolean)
+  const hasStandaloneCountry = components.some(component => normalize(component) === normalize(country))
+  return components.length >= 2
+    && components.length <= 4
+    && hasStandaloneCountry
+    && components.every(locationShapedOriginComponent)
+    ? canonical
+    : country
+}
+
 function recognizedTastingNotes(value: string) {
   const corrected = normalize(value)
     .replace(/\bmanzara\b/g, 'manzana')
@@ -524,6 +572,7 @@ function recognizedTastingNotes(value: string) {
     .replace(/\bchoc\s+olate\b/g, 'chocolate')
     .replace(/\bcho\s+colate\b/g, 'chocolate')
     .replace(/\bavellan\b/g, 'avellana')
+    .replace(/\bforest fruit j\s*m\b/g, 'forest fruit jam')
   const found: string[] = []
   for (const [alias, canonical] of TASTING_NOTE_ALIASES) {
     if (new RegExp(`(?:^|[^a-z])${alias.replace(' ', '\\s+')}([^a-z]|$)`).test(corrected)) found.push(canonical)
@@ -597,6 +646,7 @@ function confidenceForJoinedNote(blocks: readonly OcrTextBlock[], note: string) 
 function plausibleOriginContinuation(block: OcrTextBlock) {
   const normalized = normalize(block.text)
   if (!normalized || normalized.length > 60 || normalized.split(' ').length > 6 || /\d/.test(normalized)) return false
+  if (block.source?.startsWith('country-seal') && !countryOrigin(block.text)) return false
   if (extractLabelAndValue(block.text)) return false
   if (PROCESS_ALIASES[normalized] || ROAST_ALIASES[normalized] || VARIETY_ALIASES[normalized]) return false
   return likelyPersonName(block.text) || normalized.split(' ').length <= 3
@@ -624,6 +674,38 @@ function crossPassOriginContinuation(
       const rightGap = Math.max(0, right.bbox!.y0 - anchor.y1)
       return leftGap - rightGap
     })[0]
+}
+
+function countryOriginFromFragments(blocks: readonly OcrTextBlock[]) {
+  return blocks
+    .flatMap(anchor => {
+      if (!anchor.source || typeof anchor.order !== 'number' || !anchor.bbox || !countryOrigin(anchor.text)) return []
+      const preceding = blocks
+        .filter(candidate => (
+          candidate !== anchor
+          && candidate.source === anchor.source
+          && typeof candidate.order === 'number'
+          && candidate.order < anchor.order!
+          && anchor.order! - candidate.order <= 2
+          && candidate.bbox
+          && /,\s*$/.test(candidate.text)
+          && !/\d/.test(candidate.text)
+          && Math.abs(candidate.bbox.y0 - anchor.bbox!.y0) <= 0.04
+          && candidate.bbox.x0 < anchor.bbox!.x0
+        ))
+        .toSorted((left, right) => left.order! - right.order!)
+      if (preceding.length === 0) return []
+      const chain = [...preceding, anchor]
+      if (chain.some((block, index) => (
+        index > 0
+        && block.bbox!.x0 - chain[index - 1].bbox!.x1 > 0.03
+      ))) return []
+      const combinedValue = canonicalOriginText(chain.map(block => block.text).join(' '))
+      if (combinedValue.split(',').filter(Boolean).length < 2) return []
+      const value = countryBearingOrigin(combinedValue)
+      return value ? [{ value, block: anchor }] : []
+    })
+    .toSorted((left, right) => right.value.length - left.value.length)[0]
 }
 
 /**
@@ -770,12 +852,13 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
 
     const singleOrigin = normalized.match(/^single origin\s+(.+)$/)
     if (singleOrigin) setCandidate('origin', titleCaseUppercase(singleOrigin[1]), block, 2)
-    const originCountry = countryOrigin(block.text)
+    const originCountry = countryOriginForBlock(block)
+    const countryLine = countryBearingOrigin(block.text) ?? originCountry
     const locationLikeCountryLine = normalized.split(' ').length <= 4
       || normalized.includes(',')
       || normalized.startsWith(normalize(originCountry ?? ''))
-    if (originCountry && normalized.length <= 55 && locationLikeCountryLine) {
-      setCandidate('origin', originCountry, block, 1)
+    if (originCountry && countryLine && normalized.length <= 70 && locationLikeCountryLine) {
+      setCandidate('origin', countryLine, block, countryLine === originCountry ? 1 : 2)
     }
 
     const match = extractLabelAndValue(block.text)
@@ -844,11 +927,38 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     setCandidate(match.field, parseValue(match.field, rawValue), valueBlock, 4)
   }
 
+  const fragmentedCountryOrigin = countryOriginFromFragments(blocks)
+  if (fragmentedCountryOrigin) {
+    setCandidate('origin', fragmentedCountryOrigin.value, fragmentedCountryOrigin.block, 2)
+  }
+
   for (const [field, block] of tableValues) {
     const value = titleCaseUppercase(block.text.replace(/^de\s+/i, ''))
     if (field === 'producer') setCandidate('producer', value, block, 4)
     if (field === 'origin') setCandidate('origin', value, block, 4)
     if (field === 'finca') setCandidate('finca', value.replace(/^Bellavista$/i, 'Bella Vista'), block, 4)
+  }
+
+  if (typeof bean.origin === 'string' && !COUNTRY_ORIGIN.test(bean.origin)) {
+    const countryBlock = blocks
+      .flatMap(block => {
+        const country = countryOriginForBlock(block)
+        const normalized = normalize(block.text)
+        const dedicatedSealReading = block.source?.startsWith('country-seal')
+          && /^salv[a-z]{1,4}$/.test(normalized)
+        return country && (normalized === normalize(country) || dedicatedSealReading)
+          ? [{ block, country }]
+          : []
+      })
+      .toSorted((left, right) => confidenceFor(right.block) - confidenceFor(left.block))[0]
+    if (countryBlock) {
+      setCandidate(
+        'origin',
+        canonicalOriginText(`${bean.origin}, ${countryBlock.country}`),
+        countryBlock.block,
+        5,
+      )
+    }
   }
 
   for (let index = 0; index + 2 < blocks.length; index += 1) {

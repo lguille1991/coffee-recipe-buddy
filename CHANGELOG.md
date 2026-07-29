@@ -1,3 +1,8 @@
+## 2.1.0 - 2026-07-28
+
+- Improved original-resolution coffee-bag OCR to preserve complete origins, reconcile split location lines, recover fragmented tasting notes, and read small curved country seals.
+- Added a repeatable six-bag profile accuracy command that verifies every supported extraction field against the human reference profiles.
+
 ## 2.0.6 - 2026-07-23
 
 - Removed the Home hero artwork so primary coffee actions and saved recipes appear sooner.

@@ -1,6 +1,6 @@
 {
   "name": "crp",
-  "version": "2.0.6",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e:ocr-ui": "node scripts/e2e-ocr-ui.mjs"
+    "test:e2e:ocr-ui": "node scripts/e2e-ocr-ui.mjs",
+    "test:ocr-profiles": "node scripts/ocr-profile-accuracy.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

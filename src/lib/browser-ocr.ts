@@ -6,6 +6,7 @@ import type { PSM } from 'tesseract.js'
 
 const OCR_ASSET_ROOT = '/ocr/v7'
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const COUNTRY_ORIGIN_TEXT = /\b(?:el salvador|brazil|brasil|colombia|guatemala|honduras|costa rica|panama|ethiopia|kenya)\b/i
 
 // Coffee bags are composed labels rather than one continuous document column.
 // Tesseract sparse-text mode preserves their independently positioned fields.
@@ -13,7 +14,7 @@ export const OCR_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
 export const OCR_DEFAULT_PAGE_SEGMENTATION_MODE: PSM = '3' as PSM
 export const OCR_IDENTITY_PAGE_SEGMENTATION_MODE: PSM = '11' as PSM
 export const OCR_SINGLE_LINE_PAGE_SEGMENTATION_MODE: PSM = '7' as PSM
-const MAX_RECOGNITION_PASSES = 8
+const MAX_RECOGNITION_PASSES = 9
 
 export type OcrProgress = {
   progress: number
@@ -271,6 +272,18 @@ export function varietyCropForPortraitBag(width: number, height: number) {
   }
 }
 
+// A focused upscale gives small country-of-origin seals a chance to be read
+// when the main label already supplied a regional origin.
+export function countrySealCropForPortraitBag(width: number, height: number) {
+  if (height / width < 1.1) return null
+  return {
+    left: Math.round(width * 0.8),
+    top: Math.round(height * 0.32),
+    width: Math.round(width * 0.2),
+    height: Math.round(height * 0.18),
+  }
+}
+
 type PreparedOcrImage = {
   color: Blob
   grayscale: Blob
@@ -279,6 +292,7 @@ type PreparedOcrImage = {
   bands: PreparedOcrCrop[]
   identity: PreparedOcrCrop[]
   variety?: PreparedOcrCrop
+  countrySeals: PreparedOcrCrop[]
 }
 
 type PreparedOcrCrop = {
@@ -287,6 +301,7 @@ type PreparedOcrCrop = {
   rectangle: OcrRectangle
   renderedWidth: number
   renderedHeight: number
+  rotated?: boolean
 }
 
 function canvasBlob(canvas: HTMLCanvasElement) {
@@ -319,6 +334,18 @@ export function drawScaledCrop(
     canvas.width,
     canvas.height,
   )
+  return canvas
+}
+
+function rotateCropQuarterTurns(source: HTMLCanvasElement, quarterTurns: 1 | 3) {
+  const canvas = document.createElement('canvas')
+  canvas.width = source.height
+  canvas.height = source.width
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('OCR image processing is unavailable in this browser.')
+  context.translate(canvas.width / 2, canvas.height / 2)
+  context.rotate(quarterTurns * Math.PI / 2)
+  context.drawImage(source, -source.width / 2, -source.height / 2)
   return canvas
 }
 
@@ -362,14 +389,17 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
       sourceCanvas: HTMLCanvasElement,
       rectangle: OcrRectangle,
       source: string,
+      quarterTurns?: 1 | 3,
     ): Promise<PreparedOcrCrop> => {
       const cropCanvas = drawScaledCrop(sourceCanvas, rectangle)
+      const renderedCanvas = quarterTurns ? rotateCropQuarterTurns(cropCanvas, quarterTurns) : cropCanvas
       return {
-        image: await canvasBlob(cropCanvas),
+        image: await canvasBlob(renderedCanvas),
         source,
         rectangle,
-        renderedWidth: cropCanvas.width,
-        renderedHeight: cropCanvas.height,
+        renderedWidth: renderedCanvas.width,
+        renderedHeight: renderedCanvas.height,
+        rotated: Boolean(quarterTurns),
       }
     }
     const bandsPromise = Promise.all(bandDefinitions.map(definition => {
@@ -383,7 +413,16 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
     }))
     const identityRectangle = identityCropForPortraitBag(width, height)
     const varietyRectangle = varietyCropForPortraitBag(width, height)
-    const [color, grayscale, bands, identityColor, identityGrayscale, variety] = await Promise.all([
+    const countrySealRectangle = countrySealCropForPortraitBag(width, height)
+    const [
+      color,
+      grayscale,
+      bands,
+      identityColor,
+      identityGrayscale,
+      variety,
+      countrySealCounterclockwise,
+    ] = await Promise.all([
       canvasBlob(colorCanvas),
       canvasBlob(grayscaleCanvas),
       bandsPromise,
@@ -395,6 +434,9 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
         : Promise.resolve(undefined),
       varietyRectangle
         ? prepareCrop(grayscaleCanvas, varietyRectangle, 'variety-grayscale')
+        : Promise.resolve(undefined),
+      countrySealRectangle
+        ? prepareCrop(grayscaleCanvas, countrySealRectangle, 'country-seal-counterclockwise', 3)
         : Promise.resolve(undefined),
     ])
 
@@ -408,6 +450,9 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
         (crop): crop is PreparedOcrCrop => Boolean(crop),
       ),
       variety,
+      countrySeals: [countrySealCounterclockwise].filter(
+        (crop): crop is PreparedOcrCrop => Boolean(crop),
+      ),
     }
   } finally {
     bitmap.close()
@@ -416,7 +461,11 @@ async function preprocessForOcr(file: File): Promise<PreparedOcrImage> {
 
 export async function recognizeCoffeeBag(
   file: File,
-  options: { onProgress?: (progress: OcrProgress) => void; signal?: AbortSignal } = {},
+  options: {
+    onProgress?: (progress: OcrProgress) => void
+    signal?: AbortSignal
+    onBlocks?: (blocks: OcrTextBlock[]) => void
+  } = {},
 ): Promise<ExtractionResponse> {
   assertSupportedOcrImage(file)
   const prepared = await preprocessForOcr(file)
@@ -533,8 +582,36 @@ export async function recognizeCoffeeBag(
       }))
       extraction = parseCoffeeBagOcr(blocks)
     }
+    if (
+      prepared.countrySeals.length
+      && (
+        !extraction.bean.origin
+        || !COUNTRY_ORIGIN_TEXT.test(extraction.bean.origin)
+      )
+    ) {
+      await worker.setParameters({ tessedit_pageseg_mode: OCR_PAGE_SEGMENTATION_MODE })
+      for (const countrySeal of prepared.countrySeals) {
+        const countrySealResult = await recognizePass(countrySeal.image)
+        blocks = mergeOcrBlocks(blocks, blocksFromOcrData(
+          countrySealResult.data,
+          countrySeal.rotated
+            ? { source: countrySeal.source }
+            : {
+                source: countrySeal.source,
+                imageWidth: prepared.width,
+                imageHeight: prepared.height,
+                renderedWidth: countrySeal.renderedWidth,
+                renderedHeight: countrySeal.renderedHeight,
+                rectangle: countrySeal.rectangle,
+              },
+        ))
+        extraction = parseCoffeeBagOcr(blocks)
+        if (extraction.bean.origin && COUNTRY_ORIGIN_TEXT.test(extraction.bean.origin)) break
+      }
+    }
     activePass = MAX_RECOGNITION_PASSES - 1
     reportProgress(1, 'complete')
+    options.onBlocks?.(blocks)
     return extraction
   } finally {
     options.signal?.removeEventListener('abort', stop)

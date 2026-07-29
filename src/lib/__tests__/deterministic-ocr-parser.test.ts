@@ -462,4 +462,107 @@ describe('parseCoffeeBagOcr', () => {
 
     expect(result.bean.origin).toBe('Huehuetenango, La Democracia')
   })
+
+  it('preserves complete country-bearing origin lines and canonicalizes Centroamérica', () => {
+    expect(parseCoffeeBagOcr([
+      {
+        text: 'El Salvador, Centroamérica',
+        confidence: 95,
+        source: 'bottom',
+        order: 25,
+        bbox: { x0: 0.29, y0: 0.86, x1: 0.58, y1: 0.89 },
+      },
+    ]).bean.origin).toBe('El Salvador, Central America')
+
+    expect(parseCoffeeBagOcr([
+      {
+        text: 'La Palma, Chalatenango, El Salvador, C.A',
+        confidence: 93,
+        source: 'full-grayscale',
+        order: 55,
+        bbox: { x0: 0.31, y0: 0.91, x1: 0.72, y1: 0.93 },
+      },
+    ]).bean.origin).toBe('La Palma, Chalatenango, El Salvador')
+  })
+
+  it('does not preserve comma-bearing prose as a complete origin', () => {
+    expect(parseCoffeeBagOcr([
+      { text: 'Roasted with care, Colombia', confidence: 95 },
+    ]).bean.origin).toBe('Colombia')
+
+    expect(parseCoffeeBagOcr([
+      { text: 'Roasted with care, imported from Colombia', confidence: 95 },
+    ]).bean.origin).toBe('Colombia')
+
+    expect(parseCoffeeBagOcr([
+      {
+        text: 'Roasted with care,',
+        confidence: 95,
+        source: 'bottom',
+        order: 10,
+        bbox: { x0: 0.1, y0: 0.8, x1: 0.4, y1: 0.84 },
+      },
+      {
+        text: 'Colombia',
+        confidence: 95,
+        source: 'bottom',
+        order: 11,
+        bbox: { x0: 0.41, y0: 0.8, x1: 0.55, y1: 0.84 },
+      },
+    ]).bean.origin).toBe('Colombia')
+  })
+
+  it('reassembles a country-bearing origin from adjacent bottom-label fragments', () => {
+    const result = parseCoffeeBagOcr([
+      {
+        text: 'ta Palma,',
+        confidence: 93,
+        source: 'full-grayscale',
+        order: 47,
+        bbox: { x0: 0.31, y0: 0.895, x1: 0.4, y1: 0.911 },
+      },
+      {
+        text: 'Chalatenango,',
+        confidence: 89,
+        source: 'full-grayscale',
+        order: 48,
+        bbox: { x0: 0.407, y0: 0.898, x1: 0.553, y1: 0.925 },
+      },
+      {
+        text: 'El Salvador, CA',
+        confidence: 85,
+        source: 'full-grayscale',
+        order: 49,
+        bbox: { x0: 0.56, y0: 0.912, x1: 0.718, y1: 0.942 },
+      },
+    ])
+
+    expect(result.bean.origin).toBe('La Palma, Chalatenango, El Salvador')
+  })
+
+  it('adds a separately recognized country seal to a labelled regional origin', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'Región: Apaneca, Ilamatepec, Santa Ana', confidence: 90, source: 'full-grayscale', order: 10 },
+      { text: 'SALVe', confidence: 32, source: 'country-seal-counterclockwise', order: 0 },
+    ])
+
+    expect(result.bean.origin).toBe('Apaneca, Ilamatepec, Santa Ana, El Salvador')
+  })
+
+  it('recovers the Geisha jam and Pu-erh notes from complementary OCR fragments', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'Durazno, chocolate, higo', confidence: 94, source: 'full-grayscale', order: 0 },
+      { text: 'forest fruit j', confidence: 94, source: 'middle', order: 23 },
+      { text: 'm,', confidence: 90, source: 'middle', order: 24 },
+      { text: 'Y Pu-erh tea, and', confidence: 57, source: 'middle', order: 29 },
+    ])
+
+    expect(result.bean.tasting_notes).toEqual(expect.arrayContaining([
+      'durazno',
+      'chocolate',
+      'higo',
+      'mermelada de frutos del bosque',
+      'pu-erh tea',
+    ]))
+  })
 })

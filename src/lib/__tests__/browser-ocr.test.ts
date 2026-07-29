@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import {
   assertSupportedOcrImage,
   blocksFromOcrData,
+  countrySealCropForPortraitBag,
   drawScaledCrop,
   identityCropForPortraitBag,
   varietyCropForPortraitBag,
@@ -34,6 +35,16 @@ describe('browser OCR helpers', () => {
   it('targets the upper-middle variety name only for portrait bags', () => {
     expect(varietyCropForPortraitBag(960, 1280)).toEqual({ left: 96, top: 282, width: 768, height: 230 })
     expect(varietyCropForPortraitBag(1280, 960)).toBeNull()
+  })
+
+  it('targets the small upper-right country seal only for portrait bags', () => {
+    expect(countrySealCropForPortraitBag(960, 1280)).toEqual({
+      left: 768,
+      top: 410,
+      width: 192,
+      height: 230,
+    })
+    expect(countrySealCropForPortraitBag(1280, 960)).toBeNull()
   })
 
   it('merges complementary OCR passes without duplicating a stronger shared line', () => {

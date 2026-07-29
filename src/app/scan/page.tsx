@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Camera, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { isE2eTestAuthEnabled } from '@/lib/e2e-test-auth'
 import { compressImage } from '@/lib/image-compressor'
 import { assertSupportedOcrImage, recognizeCoffeeBag } from '@/lib/browser-ocr'
 import { recipeSessionStorage } from '@/lib/recipe-session-storage'
@@ -47,6 +48,12 @@ export default function ScanPage() {
       const data = await recognizeCoffeeBag(file, {
         signal: controller.signal,
         onProgress: progress => setProgressMessage(`${progress.status} (${Math.round(progress.progress * 100)}%)`),
+        onBlocks: isE2eTestAuthEnabled({
+          NODE_ENV: process.env.NODE_ENV,
+          NEXT_PUBLIC_E2E_TEST_AUTH: process.env.NEXT_PUBLIC_E2E_TEST_AUTH,
+        })
+          ? blocks => sessionStorage.setItem('ocrDebugBlocks', JSON.stringify(blocks))
+          : undefined,
       })
       if (controller.signal.aborted) return
       recipeSessionStorage.setExtractionResult(data)
