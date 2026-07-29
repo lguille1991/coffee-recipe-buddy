@@ -1,3 +1,8 @@
+## 2.0.6 - 2026-07-23
+
+- Removed the Home hero artwork so primary coffee actions and saved recipes appear sooner.
+- Expanded the Home recent-recipe list from six to twelve saved recipes.
+
 ## 2.0.5 - 2026-07-23
 
 - Improved local OCR reliability for original-resolution coffee bag photos, including curved process text, split altitude and producer details, table layouts, and redundant tasting notes.

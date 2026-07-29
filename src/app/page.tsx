@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { Camera, PenLine, LogIn } from 'lucide-react'
 import RecipeListCard from '@/components/RecipeListCard'
@@ -17,7 +16,7 @@ export default async function HomePage() {
   if (user) {
     const [profile, recipeResult] = await Promise.all([
       getOrCreateUserProfile(supabase, user),
-      listRecipesForUser(supabase, { userId: user.id, limit: 6 }),
+      listRecipesForUser(supabase, { userId: user.id, limit: 12, sort: 'recent' }),
     ])
     displayName = profile.display_name?.trim() ?? null
     recipes = recipeResult.recipes
@@ -38,21 +37,7 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Hero image */}
-      <div className="px-4 sm:px-6">
-        <div className="ui-card-interactive group w-full aspect-square sm:aspect-[4/3] xl:aspect-[3/2] rounded-[16px] overflow-hidden bg-[#D4C9B8] ring-1 ring-black/5 relative">
-          <Image
-            src="/CoffeeBrewing.jpg"
-            alt="Illustrated baristas brewing pour-over coffee together"
-            fill
-            className="object-cover object-top transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.015]"
-            sizes="(min-width: 1280px) 960px, (min-width: 640px) 768px, 100vw"
-            preload
-          />
-        </div>
-      </div>
-
-      <div className="px-4 sm:px-6 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 ui-animate-enter-soft">
+      <div className="px-4 sm:px-6 mt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 ui-animate-enter-soft">
         <Link
           href="/scan"
           className="ui-button-primary flex-1"
@@ -81,7 +66,7 @@ export default async function HomePage() {
       {user && (
         <div className="px-4 sm:px-6 mt-8 ui-animate-enter-soft">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="ui-card-title">My Recipes</h2>
+            <h2 className="ui-card-title">Recent Recipes</h2>
             <Link href="/recipes" className="ui-focus-ring rounded-md ui-meta underline underline-offset-4 transition-colors duration-150 hover:text-[var(--foreground)]">See all</Link>
           </div>
 
@@ -94,7 +79,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3">
-              {recipes.slice(0, 6).map(r => (
+              {recipes.map(r => (
                 <RecipeListCard key={r.id} recipe={r} />
               ))}
             </div>

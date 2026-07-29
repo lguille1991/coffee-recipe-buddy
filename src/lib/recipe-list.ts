@@ -6,6 +6,7 @@ import { isManualRecipeCreated } from '@/lib/recipe-origin'
 type FeedbackHistoryRow = Array<{ type?: string }>
 
 type RecipeListSection = 'favorites' | 'my' | 'shared'
+type RecipeListSort = 'favorites-first' | 'recent'
 
 type OwnedRecipeListRow = {
   id: string
@@ -46,6 +47,7 @@ type ListUserRecipesParams = {
   archived?: boolean
   page?: number
   limit?: number
+  sort?: RecipeListSort
 }
 
 type ListUserRecipesResult = {
@@ -182,6 +184,7 @@ export async function listRecipesForUser(
     archived = false,
     page = 1,
     limit = 10,
+    sort = 'favorites-first',
   }: ListUserRecipesParams,
 ): Promise<ListUserRecipesResult> {
   const normalizedLimit = Math.min(Math.max(1, limit), 50)
@@ -225,9 +228,11 @@ export async function listRecipesForUser(
 
     const rows = (data ?? []) as OwnedRecipeListRow[]
     const sortedRows = rows.toSorted((a, b) => {
-      const aFavorite = favoriteIds.has(a.id)
-      const bFavorite = favoriteIds.has(b.id)
-      if (aFavorite !== bFavorite) return aFavorite ? -1 : 1
+      if (sort === 'favorites-first') {
+        const aFavorite = favoriteIds.has(a.id)
+        const bFavorite = favoriteIds.has(b.id)
+        if (aFavorite !== bFavorite) return aFavorite ? -1 : 1
+      }
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
     const paged = paginate(sortedRows, normalizedPage, normalizedLimit)

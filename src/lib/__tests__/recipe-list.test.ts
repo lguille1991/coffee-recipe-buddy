@@ -46,6 +46,60 @@ describe('listRecipesForUser', () => {
     expect(result.recipes).toHaveLength(5)
   })
 
+  it('can sort newest-first without letting an older favorite displace recent recipes', async () => {
+    const olderFavorite = {
+      id: '00000000-0000-0000-0000-000000000001',
+      user_id: 'user-123',
+      method: 'v60',
+      bean_info: { bean_name: 'Older favorite', process: 'washed', roast_level: 'light' },
+      image_url: null,
+      created_at: '2026-05-01T00:00:00.000Z',
+      schema_version: 1,
+      archived: false,
+      current_recipe_json: { objective: 'x', range_logic: { base_range: 'x' } },
+      feedback_history: [],
+      parent_recipe_id: null,
+    }
+    const newerRecipe = {
+      ...olderFavorite,
+      id: '00000000-0000-0000-0000-000000000002',
+      bean_info: { ...olderFavorite.bean_info, bean_name: 'Newer recipe' },
+      created_at: '2026-05-02T00:00:00.000Z',
+    }
+
+    const favoritesQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({
+        data: [{ recipe_id: olderFavorite.id }],
+        error: null,
+      }),
+    }
+
+    const recipeQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [olderFavorite, newerRecipe],
+        error: null,
+      }),
+      or: vi.fn().mockReturnThis(),
+    }
+
+    const supabase = {
+      from: vi.fn((table: string) => table === 'recipe_user_favorites' ? favoritesQuery : recipeQuery),
+    }
+
+    const result = await listRecipesForUser(supabase as never, {
+      userId: 'user-123',
+      section: 'my',
+      limit: 1,
+      sort: 'recent',
+    })
+
+    expect(result.recipes).toHaveLength(1)
+    expect(result.recipes[0].id).toBe(newerRecipe.id)
+  })
+
   it('maps persisted generation_context goals onto recipe list items', async () => {
     const recipeRows = [{
       id: '00000000-0000-0000-0000-000000000001',
