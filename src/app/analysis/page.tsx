@@ -38,6 +38,7 @@ const ROAST_LABELS: Record<string, string> = {
   medium: 'Medium',
   'medium-dark': 'Med-Dark',
   dark: 'Dark',
+  unknown: 'Unknown',
 }
 
 const GOAL_OPTIONS: Array<{ value: BrewGoal; label: string; description: string }> = [
@@ -48,7 +49,7 @@ const GOAL_OPTIONS: Array<{ value: BrewGoal; label: string; description: string 
   { value: 'forgiving', label: 'Forgiving', description: 'safer starting point when the bag is tricky' },
 ]
 
-const ROAST_OPTIONS: BeanProfile['roast_level'][] = ['light', 'medium-light', 'medium', 'medium-dark', 'dark']
+const ROAST_OPTIONS: BeanProfile['roast_level'][] = ['light', 'medium-light', 'medium', 'medium-dark', 'dark', 'unknown']
 const PROCESS_OPTIONS: BeanProfile['process'][] = [
   'washed',
   'natural',
@@ -80,7 +81,7 @@ function getMaxLengthError(label: string, value: string): string | undefined {
 }
 
 function ConfidenceBadge({ score }: { score?: number }) {
-  if (!score || score >= 0.6) return null
+  if (score === undefined || score >= 0.6) return null
   return (
     <span className="ml-1 inline-block ui-badge ui-badge-warning">
       low confidence
@@ -232,7 +233,7 @@ export default function AnalysisPage() {
       ...bean,
       altitude_masl: altitude,
       process: bean.process ?? 'unknown',
-      roast_level: bean.roast_level ?? 'medium',
+      roast_level: bean.roast_level ?? 'unknown',
       roast_date: roastDate || undefined,
     }) as BeanProfile
   }

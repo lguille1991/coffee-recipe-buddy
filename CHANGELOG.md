@@ -1,3 +1,39 @@
+## 2.1.0 - 2026-07-28
+
+- Improved original-resolution coffee-bag OCR to preserve complete origins, reconcile split location lines, recover fragmented tasting notes, and read small curved country seals.
+- Added a repeatable six-bag profile accuracy command that verifies every supported extraction field against the human reference profiles.
+
+## 2.0.6 - 2026-07-23
+
+- Removed the Home hero artwork so primary coffee actions and saved recipes appear sooner.
+- Expanded the Home recent-recipe list from six to twelve saved recipes.
+
+## 2.0.5 - 2026-07-23
+
+- Improved local OCR reliability for original-resolution coffee bag photos, including curved process text, split altitude and producer details, table layouts, and redundant tasting notes.
+- Added metadata-safe production-equivalent fixtures alongside the optimized six-bag Scan-to-Analysis regression matrix.
+
+## 2.0.4 - 2026-07-23
+
+- Improved local coffee-bag scanning with complementary color and contrast OCR passes, layout-aware field mapping, and more reliable extraction of wrapped or stylized details.
+- Added a six-bag browser regression matrix covering the complete Scan-to-Analysis flow without external extraction requests.
+
+## 2.0.3 - 2026-07-23
+
+- Switched the local development server to Webpack to avoid a Turbopack CSS-generation failure; production builds are unchanged.
+
+## 2.0.2 - 2026-07-23
+
+- Added a production-disabled local E2E authentication mode for testing the real Scan-to-Analysis OCR UI flow.
+
+## 2.0.1 - 2026-07-22
+
+- Improved on-device coffee-bag OCR for independently positioned package labels, yielding more reliable field extraction in Coffee Analysis.
+
+## 2.0.0 - 2026-07-22
+
+- Added on-device English/Spanish coffee-bag OCR with deterministic, label-only parsing; scan images no longer go to an extraction AI route.
+
 ## 1.25.0 - 2026-06-05
 
 - Added env-based OpenRouter model selection with one shared default (`OPENROUTER_MODEL`) plus feature-specific overrides for recipe generation, bean extraction, and auto-adjust flows.

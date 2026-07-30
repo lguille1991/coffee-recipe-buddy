@@ -9,9 +9,16 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-dev/**",
+    ".next-e2e/**",
+    ".next-recovery-*/**",
+    ".next-*-recovery-*/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Pinned, third-party OCR worker and WASM loader scripts; checksums are
+    // verified in docs/ocr-assets.md instead of applying app-source lint rules.
+    "public/ocr/v7/**",
   ]),
 ]);
 
