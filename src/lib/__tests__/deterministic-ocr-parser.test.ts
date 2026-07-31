@@ -32,6 +32,22 @@ describe('parseCoffeeBagOcr', () => {
     })
   })
 
+  it('parses the bilingual labels and farm location read from the Loma Verde Colombia bag', () => {
+    const result = parseCoffeeBagOcr([
+      { text: 'ORIGEN / ORIGIN: Finca Lomaverde, Santa Bárbara, Antioquia', confidence: 91 },
+      { text: 'VARIEDAD / VARIETY: Colombia | ALTURA / ELEVATION: 1750 m', confidence: 93 },
+      { text: 'PROCESO / PROCESS: Lavado / Washed', confidence: 91 },
+    ])
+
+    expect(result.bean).toMatchObject({
+      finca: 'Lomaverde',
+      origin: 'Santa Bárbara, Antioquia',
+      variety: 'Colombia',
+      altitude_masl: 1750,
+      process: 'washed',
+    })
+  })
+
   it('does not infer values from unlabelled prose and reports an empty result', () => {
     const result = parseCoffeeBagOcr([
       { text: 'A bright, natural coffee with jasmine and peach notes.', confidence: 0.99 },

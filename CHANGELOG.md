@@ -1,3 +1,7 @@
+## 2.1.1 - 2026-07-30
+
+- Fixed coffee-bag scanning for bilingual Spanish/English labels, including washed-process, variety, and farm/location details on labels such as Loma Verde Colombia.
+
 ## 2.1.0 - 2026-07-28
 
 - Improved original-resolution coffee-bag OCR to preserve complete origins, reconcile split location lines, recover fragmented tasting notes, and read small curved country seals.
