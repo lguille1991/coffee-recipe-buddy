@@ -25,6 +25,35 @@ Package/app identifier: `crp`
 
 The app uses the App Router under `src/app`.
 
+## AI agent workflow
+
+Agents follow the repository rules in [`AGENTS.md`](AGENTS.md). The workflow below shows how a request moves from risk classification through validation and handoff.
+
+```mermaid
+flowchart TD
+  A["Requested change"] --> B{"Classify risk"}
+  B -->|"Documentation only"| C["Update documentation"]
+  B -->|"Low risk"| D["Plan and one implementation approval"]
+  B -->|"Standard or high risk"| E["Plan and explicit implementation approval"]
+
+  C --> R["Review changed files"]
+  D --> F["Implement approved scope"]
+  E --> F
+  F --> G["Run targeted checks"]
+  G --> H["Findings-first review"]
+  H --> I{"Issues found?"}
+  I -->|"Yes"| J["Report findings and wait for fix approval"]
+  J --> F
+  I -->|"No, low risk"| K["Run test, lint, and build"]
+  I -->|"No, standard or high risk"| L["Wait for commit-readiness confirmation"]
+  L --> K
+  K --> M["Report results and suggest commit message"]
+  R --> M
+
+  E -. "High risk: migrations, auth, APIs, RLS, OpenRouter, environment, dependencies" .-> N["Apply compatibility, security, and rollback safeguards"]
+  N --> F
+```
+
 ## Stack
 
 - Next.js `16.2.2`
