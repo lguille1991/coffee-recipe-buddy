@@ -231,8 +231,20 @@ function canonicalOriginText(value: string) {
 function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | null {
   if (!value) return null
   const normalized = normalize(value)
-  if (field === 'process') return PROCESS_ALIASES[normalized] ?? null
-  if (field === 'roast_level') return ROAST_ALIASES[normalized] ?? null
+  if (field === 'process') {
+    for (const alternative of normalized.split('/')) {
+      const process = PROCESS_ALIASES[alternative.trim()]
+      if (process) return process
+    }
+    return null
+  }
+  if (field === 'roast_level') {
+    for (const alternative of normalized.split('/')) {
+      const roastLevel = ROAST_ALIASES[alternative.trim()]
+      if (roastLevel) return roastLevel
+    }
+    return null
+  }
   if (field === 'altitude_masl') return parseAltitude(value)
   if (field === 'tasting_notes') return parseNotes(value)
   if (field === 'variety') return VARIETY_ALIASES[normalized] ?? titleCaseUppercase(value)
@@ -244,6 +256,16 @@ function parseValue(field: BeanField, value: string): BeanProfile[BeanField] | n
   if (field === 'origin') return canonicalOriginText(value).replace(/\bllamatepec\b/gi, 'Ilamatepec')
   if (field === 'finca') return cleanValue(value).replace(/^Bellavista$/i, 'Bella Vista')
   return cleanValue(value) || null
+}
+
+function parseExplicitFarmOrigin(value: string) {
+  const match = cleanValue(value).match(/^finca\s+([^,]+),\s*(.+)$/i)
+  if (!match) return null
+  const finca = parseValue('finca', match[1])
+  const origin = parseValue('origin', match[2])
+  return typeof finca === 'string' && typeof origin === 'string'
+    ? { finca, origin }
+    : null
 }
 
 function parseCompactIdentity(line: string): Partial<Pick<BeanProfile, 'bean_name' | 'process' | 'variety'>> | null {
@@ -263,19 +285,37 @@ function parseCompactIdentity(line: string): Partial<Pick<BeanProfile, 'bean_nam
   return null
 }
 
-function extractLabelAndValue(line: string) {
-  const normalized = normalize(line).replace(/[:.\s]+$/, '')
+function fieldForLabel(value: string) {
+  const normalized = normalize(value).replace(/[:.\s]+$/, '')
   const standaloneField = LABEL_TO_FIELD[normalized]
   if (standaloneField) return { field: standaloneField, value: '' }
 
+  const bilingualLabels = normalized.split(/\s*\/\s*/)
+  const bilingualFields = bilingualLabels.map(label => LABEL_TO_FIELD[label])
+  if (
+    bilingualLabels.length > 1
+    && bilingualFields.every((field): field is BeanField => Boolean(field))
+    && bilingualFields.every(field => field === bilingualFields[0])
+  ) {
+    return { field: bilingualFields[0], value: '' }
+  }
+
+  return null
+}
+
+function extractLabelAndValue(line: string) {
+  const standalone = fieldForLabel(line)
+  if (standalone) return standalone
+
   const separatorIndex = line.search(/[:–—]/)
   if (separatorIndex > 0) {
-    const field = LABEL_TO_FIELD[normalize(line.slice(0, separatorIndex))]
-    const value = cleanValue(line.slice(separatorIndex + 1))
-    if (field) return { field, value }
+    const label = fieldForLabel(line.slice(0, separatorIndex))
+    const value = cleanValue(line.slice(separatorIndex + 1).split('|', 1)[0])
+    if (label) return { field: label.field, value }
   }
 
   for (const label of SPACE_SEPARATED_LABELS) {
+    const normalized = normalize(line)
     if (normalized.startsWith(`${label} `)) {
       const field = LABEL_TO_FIELD[label]
       const value = cleanValue(line.slice(label.length))
@@ -748,6 +788,7 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
     const normalized = normalize(block.text)
+    const match = extractLabelAndValue(block.text)
     const following = followingBlocks(blocks, index)
     for (const note of recognizedTastingNotes(block.text)) {
       unlabelledNotes.set(note, Math.max(unlabelledNotes.get(note) ?? 0, confidenceFor(block)))
@@ -852,16 +893,17 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
 
     const singleOrigin = normalized.match(/^single origin\s+(.+)$/)
     if (singleOrigin) setCandidate('origin', titleCaseUppercase(singleOrigin[1]), block, 2)
-    const originCountry = countryOriginForBlock(block)
-    const countryLine = countryBearingOrigin(block.text) ?? originCountry
-    const locationLikeCountryLine = normalized.split(' ').length <= 4
-      || normalized.includes(',')
-      || normalized.startsWith(normalize(originCountry ?? ''))
-    if (originCountry && countryLine && normalized.length <= 70 && locationLikeCountryLine) {
-      setCandidate('origin', countryLine, block, countryLine === originCountry ? 1 : 2)
+    if (!match || match.field === 'origin') {
+      const originCountry = countryOriginForBlock(block)
+      const countryLine = countryBearingOrigin(block.text) ?? originCountry
+      const locationLikeCountryLine = normalized.split(' ').length <= 4
+        || normalized.includes(',')
+        || normalized.startsWith(normalize(originCountry ?? ''))
+      if (originCountry && countryLine && normalized.length <= 70 && locationLikeCountryLine) {
+        setCandidate('origin', countryLine, block, countryLine === originCountry ? 1 : 2)
+      }
     }
 
-    const match = extractLabelAndValue(block.text)
     if (!match) continue
     if (
       block.bbox
@@ -910,6 +952,11 @@ export function parseCoffeeBagOcr(blocks: readonly OcrTextBlock[]): ExtractionRe
     }
 
     if (match.field === 'origin' && rawValue) {
+      const farmOrigin = parseExplicitFarmOrigin(rawValue)
+      if (farmOrigin) {
+        setCandidate('finca', farmOrigin.finca, valueBlock, 4)
+        rawValue = farmOrigin.origin
+      }
       const continuation = following.find(candidate => candidate !== valueBlock && !extractLabelAndValue(candidate.text))
         ?? (/[,\-/]\s*$/.test(rawValue)
           ? crossPassOriginContinuation(blocks, block, valueBlock)
